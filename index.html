@@ -59,7 +59,7 @@ body { background: var(--bg); color: var(--ink); font-family: var(--font-body); 
 *, *::before, *::after { box-sizing: border-box; }
 .wrap { max-width: 1120px; margin: 0 auto; padding-block: 28px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 header.top { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; margin: 6px 0 20px; }
-h1 { font-family: var(--font-display); font-weight: 700; font-size: 45px; letter-spacing: -0.015em; margin: 0; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+h1 { font-family: var(--font-display); font-weight: 700; font-size: 45px; letter-spacing: -0.015em; margin: 0 -16px; padding: 0 16px 12px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; flex-basis: calc(100% + 32px); border-bottom: 3px solid #16a34a; }
 h1 .logo { flex: none; width: 62px; height: 62px; border-radius: 15px; }
 h1 .tagline { font-family: var(--font-body); font-weight: 500; font-style: italic; font-size: 19px; color: var(--ink-2); flex-basis: 100%; text-align: left; line-height: 1; margin: -20px 0 0 78px; }
 .today-label { color: var(--ink-2); font-size: 14px; margin-top: 2px; }
