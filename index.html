@@ -70,7 +70,7 @@ h3 { font-family: var(--font-display); font-weight: 700; font-size: 16px; margin
 .banner span { flex: 1 1 260px; min-width: 0; }
 
 /* tabs */
-.tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; margin-bottom: 16px; max-width: 620px; }
+.tabs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; margin-bottom: 16px; max-width: 620px; }
 .tab { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px 6px; min-height: 52px; color: var(--ink-2); display: grid; justify-items: center; align-content: center; }
 .tab b { font-size: 15px; color: inherit; }
 .tab small { font-size: 11px; line-height: 1.2; }
@@ -263,6 +263,7 @@ input[type=file] { font-size: 14px; }
 .recon small { font-size: 11px; color: var(--ink-2); }
 .cancel-list .row { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
 .tab small { font-size: 10px; }
+@media (max-width: 899px) { .tab { padding: 6px 2px; } .tab b { font-size: 14px; } .tab small { display: none; } }
 .ring { display: flex; gap: 14px; align-items: center; margin-top: 10px; }
 .ring svg { flex: none; }
 .ring .rt { font-family: var(--font-display); font-weight: 700; font-size: 15px; fill: var(--ink); }
@@ -359,6 +360,7 @@ input[type=file] { font-size: 14px; }
     <button class="tab" type="button" data-act="tab" data-view="today"><b>Today</b><small>Spend and track</small></button>
     <button class="tab" type="button" data-act="tab" data-view="review"><b>Review</b><small>Weekly</small></button>
     <button class="tab" type="button" data-act="tab" data-view="month"><b>Month</b><small>Reset</small></button>
+    <button class="tab" type="button" data-act="tab" data-view="learn"><b>Learn</b><small>Lessons</small></button>
   </nav>
 
   <main>
@@ -481,6 +483,7 @@ input[type=file] { font-size: 14px; }
 
     <section id="v-review" data-v="review" hidden><div id="reviewRoot"></div></section>
     <section id="v-month" data-v="month" hidden><div id="monthRoot"></div></section>
+    <section id="v-learn" data-v="learn" hidden><div id="learnRoot" style="max-width:760px"></div></section>
   </main>
 </div>
 
@@ -1057,7 +1060,7 @@ function nextTarget(state) {
     if (!state.budget.done) v = 'plan';
     if (v !== cur) openLesson = null;
     cur = v;
-    ['plan', 'today', 'review', 'month'].forEach(function (k) { $('#v-' + k).hidden = k !== v; });
+    ['plan', 'today', 'review', 'month', 'learn'].forEach(function (k) { $('#v-' + k).hidden = k !== v; });
     document.querySelectorAll('.tab').forEach(function (b) { if (b.getAttribute('data-view') === v) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
     render();
     window.scrollTo({ top: 0 });
@@ -1078,6 +1081,7 @@ function nextTarget(state) {
     if (cur === 'today') { setSub(sub); renderDaily(); renderGoal(); renderCoach(); renderSavings(); renderImport(); renderSummary(); renderChart(); renderUpcoming(); renderRecent(); fillCats(); updatePreview(); }
     if (cur === 'month') renderMonth();
     if (cur === 'review') renderReview(); else $('#reviewRoot').innerHTML = '';
+    if (cur === 'learn') $('#learnRoot').innerHTML = learnHTML(); else $('#learnRoot').innerHTML = '';
   }
 
   /* ---------- PLAN ---------- */
@@ -1512,7 +1516,7 @@ function nextTarget(state) {
   }
   function learnHTML() {
     var done = LESSONS.filter(function (L) { return state.learned[L.id]; }).length;
-    return '<section class="card" id="learn"><h2>Learn the ideas behind the app</h2><p class="sub">Short lessons, two to three minutes each, with a quick check. ' + done + ' of ' + LESSONS.length + ' done.</p><div class="meter"><i style="width:' + (done / LESSONS.length * 100).toFixed(0) + '%"></i></div>' + (openLesson && openLesson.open ? lessonHTML(LESSONS.find(function (x) { return x.id === openLesson.id; })) : '') + '<div class="lrows">' +
+    return '<section class="card" id="learn"><h2>' + (who() ? esc(who()) + ', learn' : 'Learn') + ' the ideas behind the app</h2><p class="sub">Twelve short lessons, two to three minutes each, with a quick check. ' + done + ' of ' + LESSONS.length + ' done.</p><div class="meter"><i style="width:' + (done / LESSONS.length * 100).toFixed(0) + '%"></i></div>' + (openLesson && openLesson.open ? lessonHTML(LESSONS.find(function (x) { return x.id === openLesson.id; })) : '') + '<div class="lrows">' +
       LESSONS.map(function (L, i) { return '<button class="lrow' + (state.learned[L.id] ? ' done' : '') + '" type="button" data-act="lesson" data-id="' + L.id + '">' + lessonArt(L.id) + '<span class="tt"><b>' + (i + 1) + '. ' + esc(L.title) + '</b><small>' + L.min + ' min</small></span><span class="st">' + (state.learned[L.id] ? '\u2713' : '\u203A') + '</span></button>'; }).join('') + '</div><p class="hint" style="margin-top:10px">Know someone who needs one of these? Open it and tap Share this lesson.</p></section>';
   }
   function lessonOfDay() {
@@ -1591,7 +1595,7 @@ function nextTarget(state) {
   }
   function editHTML() {
     return '<section class="card"><h2>Your budget</h2><p class="sub">Change anything here and it applies from now on. Next month\'s limits can also be set in the monthly check-in.</p>' + totalsHTML() + '</section>' +
-      secReview(false) + secGoals(false) + secIncome(false) + secGiving(false) + secBills(false) + secEvery(false) + secSavings(false) + learnHTML() + settingsHTML();
+      secReview(false) + secGoals(false) + secIncome(false) + secGiving(false) + secBills(false) + secEvery(false) + secSavings(false) + settingsHTML();
   }
   function renderPlan() {
     var b = state.budget, root = $('#planRoot');
@@ -2158,10 +2162,10 @@ function nextTarget(state) {
       case 'calPartner': { var cp = calEvents().find(function (e) { return e.id === b.getAttribute('data-id'); }); if (cp) shareICS(cp, true); break; }
       case 'givePct': applyGivePct(parseInt(b.getAttribute('data-v'), 10)); break;
       case 'givePctOther': { var gv = prompt('Percent of each paycheck to give', String(state.givePct || 10)); var gp = parseFloat(gv); if (gp > 0 && gp <= 50) applyGivePct(Math.round(gp)); break; }
-      case 'lesson': openLesson = { id: b.getAttribute('data-id'), open: true, pick: null }; if (b.getAttribute('data-here')) renderCoach(); else if (cur === 'plan' && state.budget.done) { renderPlan(); var le = $('#learn'); if (le) le.scrollIntoView({ block: 'start' }); } else { setView('plan'); if (state.budget.done) { var le2 = $('#learn'); if (le2) le2.scrollIntoView({ block: 'start' }); } else { var w0 = $('#planRoot'); w0.insertAdjacentHTML('afterbegin', lessonHTML(LESSONS.find(function (x) { return x.id === openLesson.id; }))); } } break;
-      case 'lessonPick': { var L0 = LESSONS.find(function (x) { return x.id === b.getAttribute('data-id'); }); openLesson = { id: L0.id, open: true, pick: parseInt(b.getAttribute('data-i'), 10) }; state.learned[L0.id] = 1; save(); if (cur === 'plan') { if (state.budget.done) renderPlan(); else { renderPlan(); $('#planRoot').insertAdjacentHTML('afterbegin', lessonHTML(L0)); } } else renderCoach(); break; }
+      case 'lesson': { var lid = b.getAttribute('data-id'); if (b.getAttribute('data-here')) { openLesson = { id: lid, open: true, pick: null }; renderCoach(); break; } if (!state.budget.done) { openLesson = { id: lid, open: true, pick: null }; renderPlan(); $('#planRoot').insertAdjacentHTML('afterbegin', lessonHTML(LESSONS.find(function (x) { return x.id === lid; }))); window.scrollTo({ top: 0 }); break; } setView('learn'); openLesson = { id: lid, open: true, pick: null }; $('#learnRoot').innerHTML = learnHTML(); window.scrollTo({ top: 0 }); break; }
+      case 'lessonPick': { var L0 = LESSONS.find(function (x) { return x.id === b.getAttribute('data-id'); }); openLesson = { id: L0.id, open: true, pick: parseInt(b.getAttribute('data-i'), 10) }; state.learned[L0.id] = 1; save(); if (cur === 'learn') $('#learnRoot').innerHTML = learnHTML(); else if (cur === 'plan') { renderPlan(); $('#planRoot').insertAdjacentHTML('afterbegin', lessonHTML(L0)); } else renderCoach(); break; }
       case 'lessonShare': shareLesson(LESSONS.find(function (x) { return x.id === b.getAttribute('data-id'); })); break;
-      case 'lessonClose': openLesson = null; if (cur === 'plan') renderPlan(); else renderCoach(); break;
+      case 'lessonClose': openLesson = null; if (cur === 'learn') $('#learnRoot').innerHTML = learnHTML(); else if (cur === 'plan') renderPlan(); else renderCoach(); break;
       case 'lessonGo': { openLesson = null; var vv = b.getAttribute('data-view'), ss = b.getAttribute('data-sub'); if (state.budget.done) { setView(vv); if (ss) setSub(ss); } else renderPlan(); break; }
       case 'mic': toggleMic(); break;
       case 'shareWeek': { var ws3 = weekOf(V.today); shareWeek(weekGraphicSVG(ws3, weekStats(state, ws3, V.today), true), ws3); break; }
@@ -2304,7 +2308,7 @@ function nextTarget(state) {
   if (!storeOk) $('#storeBanner').hidden = false;
   $('#eDate').value = toISO(todayNum());
   var h = (location.hash || '').replace('#', '');
-  setView(state.budget.done ? (['plan', 'today', 'review', 'month'].indexOf(h) >= 0 ? h : 'today') : 'plan');
+  setView(state.budget.done ? (['plan', 'today', 'review', 'month', 'learn'].indexOf(h) >= 0 ? h : 'today') : 'plan');
   installNote();
 
   if (window.ResizeObserver) new ResizeObserver(function () { renderChart(); }).observe($('#chart'));
