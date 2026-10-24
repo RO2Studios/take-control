@@ -1265,7 +1265,7 @@ function nextTarget(state) {
     var due = since == null || since >= 6;
     var h = '<p class="sub">Once a week, export the week\'s transactions from your bank as a CSV and bring them in. Everything you logged by hand gets matched off. What is left is what slipped by: forgotten purchases and subscriptions you did not know were still running.</p>';
     if (!state.remind.added.recon && !ib.length) h += '<p class="hint" style="margin:0 0 10px"><button class="link" type="button" data-act="cal" data-id="recon" style="padding:0;min-height:0">Put the Saturday reconcile on my calendar</button></p>';
-    if (due && !ib.length) h += '<div class="banner" style="margin-bottom:12px"><span>' + (dow === 6 ? 'It is Saturday. ' : '') + (since == null ? 'No reconcile yet. ' : since + ' days since your last one. ') + 'Open your bank app, export this week as CSV, and bring it in.</span></div>';
+    if (due && !ib.length && !state.sample) h += '<div class="banner" style="margin-bottom:12px"><span>' + (dow === 6 ? 'It is Saturday. ' : '') + (since == null ? 'No reconcile yet. ' : since + ' days since your last one. ') + 'Open your bank app, export this week as CSV, and bring it in.</span></div>';
     if (ib.length) h += '<div class="recon"><div><b>' + (state.reconTotal || 0) + '</b><small>from the bank</small></div><div><b class="pos">' + (state.reconMatched || 0) + '</b><small>matched what you logged</small></div><div><b class="neg">' + ib.length + '</b><small>slipped by</small></div></div>';
     if (!ib.length) h += '<form class="stack" data-form="csv" autocomplete="off" style="margin-top:0"><div class="drop"><label for="csvFile" style="display:block;font-weight:600;color:var(--ink)">Choose the CSV from your bank</label><input type="file" id="csvFile" accept=".csv,text/csv" style="margin-top:8px"></div><details style="margin-top:4px"><summary>Or paste the text here</summary><textarea id="csvText" aria-label="Pasted CSV" placeholder="Date,Description,Amount" spellcheck="false"></textarea><button class="btn alt" type="submit" style="margin-top:8px">Read pasted text</button></details><p class="err" id="csvErr" role="alert"></p></form>';
     else h += '<div class="inbox"><p class="headline" style="margin:0 0 8px;font-size:15px">' + ib.length + ' transaction' + (ib.length === 1 ? '' : 's') + ' to sort. Bills and paychecks already in your plan are marked to skip.</p><ul class="list">' + ib.map(inboxRow).join('') + '</ul><div class="actions" style="margin-top:12px"><button class="btn" type="button" data-act="applyInbox">Add these to my budget</button><button class="btn alt" type="button" data-act="clearInbox">Cancel</button></div><p class="err" id="inboxErr" role="alert"></p></div>';
@@ -1627,7 +1627,7 @@ function nextTarget(state) {
       (over.length ? '<p class="hint neg" style="margin-top:10px">Over limit this month: ' + over.map(function (c) { return esc(c.name) + ' by ' + fmt(ms.spent[c.id] - ms.lim[c.id]); }).join(', ') + '.</p>' : '') +
       streakLine() + paydayHTML() + challengeHTML() + bankNudge();
   }
-  function bankNudge() { var since = state.lastImportDay == null ? null : V.today - state.lastImportDay, sat = new Date(V.today * DAY).getUTCDay() === 6; if (!(sat && since !== 0) && !(since != null && since >= 8)) return ''; return '<p class="hint" style="margin-top:12px"><button class="link" type="button" data-act="sub" data-sub="bank" style="padding:0;min-height:0">' + (sat ? 'Saturday reconcile is due. Bring in this week\'s bank transactions.' : 'It has been ' + since + ' days since your last reconcile.') + '</button></p>'; }
+  function bankNudge() { if (state.sample) return ''; var since = state.lastImportDay == null ? null : V.today - state.lastImportDay, sat = new Date(V.today * DAY).getUTCDay() === 6; if (!(sat && since !== 0) && !(since != null && since >= 8)) return ''; return '<p class="hint" style="margin-top:12px"><button class="link" type="button" data-act="sub" data-sub="bank" style="padding:0;min-height:0">' + (sat ? 'Saturday reconcile is due. Bring in this week\'s bank transactions.' : 'It has been ' + since + ' days since your last reconcile.') + '</button></p>'; }
   function streakLine() {
     var sk = streakInfo(state, V.today), pr = state.goals.ef ? efProject(state, V.today) : null;
     if (!sk.tracked) return '';
@@ -2262,8 +2262,9 @@ function nextTarget(state) {
   }
 
   function dayNudge() {
-    if (!state.budget.done) return;
-    var t = todayNum(), sat = new Date(t * DAY).getUTCDay() === 6, el = $('#nudgeBanner');
+    var el = $('#nudgeBanner');
+    if (!state.budget.done || state.sample || !state.partner) { el.hidden = true; return; }
+    var t = todayNum(), sat = new Date(t * DAY).getUTCDay() === 6;
     var txt = '';
     if (sat && state.lastImportDay !== t) txt = 'It is Saturday. Reconcile this week, then send the summary to your accountability partner.';
     else { var pd = paydayInfo(state, t); if (pd && pd.next === t) txt = 'Payday. Give and save first, then the rest is yours. See the split on Today.'; }
