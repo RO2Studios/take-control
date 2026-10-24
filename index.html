@@ -317,6 +317,11 @@ input[type=file] { font-size: 14px; }
 .tile .tt small { font-size: 12px; color: var(--ink-2); }
 .tile.done .tt small { color: var(--pos); font-weight: 700; }
 .lesson-open .art { aspect-ratio: 16 / 7; border-radius: 10px; margin-bottom: 10px; }
+.photo { position: relative; margin-bottom: 10px; }
+.photo img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 10px; }
+.photo .art { display: none; }
+.photo.failed img { display: none; }
+.photo.failed .art { display: grid; }
 .lesson-open .art svg { width: 110px; }
 .install { position: relative; }
 .install .row-a { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
@@ -1467,27 +1472,35 @@ function nextTarget(state) {
     assets: ['#0369a1', '#082f49', '<path d="M50 22v56M28 40l22-18 22 18" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 60l10-20 10 20zM64 60l10-20 10 20z" fill="#fff" opacity=".85"/><rect x="30" y="80" width="40" height="6" rx="3" fill="#fff" opacity=".6"/>'],
     grow: ['#059669', '#064e3b', '<path d="M50 84V46" stroke="#fff" stroke-width="6" stroke-linecap="round"/><path d="M50 56c-16 0-26-10-26-24 14 0 26 10 26 24zM50 46c0-14 12-24 26-24 0 14-10 24-26 24z" fill="#fff" opacity=".92"/>']
   };
+  var PHOTOS = { pay: 1, ef: 1, needs: 1, subs: 1, time: 1, paycheck: 1, debt: 1, give: 1, balance: 1, grow: 1, assets: 1 };
   function lessonArt(id, big) {
     var a = ART[id] || ART.zero;
-    return '<div class="art" style="background:linear-gradient(135deg,' + a[0] + ',' + a[1] + ')"><svg viewBox="0 0 100 100" aria-hidden="true">' + a[2] + '</svg></div>';
+    var icon = '<div class="art" style="background:linear-gradient(135deg,' + a[0] + ',' + a[1] + ')"><svg viewBox="0 0 100 100" aria-hidden="true">' + a[2] + '</svg></div>';
+    if (big && window.__PWA && PHOTOS[id]) return '<div class="photo"><img src="images/' + id + '.jpg" alt="" loading="lazy" onerror="this.parentNode.className=\'photo failed\'">' + icon + '</div>';
+    return icon;
   }
   function wrapText(str, max) { var words = String(str).split(' '), lines = [], cur = ''; words.forEach(function (w) { if ((cur + ' ' + w).trim().length > max) { lines.push(cur.trim()); cur = w; } else cur = (cur + ' ' + w); }); if (cur.trim()) lines.push(cur.trim()); return lines; }
   function lessonCardSVG(L) {
     var W = 720, pad = 40, a = ART[L.id] || ART.zero, lines = [];
     L.body.forEach(function (b, i) { lines = lines.concat(wrapText(b, 58)); if (i < L.body.length - 1) lines.push(''); });
-    var H = 230 + lines.length * 30 + 90;
+    var photo = L._photo ? 1 : 0, ph = photo ? 405 : 0;
+    var H = 230 + ph + lines.length * 30 + 90;
     var sv = '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" font-family="Avenir Next, Segoe UI, Helvetica, Arial, sans-serif"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="' + a[0] + '"/><stop offset="1" stop-color="' + a[1] + '"/></linearGradient></defs>';
-    sv += '<rect width="' + W + '" height="' + H + '" rx="24" fill="#ffffff"/><rect width="' + W + '" height="170" fill="url(#g)"/><rect y="146" width="' + W + '" height="24" fill="#fff"/>';
-    sv += '<g transform="translate(' + (W - pad - 110) + ' 28) scale(1.1)">' + a[2] + '</g>';
-    sv += '<text x="' + pad + '" y="62" font-size="18" fill="#fff" opacity=".85" letter-spacing="2">TAKE CONTROL · 2-MINUTE LESSON</text>';
+    sv += '<rect width="' + W + '" height="' + H + '" rx="24" fill="#ffffff"/>' + (photo ? '<clipPath id="pc"><rect width="' + W + '" height="' + ph + '" rx="24"/></clipPath><image href="' + L._photo + '" x="0" y="0" width="' + W + '" height="' + ph + '" preserveAspectRatio="xMidYMid slice" clip-path="url(#pc)"/><rect y="' + (ph - 24) + '" width="' + W + '" height="24" fill="#fff"/>' : '') + '<rect y="' + ph + '" width="' + W + '" height="170" fill="url(#g)"/><rect y="' + (ph + 146) + '" width="' + W + '" height="24" fill="#fff"/>';
+    sv += '<g transform="translate(' + (W - pad - 110) + ' ' + (ph + 28) + ') scale(1.1)">' + a[2] + '</g>';
+    sv += '<text x="' + pad + '" y="' + (ph + 62) + '" font-size="18" fill="#fff" opacity=".85" letter-spacing="2">TAKE CONTROL · 2-MINUTE LESSON</text>';
     var tl = wrapText(L.title, 26);
-    tl.forEach(function (t, i) { sv += '<text x="' + pad + '" y="' + (104 + i * 40) + '" font-size="36" font-weight="800" fill="#fff">' + esc(t) + '</text>'; });
-    var y = 215;
+    tl.forEach(function (t, i) { sv += '<text x="' + pad + '" y="' + (ph + 104 + i * 40) + '" font-size="36" font-weight="800" fill="#fff">' + esc(t) + '</text>'; });
+    var y = ph + 215;
     lines.forEach(function (ln) { if (ln) sv += '<text x="' + pad + '" y="' + y + '" font-size="21" fill="#12222c">' + esc(ln) + '</text>'; y += ln ? 30 : 14; });
     sv += '<text x="' + pad + '" y="' + (H - 34) + '" font-size="16" fill="#4a5c67">Take Control of your finances · a free budgeting app that lives on your phone</text>';
     return sv + '</svg>';
   }
   function shareLesson(L) {
+    if (window.__PWA && PHOTOS[L.id] && L._photo == null) {
+      fetch('images/' + L.id + '.jpg').then(function (r) { return r.ok ? r.blob() : Promise.reject(); }).then(function (bl) { var fr = new FileReader(); fr.onload = function () { L._photo = fr.result; shareLesson(L); }; fr.onerror = function () { L._photo = ''; shareLesson(L); }; fr.readAsDataURL(bl); }).catch(function () { L._photo = ''; shareLesson(L); });
+      return;
+    }
     var msg = $('#lessonShareMsg'), svg = lessonCardSVG(L), text = L.title + '\n\n' + L.body.join('\n\n') + '\n\nFrom Take Control, a free budgeting app.';
     var img = new Image(), blob = new Blob([svg], { type: 'image/svg+xml' }), url = URL.createObjectURL(blob);
     var textShare = function () {
