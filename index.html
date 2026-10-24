@@ -360,7 +360,7 @@ input[type=file] { font-size: 14px; }
         <button type="button" data-act="sub" data-sub="spend">Spend</button>
         <button type="button" data-act="sub" data-sub="goals">Goals</button>
         <button type="button" data-act="sub" data-sub="outlook">Forecast</button>
-        <button type="button" data-act="sub" data-sub="bank">Bank</button>
+        <button type="button" data-act="sub" data-sub="bank">Reconcile</button>
       </nav>
       <div class="grid" id="todayGrid">
         <section class="card" id="daily" data-sub="spend" aria-labelledby="dailyH">
@@ -1860,7 +1860,7 @@ function nextTarget(state) {
   }
   function calEvents() {
     var t = todayNum(), sat = nextDow(t, 6), me = meName() || 'me', who = state.partner, r = state.remind, ev = [];
-    ev.push({ id: 'recon', uid: 'recon-' + (state.names[0] || 'x'), title: 'Saturday money reconcile (Take Control)', desc: 'Export this week from your bank app as CSV, open Take Control, Today, Bank, and bring it in. Everything you logged gets matched. Then open Review and send the week to ' + (who || 'your partner') + '.', start: icsDate(sat, r.recon), rrule: 'FREQ=WEEKLY;BYDAY=SA', mins: 20, alarm: 15, label: 'Saturday reconcile, weekly at ' + r.recon });
+    ev.push({ id: 'recon', uid: 'recon-' + (state.names[0] || 'x'), title: 'Saturday money reconcile (Take Control)', desc: 'Export this week from your bank app as CSV, open Take Control, Today, Reconcile, and bring it in. Everything you logged gets matched. Then open Review and send the week to ' + (who || 'your partner') + '.', start: icsDate(sat, r.recon), rrule: 'FREQ=WEEKLY;BYDAY=SA', mins: 20, alarm: 15, label: 'Saturday reconcile, weekly at ' + r.recon });
     if (who) ev.push({ id: 'review', uid: 'review-' + (state.names[0] || 'x'), title: 'Weekly money review: ' + (state.names[0] || 'me') + ' and ' + who, desc: 'Ten minutes on the weekly summary from Take Control. What went well, what to watch, one commitment for next week.', start: icsDate(sat, r.review), rrule: 'FREQ=WEEKLY;BYDAY=SA', mins: 15, alarm: 30, label: 'Weekly review with ' + who + ', Saturdays at ' + r.review, partner: true });
     var pd = paydayInfo(state, t);
     if (pd && pd.next != null) {
