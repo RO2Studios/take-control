@@ -370,10 +370,10 @@ input[type=file] { font-size: 14px; }
 
         <section class="card" id="ask" data-sub="spend" aria-labelledby="askH">
           <h2 id="askH">Ask before you spend</h2>
-          <p class="sub">Say or type a question like "If I spend $100 on Jordans today, how does that hit my budget?"</p>
+          <p class="sub">Type a question like "If I spend $100 on Jordans today, how does that hit my budget?"</p>
           <form data-form="ask" autocomplete="off">
-            <div class="askrow"><input type="text" id="askQ" placeholder="If I spend $60 on dinner tonight..." maxlength="140" aria-label="Your question"><button class="mic" type="button" data-act="mic" id="micBtn" aria-label="Talk" hidden>Talk</button></div>
-            <div class="actions" style="margin-top:8px"><button class="btn" type="submit">Ask</button><button class="btn alt" type="button" data-act="askHow">How am I doing?</button><label class="hint" style="display:flex;align-items:center;gap:6px;margin:0"><input type="checkbox" id="askSpeak" checked> Read it out loud</label></div>
+            <div class="askrow"><input type="text" id="askQ" placeholder="If I spend $60 on dinner tonight..." maxlength="140" aria-label="Your question"></div>
+            <div class="actions" style="margin-top:8px"><button class="btn" type="submit">Ask</button><button class="btn alt" type="button" data-act="askHow">How am I doing?</button></div>
           </form>
           <div class="answer" id="askOut" aria-live="polite"></div>
         </section>
@@ -1024,6 +1024,7 @@ function nextTarget(state) {
   function setMe(i) { meIdx = i; try { localStorage.setItem('moneyAhead.me', String(i)); } catch (e) {} }
   function house() { return state.names.join(' and '); }
   function meName() { return state.names.length === 1 ? state.names[0] : (meIdx != null ? state.names[meIdx] : ''); }
+  function who() { return meName() || house(); }
   function greet() { var h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'; }
   function catNames() { return state.budget.cats.length ? state.budget.cats.map(function (c) { return c.name; }) : ['Other']; }
 
@@ -1150,7 +1151,7 @@ function nextTarget(state) {
     var chips = '<div class="chips" aria-label="Goals">' + PICKS.map(function (p) { return '<button class="chip' + (picks.indexOf(p[0]) >= 0 ? ' on' : '') + '" type="button" aria-pressed="' + (picks.indexOf(p[0]) >= 0) + '" data-act="pick" data-key="' + p[0] + '">' + esc(p[1]) + '</button>'; }).join('') + '</div>';
     var edit = wiz ? '' : '<div class="actions" style="margin-top:12px"><button class="btn alt" type="button" data-act="efsave">Save my fund balance</button></div><p class="err" id="efErr" role="alert"></p>' +
       (g ? '<div style="margin-top:12px"><label class="f" for="efTarget">Emergency fund target</label><div class="moneyin"><span aria-hidden="true">$</span><input type="text" id="efTarget" data-eftarget="1" inputmode="decimal" value="' + inputVal(g.target) + '"></div><p class="hint">The standard first target is $1,000. A longer-term target is one month of essential expenses.</p></div>' : '');
-    return '<section class="card"><h2>' + (wiz ? 'What are you working toward?' : 'Your goals') + '</h2><p class="sub">' + (house() ? esc(house()) + ', the' : 'The') + ' first goal is a $1,000 emergency fund. It keeps a flat tire or a doctor bill from turning into debt. Tell me where you stand and the app builds the plan to get there.</p>' + efChoiceHTML() + edit + '</section>' +
+    return '<section class="card"><h2>' + (wiz ? 'What are you working toward?' : 'Your goals') + '</h2><p class="sub">' + (who() ? esc(who()) + ', the' : 'The') + ' first goal is a $1,000 emergency fund. It keeps a flat tire or a doctor bill from turning into debt. Tell me where you stand and the app builds the plan to get there.</p>' + efChoiceHTML() + edit + '</section>' +
       '<section class="card"><h2>What else matters most?</h2><p class="sub">Pick any that fit. They shape what the app suggests once your emergency fund is done.</p>' + chips + '</section>';
   }
   function payWord(freq) { return { weekly: 'each week', biweekly: 'each paycheck', twice: 'each paycheck', monthly: 'each month' }[freq] || 'each month'; }
@@ -1188,14 +1189,14 @@ function nextTarget(state) {
   }
   function goalBodyHTML() {
     var g = state.goals && state.goals.ef;
-    if (!g) return '<h2 style="font-size:19px">Set your first goal</h2><p class="sub">' + (house() ? esc(house()) + ', tell' : 'Tell') + ' me where your emergency fund stands and I will build a plan to reach $1,000.</p>' + efChoiceHTML() + '<button class="btn" type="button" data-act="efsave">Build my emergency fund plan</button><p class="err" id="efErr" role="alert"></p>';
+    if (!g) return '<h2 style="font-size:19px">Set your first goal</h2><p class="sub">' + (who() ? esc(who()) + ', tell' : 'Tell') + ' me where your emergency fund stands and I will build a plan to reach $1,000.</p>' + efChoiceHTML() + '<button class="btn" type="button" data-act="efsave">Build my emergency fund plan</button><p class="err" id="efErr" role="alert"></p>';
     var adv = efAdvice(state, V.today), pr = adv.pr, done = pr.remaining <= 0, lo = pr.lo, sk = streakInfo(state, V.today);
     var mn = monthName(mkey(V.today)), dp = dayPlan(state, V.today);
     var h = '<div class="lbl">Emergency fund</div><div class="fund-top"><div class="big ' + (done ? 'pos' : '') + '">' + fmt(pr.saved) + '</div><span class="of">of ' + fmt(pr.target) + '</span></div>' +
       '<div class="ring">' + ringSVG(pr.pct, 84) + '<div><div class="hint" style="margin:0">' + (pr.remaining > 0 ? fmt(pr.remaining) + ' to go' + (pr.eta != null ? ', on track for <b>' + dFull(pr.eta) + '</b>' : '') : 'Full. Nice work.') + '</div>' + (sk.n > 0 || sk.today ? '<div style="margin-top:6px"><span class="streak' + (sk.paused ? ' paused' : '') + '">' + (sk.today ? '\u2605 ' : '') + (sk.n === 0 ? 'Streak starts today' : sk.n + '-day streak under allowance') + '</span></div>' : '') + '</div></div>';
     if (done) {
       var nt = nextTarget(state), L = efLadder(state), nr = L.find(function (r) { return r.target === nt; });
-      h += '<p class="headline">' + (house() ? esc(house()) + ', your' : 'Your') + ' fund hit ' + fmt(pr.target) + '. ' + (nr ? 'Next rung: ' + nr.name.toLowerCase() + ', ' + fmt(nt) + '. ' + esc(nr.why) : 'You have climbed the whole ladder.') + '</p>' + (nr ? '<button class="btn" type="button" data-act="efraise" data-t="' + nt + '">Set my next target: ' + fmt(nt) + '</button>' : '');
+      h += '<p class="headline">' + (who() ? esc(who()) + ', your' : 'Your') + ' fund hit ' + fmt(pr.target) + '. ' + (nr ? 'Next rung: ' + nr.name.toLowerCase() + ', ' + fmt(nt) + '. ' + esc(nr.why) : 'You have climbed the whole ladder.') + '</p>' + (nr ? '<button class="btn" type="button" data-act="efraise" data-t="' + nt + '">Set my next target: ' + fmt(nt) + '</button>' : '');
       var nx = { debt: 'Point the monthly transfer at your highest-interest debt.', big: 'Start a savings line for your big purchase and give it its own monthly amount.', three: 'Keep the monthly transfer going until the fund covers three months of essentials.', payday: 'Keep the transfer going so one surprise never puts you short before payday.', habit: 'Keep logging every day. The habit is what makes the money last.' };
       var pk = state.goals.picks.filter(function (k) { return nx[k]; });
       if (pk.length) h += '<p class="hint" style="margin-top:10px">' + esc(nx[pk[0]]) + '</p>';
@@ -1234,7 +1235,7 @@ function nextTarget(state) {
   var savWeekly = null;
   function renderCoach() {
     var tips = coachTips(state, V.today);
-    $('#coachDyn').innerHTML = lessonOfDay() + '<p class="sub">' + (house() ? esc(house()) + ', here' : 'Here') + ' is what your spending this month says, and what to do about it.</p><ul class="coach">' + tips.map(function (t) {
+    $('#coachDyn').innerHTML = lessonOfDay() + '<p class="sub">' + (who() ? esc(who()) + ', here' : 'Here') + ' is what your spending this month says, and what to do about it.</p><ul class="coach">' + tips.map(function (t) {
       return '<li class="' + (t.kind === 'warn' ? 'warn' : t.kind === 'good' ? 'good' : '') + '"><span>' + esc(t.text) + '</span></li>';
     }).join('') + '</ul>';
   }
@@ -1242,7 +1243,7 @@ function nextTarget(state) {
     var planM = savingsPlanMonthly(state), w = savWeekly != null ? savWeekly : Math.max(1000, Math.round(planM * 12 / 52 / 500) * 500);
     var m = Math.round(w * 52 / 12), apy = 0.04;
     function cell(lbl, months, hero) { return '<div' + (hero ? ' class="hero"' : '') + '><dt>' + lbl + '</dt><dd>' + fmt(growth(m, months, 0)) + '</dd><span class="note" style="font-size:11px;display:block">' + fmt(growth(m, months, apy)) + ' at 4%</span></div>'; }
-    $('#savDyn').innerHTML = '<p class="sub">' + (planM ? 'Your plan sets aside ' + fmt(planM) + ' a month. ' : '') + 'Slide to see what a steady weekly amount turns into.</p>' +
+    $('#savDyn').innerHTML = '<p class="sub">' + (who() ? esc(who()) + ', ' : '') + (planM ? 'your plan sets aside ' + fmt(planM) + ' a month. ' : '') + 'Slide to see what a steady weekly amount turns into.</p>' +
       '<div class="bar-top"><span>Saving <b id="savW">' + fmt(w) + '</b> a week</span><span class="hint" style="display:inline">' + fmt(m) + ' a month</span></div>' +
       '<input class="slider" type="range" id="savSlider" min="500" max="50000" step="500" value="' + w + '" aria-label="Weekly amount saved">' +
       '<dl class="proj">' + cell('1 month', 1) + cell('6 months', 6) + cell('1 year', 12, true) + cell('3 years', 36) + cell('5 years', 60, true) + '</dl>' +
@@ -1274,7 +1275,7 @@ function nextTarget(state) {
     if (state.cancel.length || state.cancelled) {
       var cm = cancelTotals(state);
       h += '<div class="cancel-list" style="margin-top:14px"><h3>Cancel list</h3>' + (state.cancel.length ? '<p class="hint" style="margin:0 0 6px">These are costing you <b>' + fmt(cm) + ' a month</b>, ' + fmt(cm * 12) + ' a year. Cancel them in the app or by calling, then tap Cancelled.</p><ul class="list">' + state.cancel.map(function (c, i) { return '<li class="row"><div><div class="nm">' + esc(c.name) + '</div><div class="d">' + fmtC(c.amt) + ' a month' + '</div></div><div class="actions"><button class="btn alt" type="button" data-act="cancelDone" data-i="' + i + '">Cancelled</button><button class="mini" type="button" data-act="cancelKeep" data-i="' + i + '">Keep</button></div></li>'; }).join('') + '</ul>' : '') +
-        (state.cancelled ? '<p class="hint pos" style="margin-top:8px">' + (house() ? esc(house()) + ', you' : 'You') + ' have cancelled <b>' + fmt(state.cancelled) + ' a month</b> of subscriptions. That is ' + fmt(state.cancelled * 12) + ' a year back in your control.</p>' : '') + '</div>';
+        (state.cancelled ? '<p class="hint pos" style="margin-top:8px">' + (who() ? esc(who()) + ', you' : 'You') + ' have cancelled <b>' + fmt(state.cancelled) + ' a month</b> of subscriptions. That is ' + fmt(state.cancelled * 12) + ' a year back in your control.</p>' : '') + '</div>';
     }
     el.innerHTML = h;
   }
@@ -1291,7 +1292,7 @@ function nextTarget(state) {
     });
     rest.sort(function (a, b) { return (b.sub ? 1 : 0) - (a.sub ? 1 : 0) || b.day - a.day; });
     state.inbox = rest.slice(0, 200); state.reconMatched = matched; state.reconTotal = items.length; state.lastImportDay = todayNum();
-    if (!rest.length) state.lastImport = { head: 'All ' + matched + ' bank transactions matched what you logged this week. Nothing slipped by.', body: '' };
+    if (!rest.length) state.lastImport = { head: (who() ? who() + ', all ' : 'All ') + matched + ' bank transactions matched what you logged this week. Nothing slipped by.', body: '' };
     save(); render(); setSub('bank'); window.scrollTo({ top: 0 });
   }
   function applyInbox() {
@@ -1315,7 +1316,7 @@ function nextTarget(state) {
     var cats = Object.keys(byCat).sort(function (a, b) { return byCat[b] - byCat[a]; });
     var lines = cats.slice(0, 4).map(function (n) { var c = state.budget.cats.find(function (x) { return x.name === n; }); var left = c ? ms1.lim[c.id] - ms1.spent[c.id] : null; return '<div class="ln"><span>' + esc(n) + ' ' + fmt(byCat[n]) + '</span><span>' + (left == null ? '' : (left >= 0 ? fmt(left) + ' left' : '<span class="neg">' + fmt(-left) + ' over</span>')) + '</span></div>'; }).join('');
     var d = after.dp.allowance - before.dp.allowance;
-    state.lastImport = { head: (state.reconMatched ? state.reconMatched + ' matched what you logged. ' : '') + 'Added ' + added.length + ' you did not know about, ' + fmt(spent) + ' of spending.' + (bills ? ' ' + bills + ' subscription' + (bills === 1 ? '' : 's') + ' added to your bills.' : '') + (cancels ? ' ' + fmt(cancels) + ' a month moved to your cancel list.' : ''), body: lines + '<div class="ln"><span>Daily allowance for the rest of ' + monthName(mkey(today)) + '</span><span><b>' + fmt(before.dp.allowance) + '</b> → <b>' + fmt(after.dp.allowance) + '</b> <span class="' + (d >= 0 ? 'pos' : 'neg') + '">(' + (d === 0 ? 'no change' : sgn(d)) + ')</span></span></div><div class="ln"><span>Balance in 30 days</span><span><b>' + fmt(before.d30) + '</b> → <b>' + fmt(after.d30) + '</b></span></div>' };
+    state.lastImport = { head: (who() ? who() + ', ' : '') + (state.reconMatched ? state.reconMatched + ' matched what you logged. ' : '') + 'Added ' + added.length + ' you did not know about, ' + fmt(spent) + ' of spending.' + (bills ? ' ' + bills + ' subscription' + (bills === 1 ? '' : 's') + ' added to your bills.' : '') + (cancels ? ' ' + fmt(cancels) + ' a month moved to your cancel list.' : ''), body: lines + '<div class="ln"><span>Daily allowance for the rest of ' + monthName(mkey(today)) + '</span><span><b>' + fmt(before.dp.allowance) + '</b> → <b>' + fmt(after.dp.allowance) + '</b> <span class="' + (d >= 0 ? 'pos' : 'neg') + '">(' + (d === 0 ? 'no change' : sgn(d)) + ')</span></span></div><div class="ln"><span>Balance in 30 days</span><span><b>' + fmt(before.d30) + '</b> → <b>' + fmt(after.d30) + '</b></span></div>' };
     save(); render();
     setSub('bank');
     var bm = $('#backupFileMsg'); if (bm) bm.textContent = 'Reconcile done. Saving a backup next.';
@@ -1324,7 +1325,7 @@ function nextTarget(state) {
   function backupFile() {
     var msg = $('#backupFileMsg'), name = 'Take Control backup ' + toISO(todayNum()) + '.json';
     var data = JSON.stringify(state), blob = new Blob([data], { type: 'application/json' });
-    var done = function () { state.lastBackupDay = todayNum(); save(); if (msg) msg.textContent = 'Backup saved. Keep it in iCloud Drive or Google Drive.'; };
+    var done = function () { state.lastBackupDay = todayNum(); save(); if (msg) msg.textContent = (who() ? who() + ', backup' : 'Backup') + ' saved. Keep it in iCloud Drive or Google Drive.'; };
     try {
       var file = new File([blob], name, { type: 'application/json' });
       if (navigator.canShare && navigator.canShare({ files: [file] })) { navigator.share({ files: [file], title: 'Take Control backup' }).then(done, function () { if (msg) msg.textContent = 'Backup cancelled.'; }); return; }
@@ -1345,7 +1346,7 @@ function nextTarget(state) {
   /* ask */
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition, rec = null;
   function speak(txt) {
-    if (!$('#askSpeak').checked || !window.speechSynthesis) return;
+    return;
     try { speechSynthesis.cancel(); var u = new SpeechSynthesisUtterance(txt.replace(/−/g, 'minus ')); u.rate = 1.02; speechSynthesis.speak(u); } catch (e) {}
   }
   function parseAsk(q) {
@@ -1410,7 +1411,7 @@ function nextTarget(state) {
   function renderGoal() { $('#goalDyn').innerHTML = goalBodyHTML(); }
 
   function secIncome(wiz) {
-    return '<section class="card"><h2>' + (wiz ? 'What comes in each month?' : 'Income') + '</h2><p class="sub">' + (house() ? esc(house()) + ', add' : 'Add') + ' every paycheck. Use take-home pay, the amount that lands in your account after taxes.</p>' +
+    return '<section class="card"><h2>' + (wiz ? 'What comes in each month?' : 'Income') + '</h2><p class="sub">' + (who() ? esc(who()) + ', add' : 'Add') + ' every paycheck. Use take-home pay, the amount that lands in your account after taxes.</p>' +
       recList(function (r) { return r.type === 'in'; }, 'No income added yet.') + chipsHTML('in') + recForm('in') +
       (wiz ? '<div style="margin-top:16px"><label class="f" for="startBal">Balance in your checking account right now</label><input type="text" id="startBal" inputmode="decimal" placeholder="0.00" value="' + (state.anchor.balance ? (state.anchor.balance / 100).toFixed(2) : '') + '"><p class="hint">Check your banking app. This is the starting point for tracking your money.</p></div>' : '') +
       '</section>';
@@ -1419,7 +1420,7 @@ function nextTarget(state) {
     var pays = state.recs.filter(function (r) { return r.type === 'in'; }), t = planTotals(state), pct = state.givePct || 0;
     var ytd = givingYTD(state, todayNum());
     var opts = [0, 5, 10].map(function (v) { return '<button class="chip' + (pct === v ? ' on' : '') + '" type="button" data-act="givePct" data-v="' + v + '">' + (v === 0 ? 'Not right now' : v + '% of each paycheck') + '</button>'; }).join('') + '<button class="chip' + ([0, 5, 10].indexOf(pct) < 0 ? ' on' : '') + '" type="button" data-act="givePctOther">' + ([0, 5, 10].indexOf(pct) < 0 ? pct + '%' : 'Another amount') + '</button>';
-    return '<section class="card"><h2>' + (wiz ? 'Giving comes off the top' : 'Giving') + '</h2><p class="sub">' + (house() ? esc(house()) + ', if' : 'If') + ' you tithe or give to charity, set it here as a percent of each paycheck. It moves the day the check lands, so it never competes with the rest of the budget.</p>' +
+    return '<section class="card"><h2>' + (wiz ? 'Giving comes off the top' : 'Giving') + '</h2><p class="sub">' + (who() ? esc(who()) + ', if' : 'If') + ' you tithe or give to charity, set it here as a percent of each paycheck. It moves the day the check lands, so it never competes with the rest of the budget.</p>' +
       '<div class="chips">' + opts + '</div>' +
       (pct ? '<p class="hint pos">' + pct + '% of take-home is <b>' + fmt(Math.round(t.inc * pct / 100)) + ' a month</b>. ' + (pays.length > 1 ? 'Set per paycheck below.' : '') + '</p>' : '') +
       (t.give ? recList(function (r) { return r.type === 'out' && r.cat === 'Giving'; }, '') : (pct && !pays.length ? '<p class="err" style="display:block">Add your income first, then giving can be set per paycheck.</p>' : '')) +
@@ -1508,7 +1509,7 @@ function nextTarget(state) {
     var unread = LESSONS.filter(function (L) { return !state.learned[L.id]; });
     if (!unread.length) return '';
     var L = unread[todayNum() % unread.length];
-    return '<section class="card" style="border-color:var(--accent)"><div class="lbl">Two-minute lesson</div>' + (openLesson && openLesson.id === L.id && openLesson.open ? '' : '<div class="lesson-open">' + lessonArt(L.id, true) + '</div>') + (openLesson && openLesson.id === L.id && openLesson.open ? lessonHTML(L) : '<h3 style="margin-top:4px">' + esc(L.title) + '</h3><p class="hint" style="margin:0 0 8px">' + esc(L.body[0]) + '</p>' + '<button class="btn alt" type="button" data-act="lesson" data-id="' + L.id + '" data-here="1">Read it</button>') + '</section>';
+    return '<section class="card" style="border-color:var(--accent)"><div class="lbl">' + (who() ? esc(who()) + ', a two-minute lesson' : 'Two-minute lesson') + '</div>' + (openLesson && openLesson.id === L.id && openLesson.open ? '' : '<div class="lesson-open">' + lessonArt(L.id, true) + '</div>') + (openLesson && openLesson.id === L.id && openLesson.open ? lessonHTML(L) : '<h3 style="margin-top:4px">' + esc(L.title) + '</h3><p class="hint" style="margin:0 0 8px">' + esc(L.body[0]) + '</p>' + '<button class="btn alt" type="button" data-act="lesson" data-id="' + L.id + '" data-here="1">Read it</button>') + '</section>';
   }
   function secBills(wiz) {
     return '<section class="card"><h2>' + (wiz ? 'Bills that come due on a schedule' : 'Bills') + '</h2><p class="sub">Rent, utilities, insurance, loan payments and subscriptions. Tap a quick pick or add your own. These post by themselves on their due date.</p>' +
@@ -1539,7 +1540,7 @@ function nextTarget(state) {
       return '<div><div class="bar-top"><span>' + lbl + '</span><span><b>' + Math.round(p) + '%</b> <span class="hint" style="display:inline">guide ' + target + '%</span></span></div><div class="bar"><i style="width:' + Math.min(100, Math.max(0, p)).toFixed(1) + '%"></i><u style="left:' + target + '%"></u></div></div>';
     }
     var coach = state.goals.ef && wiz ? '<section class="card"><h2>Your emergency fund plan</h2>' + goalBodyHTML() + '</section>' : '';
-    var msg = t.inc === 0 ? 'Add your income first.' : t.left === 0 ? (house() ? house() + ', every' : 'Every') + ' dollar of take-home has a job. You are ready to start tracking.' : t.left > 0 ? 'You have ' + fmt(t.left) + ' a month with no job. Raise a limit, or move it to savings so it does not disappear.' : 'You are planning to spend ' + fmt(-t.left) + ' a month more than you bring in. Lower a bill or an everyday limit before you start.';
+    var msg = t.inc === 0 ? 'Add your income first.' : t.left === 0 ? (who() ? who() + ', every' : 'Every') + ' dollar of take-home has a job. You are ready to start tracking.' : t.left > 0 ? 'You have ' + fmt(t.left) + ' a month with no job. Raise a limit, or move it to savings so it does not disappear.' : 'You are planning to spend ' + fmt(-t.left) + ' a month more than you bring in. Lower a bill or an everyday limit before you start.';
     return '<section class="card"><h2>' + (wiz ? 'Give every dollar a job' : 'How your plan adds up') + '</h2>' +
       '<div class="bars" style="gap:8px">' + row('Take-home pay', t.inc, 'pos') + (t.give ? row('Giving', -t.give) : '') + row('Bills', -t.fixed) + row('Savings', -t.save) + row('Everyday spending limits', -t.every) +
       '<div class="bar-top" style="border-top:1px solid var(--line);padding-top:8px"><span><b>Left to assign</b></span><b class="' + (t.left < 0 ? 'neg' : t.left > 0 ? '' : 'pos') + '">' + fmt(t.left) + '</b></div></div>' +
@@ -1625,7 +1626,7 @@ function nextTarget(state) {
     var cls = left < 0 ? 'short' : (dp.allowance > 0 && dp.spentToday > dp.allowance * 0.8 ? 'tight' : '');
     var sub = dp.remaining >= 0 ? 'You have ' + fmt(dp.remaining) + ' left of your ' + fmt(dp.total) + ' everyday budget for ' + monthName(key) + ', with ' + dp.daysLeft + ' day' + (dp.daysLeft === 1 ? '' : 's') + ' to go.' : 'You are ' + fmt(-dp.remaining) + ' past your ' + monthName(key) + ' everyday budget. Spend only what you must until the month turns over.';
     el.innerHTML = '<div class="lbl">Left to spend today</div><div class="big ' + (left < 0 ? 'neg' : 'pos') + '">' + fmt(left) + '</div>' +
-      '<p class="headline" style="margin-bottom:10px">' + (house() ? esc(house()) + ', today\'s' : 'Today\'s') + ' allowance is <b>' + fmt(dp.allowance) + '</b> and you have spent <b>' + fmt(dp.spentToday) + '</b>. ' + esc(sub) + '</p>' +
+      '<p class="headline" style="margin-bottom:10px">' + (who() ? esc(who()) + ', today\'s' : 'Today\'s') + ' allowance is <b>' + fmt(dp.allowance) + '</b> and you have spent <b>' + fmt(dp.spentToday) + '</b>. ' + esc(sub) + '</p>' +
       '<div class="meter" role="img" aria-label="Spent today compared with allowance"><i class="' + cls + '" style="width:' + pct.toFixed(1) + '%"></i></div>' +
       (over.length ? '<p class="hint neg" style="margin-top:10px">Over limit this month: ' + over.map(function (c) { return esc(c.name) + ' by ' + fmt(ms.spent[c.id] - ms.lim[c.id]); }).join(', ') + '.</p>' : '') +
       streakLine() + paydayHTML() + challengeHTML() + bankNudge();
@@ -1634,7 +1635,7 @@ function nextTarget(state) {
   function streakLine() {
     var sk = streakInfo(state, V.today), pr = state.goals.ef ? efProject(state, V.today) : null;
     if (!sk.tracked) return '';
-    var t = sk.today ? 'Under allowance so far today. ' + (sk.n > 0 ? 'Finish the day this way and the streak hits ' + (sk.n + 1) + '.' : 'Finish the day this way and your streak starts.') : 'Over today\'s allowance. The streak pauses, it does not reset. Tomorrow counts again.';
+    var t = sk.today ? (who() ? who() + ', you are under' : 'Under') + ' allowance so far today. ' + (sk.n > 0 ? 'Finish the day this way and the streak hits ' + (sk.n + 1) + '.' : 'Finish the day this way and your streak starts.') : 'Over today\'s allowance. The streak pauses, it does not reset. Tomorrow counts again.';
     var goal = pr && pr.remaining > 0 && pr.eta != null ? ' Every under-budget day keeps your fund on track for ' + dFull(pr.eta) + '.' : '';
     return '<div style="margin-top:10px"><span class="streak' + (sk.today ? '' : ' paused') + '">' + (sk.today ? '\u2605 ' : '\u23F8 ') + (sk.n === 0 ? (sk.today ? 'Streak starts today' : 'Streak paused') : sk.n + '-day streak') + '</span></div><p class="hint" style="margin-top:6px">' + esc(t) + esc(goal) + '</p>';
   }
@@ -1790,7 +1791,7 @@ function nextTarget(state) {
     var inc3 = ms.sch.inc ? ms.sch.bills.length : 0;
     var sum = '<section class="card" id="msum"><h2>The plan for ' + monthName(key) + '</h2>' +
       '<div class="mo"><div><span class="lbl">Income</span><b class="pos">' + fmt(ms.income) + '</b></div><div><span class="lbl">Bills</span><b>' + fmt(ms.sch.fixed) + '</b></div>' + (ms.sch.give ? '<div><span class="lbl">Giving</span><b>' + fmt(ms.sch.give) + '</b></div>' : '') + '<div><span class="lbl">Savings</span><b>' + fmt(ms.sch.save) + '</b></div><div><span class="lbl">Everyday limits</span><b>' + fmt(ms.totalLimit) + '</b></div></div>' +
-      '<p class="headline" style="font-size:15px;margin-bottom:6px">' + (left === 0 ? 'Every dollar has a job this month.' : left > 0 ? fmt(left) + ' of this month\'s income has no job yet. Raise a limit or add it to savings.' : 'This month plans to spend ' + fmt(-left) + ' more than comes in.') + '</p>' +
+      '<p class="headline" style="font-size:15px;margin-bottom:6px">' + (left === 0 ? (who() ? esc(who()) + ', every' : 'Every') + ' dollar has a job this month.' : left > 0 ? fmt(left) + ' of this month\'s income has no job yet. Raise a limit or add it to savings.' : 'This month plans to spend ' + fmt(-left) + ' more than comes in.') + '</p>' +
       (ms.income !== planTotals(state).inc ? '<p class="hint">This month has ' + (ms.income > planTotals(state).inc ? 'more' : 'less') + ' income than an average month because of how paydays fall.</p>' : '') +
       (isFuture ? '' : '<div style="margin-top:12px"><span class="lbl">Everyday spending so far</span><div class="bar-top" style="margin-top:4px"><span><b>' + fmt(ms.totalSpent) + '</b> of ' + fmt(ms.totalLimit) + '</span><span class="' + (ms.totalSpent > ms.totalLimit ? 'neg' : 'pos') + '"><b>' + (ms.totalSpent > ms.totalLimit ? fmt(ms.totalSpent - ms.totalLimit) + ' over' : fmt(ms.totalLimit - ms.totalSpent) + ' left') + '</b></span></div>' +
       '<div class="bar"><i class="' + (ms.totalSpent > ms.totalLimit ? 'over' : '') + '" style="width:' + (ms.totalLimit ? Math.min(100, ms.totalSpent / ms.totalLimit * 100) : 0).toFixed(1) + '%"></i>' + (isCur ? '<u style="left:' + (dayFrac * 100).toFixed(1) + '%"></u>' : '') + '</div>' + (isCur ? '<p class="bar-note">The line marks how far through the month you are.</p>' : '') + '</div>') + '</section>';
@@ -1826,7 +1827,7 @@ function nextTarget(state) {
         var nl = limitFor(state, c, nextKey);
         return '<div class="catrow"><label for="nl-' + c.id + '">' + esc(c.name) + '<small>This month ' + fmt(ms.spent[c.id]) + ' of ' + fmt(ms.lim[c.id]) + '</small></label><div class="moneyin"><span aria-hidden="true">$</span><input type="text" id="nl-' + c.id + '" data-nl="' + c.id + '" inputmode="decimal" value="' + inputVal(nl) + '" aria-label="' + esc(monthName(nextKey)) + ' limit for ' + esc(c.name) + '"></div><span></span></div>';
       }).join('');
-      check = '<section class="card" id="mcheck"><h2>Monthly check-in</h2><p class="sub">' + (lastDays <= 7 ? 'The month is almost over. ' : '') + (house() ? esc(house()) + ', do' : 'Do') + ' these three steps once a month, ideally in the last week.</p>' +
+      check = '<section class="card" id="mcheck"><h2>Monthly check-in</h2><p class="sub">' + (lastDays <= 7 ? 'The month is almost over. ' : '') + (who() ? esc(who()) + ', do' : 'Do') + ' these three steps once a month, ideally in the last week.</p>' +
         '<ol class="todo"><li><b>Match your bank balance.</b> ' + (fresh ? '<span class="tag paid">Done this week</span>' : '<span class="tag">Not done this week</span>') + '<div class="hint">Log any missing purchases, then enter what your bank shows so the numbers stay honest.</div><button class="link" type="button" data-act="gomatch">Match my balance now</button></li>' +
         '<li><b>See what went over.</b>' + (over.length ? '<ul>' + over.map(function (c) { return '<li>' + esc(c.name) + ' is ' + fmt(ms.spent[c.id] - ms.lim[c.id]) + ' over its limit.</li>'; }).join('') + '</ul>' : '<div class="hint">Nothing is over its limit right now.</div>') + (unspent > 0 && lastDays <= 7 ? '<div class="hint">' + fmt(unspent) + ' is unspent across categories. Moving it to savings is a strong way to use it.</div>' + (efLeft > 0 && Math.min(unspent, efLeft) >= 500 ? '<button class="link" type="button" data-act="efadd" data-amt="' + Math.min(unspent, efLeft) + '">I moved ' + fmt(floor5(Math.min(unspent, efLeft))) + ' to my emergency fund</button>' : '') : '') + '</li>' +
         '<li><b>Plan ' + esc(monthName(nextKey)) + '.</b><div class="hint">Next month brings in ' + fmt(ns.income) + ' with ' + fmt(ns.sch.fixed) + ' in bills' + (ns.sch.give ? ', ' + fmt(ns.sch.give) + ' in giving' : '') + ' and ' + fmt(ns.sch.save) + ' in savings. Set each everyday limit to use what is left.</div>' +
@@ -1941,17 +1942,17 @@ function nextTarget(state) {
   function renderReview() {
     var root = $('#reviewRoot'), today = V.today, ws = weekOf(today), wst = weekStats(state, ws, today), svg = weekGraphicSVG(ws, wst);
     var cur0 = state.reviews.find(function (r) { return r.s === ws.s; }), prev = state.reviews.filter(function (r) { return r.s < ws.s; }).sort(function (a, b) { return b.s - a.s; });
-    var last = prev[0], who = 'your accountability partner';
+    var last = prev[0], pw = 'your accountability partner';
     var h = '<section class="card"><div class="row" style="grid-template-columns:minmax(0,1fr) auto;padding:0;border:0"><h2 style="margin:0">Week of ' + dShort(ws.s) + ' to ' + dShort(ws.e) + '</h2>' + (state.partner ? '<span class="pill ' + (state.lastShareWeek === ws.s ? 'ok' : 'tight') + '">' + (state.lastShareWeek === ws.s ? 'Sent' : 'Not sent yet') + '</span>' : '') + '</div>' +
-      '<p class="sub">' + (state.lastImportDay === today ? 'Reconcile done today. ' : (new Date(today * DAY).getUTCDay() === 6 ? 'Do the Saturday reconcile first so this is complete. ' : 'Week to date. ')) + 'This is the one screen ' + esc(who) + ' sees.</p>' +
+      '<p class="sub">' + (state.lastImportDay === today ? 'Reconcile done today. ' : (new Date(today * DAY).getUTCDay() === 6 ? 'Do the Saturday reconcile first so this is complete. ' : 'Week to date. ')) + (who() ? esc(who()) + ', this' : 'This') + ' is the one screen your accountability partner sees.</p>' +
       '<div class="wkgraphic">' + svg + '</div>' +
       '<button class="btn" type="button" data-act="shareWeek" style="width:100%;margin-top:12px">' + 'Send to accountability partner</button><p class="hint" id="shareMsg" role="status"></p>' +
       (state.partner && !state.remind.added.review ? '<div class="actions" style="margin-top:8px"><button class="btn alt" type="button" data-act="cal" data-id="review">Add the weekly review to my calendar</button><button class="btn alt" type="button" data-act="calPartner" data-id="review">Send my accountability partner a calendar invite</button></div><p class="hint" id="calMsg" role="status"></p>' : '') +
       (!state.partner ? '<p class="hint">No accountability partner yet. Add one in Plan, then Settings. A weekly look from someone you trust is what makes this stick.</p>' : '') + '</section>';
     if (last && last.kept == null) h += '<section class="card"><h2>Last week\'s commitment</h2><p class="headline" style="margin:4px 0 10px">' + esc(last.commit || 'No commitment recorded.') + '</p><div class="actions"><button class="btn" type="button" data-act="kept" data-s="' + last.s + '" data-v="1">I kept it</button><button class="btn alt" type="button" data-act="kept" data-s="' + last.s + '" data-v="0">Not this time</button></div></section>';
-    h += '<section class="card"><h2>This week\'s review</h2><p class="sub">Two minutes, after you talk with ' + esc(who) + '.</p><form class="stack" data-form="review" data-s="' + ws.s + '" autocomplete="off" style="margin-top:0">' +
+    h += '<section class="card"><h2>This week\'s review</h2><p class="sub">Two minutes, after you talk with ' + esc(pw) + '.</p><form class="stack" data-form="review" data-s="' + ws.s + '" autocomplete="off" style="margin-top:0">' +
       '<div><label class="f" for="rvWell">What went well</label><input type="text" id="rvWell" name="well" maxlength="140" value="' + esc(cur0 ? cur0.well : '') + '"></div>' +
-      '<div><label class="f" for="rvFlag">What ' + esc(who) + ' flagged</label><input type="text" id="rvFlag" name="flag" maxlength="140" value="' + esc(cur0 ? cur0.flag : '') + '"></div>' +
+      '<div><label class="f" for="rvFlag">What ' + esc(pw) + ' flagged</label><input type="text" id="rvFlag" name="flag" maxlength="140" value="' + esc(cur0 ? cur0.flag : '') + '"></div>' +
       '<div><label class="f" for="rvCommit">One commitment for next week</label><input type="text" id="rvCommit" name="commit" maxlength="140" value="' + esc(cur0 ? cur0.commit : '') + '"></div>' +
       '<button class="btn alt" type="submit">' + (cur0 ? 'Update review' : 'Save review') + '</button><p class="hint" id="rvMsg" role="status">' + (cur0 ? 'Saved ' + dLong(cur0.ts) + '.' : '') + '</p></form></section>';
     var ms = milestoneList(state, today), won = ms.filter(function (m) { return m.won; });
@@ -2269,8 +2270,8 @@ function nextTarget(state) {
     if (!state.budget.done || state.sample || !state.partner) { el.hidden = true; return; }
     var t = todayNum(), sat = new Date(t * DAY).getUTCDay() === 6;
     var txt = '';
-    if (sat && state.lastImportDay !== t) txt = 'It is Saturday. Reconcile this week, then send the summary to your accountability partner.';
-    else { var pd = paydayInfo(state, t); if (pd && pd.next === t) txt = 'Payday. Give and save first, then the rest is yours. See the split on Today.'; }
+    if (sat && state.lastImportDay !== t) txt = (who() ? who() + ', it' : 'It') + ' is Saturday. Reconcile this week, then send the summary to your accountability partner.';
+    else { var pd = paydayInfo(state, t); if (pd && pd.next === t) txt = 'Payday' + (who() ? ', ' + who() : '') + '. Give and save first, then the rest is yours. See the split on Today.'; }
     if (!txt) { el.hidden = true; return; }
     try { if (localStorage.getItem('moneyAhead.nudge') === String(t)) { el.hidden = true; return; } } catch (e) {}
     el.querySelector('span').textContent = txt; el.hidden = false;
@@ -2295,7 +2296,7 @@ function nextTarget(state) {
   var h = (location.hash || '').replace('#', '');
   setView(state.budget.done ? (['plan', 'today', 'review', 'month'].indexOf(h) >= 0 ? h : 'today') : 'plan');
   installNote();
-  if (SR) $('#micBtn').hidden = false;
+
   if (window.ResizeObserver) new ResizeObserver(function () { renderChart(); }).observe($('#chart'));
   else window.addEventListener('resize', renderChart);
   document.addEventListener('visibilitychange', function () {
