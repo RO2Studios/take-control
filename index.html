@@ -297,7 +297,16 @@ input[type=file] { font-size: 14px; }
 #todayGrid > .card:not(.show) { display: none; }
 #todayGrid > .card { grid-area: auto; }
 @media (min-width: 900px) { #todayGrid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: none; } #todayGrid > .card.wide { grid-column: 1 / -1; } }
-.tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+.lrows { display: grid; gap: 6px; margin-top: 12px; }
+.lrow { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 12px; align-items: center; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px 8px 8px; min-height: 56px; }
+.lrow .art { width: 40px; height: 40px; aspect-ratio: auto; border-radius: 10px; }
+.lrow .art svg { width: 26px; }
+.lrow .tt { display: grid; gap: 1px; min-width: 0; }
+.lrow .tt b { font-size: 14px; line-height: 1.25; }
+.lrow .tt small { font-size: 12px; color: var(--ink-2); }
+.lrow .st { font-size: 18px; font-weight: 700; color: var(--ink-2); }
+.lrow.done .st { color: var(--pos); }
+.lrow.done .tt b { color: var(--ink-2); }
 @media (min-width: 600px) { .tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 .tile { border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: var(--surface); text-align: left; padding: 0; display: grid; grid-template-rows: auto 1fr; min-height: 0; }
 .tile .art { aspect-ratio: 4 / 3; display: grid; place-items: center; }
@@ -1503,8 +1512,8 @@ function nextTarget(state) {
   }
   function learnHTML() {
     var done = LESSONS.filter(function (L) { return state.learned[L.id]; }).length;
-    return '<section class="card" id="learn"><h2>Learn the ideas behind the app</h2><p class="sub">Short lessons, two to three minutes each, with a quick check. ' + done + ' of ' + LESSONS.length + ' done.</p><div class="meter"><i style="width:' + (done / LESSONS.length * 100).toFixed(0) + '%"></i></div>' + (openLesson && openLesson.open ? lessonHTML(LESSONS.find(function (x) { return x.id === openLesson.id; })) : '') + '<div class="tiles">' +
-      LESSONS.map(function (L) { return '<button class="tile' + (state.learned[L.id] ? ' done' : '') + '" type="button" data-act="lesson" data-id="' + L.id + '">' + lessonArt(L.id) + '<span class="tt"><b>' + esc(L.title) + '</b><small>' + (state.learned[L.id] ? '\u2713 Done \u00b7 ' : '') + L.min + ' min read</small></span></button>'; }).join('') + '</div><p class="hint" style="margin-top:10px">Know someone who needs one of these? Open it and tap Share this lesson.</p></section>';
+    return '<section class="card" id="learn"><h2>Learn the ideas behind the app</h2><p class="sub">Short lessons, two to three minutes each, with a quick check. ' + done + ' of ' + LESSONS.length + ' done.</p><div class="meter"><i style="width:' + (done / LESSONS.length * 100).toFixed(0) + '%"></i></div>' + (openLesson && openLesson.open ? lessonHTML(LESSONS.find(function (x) { return x.id === openLesson.id; })) : '') + '<div class="lrows">' +
+      LESSONS.map(function (L, i) { return '<button class="lrow' + (state.learned[L.id] ? ' done' : '') + '" type="button" data-act="lesson" data-id="' + L.id + '">' + lessonArt(L.id) + '<span class="tt"><b>' + (i + 1) + '. ' + esc(L.title) + '</b><small>' + L.min + ' min</small></span><span class="st">' + (state.learned[L.id] ? '\u2713' : '\u203A') + '</span></button>'; }).join('') + '</div><p class="hint" style="margin-top:10px">Know someone who needs one of these? Open it and tap Share this lesson.</p></section>';
   }
   function lessonOfDay() {
     var unread = LESSONS.filter(function (L) { return !state.learned[L.id]; });
