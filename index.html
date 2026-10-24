@@ -1869,7 +1869,7 @@ function nextTarget(state) {
   }
   function shareICS(ev, forPartner) {
     var ics = buildICS(ev), name = 'take-control-' + ev.id + '.ics', blob = new Blob([ics], { type: 'text/calendar' }), msg = $('#calMsg');
-    var done = function () { state.remind.added[ev.id] = todayNum(); save(); if (msg) msg.textContent = forPartner ? 'Invite sent. ' + state.partner + ' taps it to add it to their calendar.' : 'Opening your calendar. Tap Add to save it.'; renderCal(); };
+    var done = function () { state.remind.added[ev.id] = todayNum(); save(); if (msg) msg.textContent = forPartner ? 'Invite sent. Your accountability partner taps it to add it to their calendar.' : 'Opening your calendar. Tap Add to save it.'; renderCal(); };
     if (forPartner) {
       try { var file = new File([blob], name, { type: 'text/calendar' }); if (navigator.canShare && navigator.canShare({ files: [file] })) { navigator.share({ files: [file], title: ev.title, text: 'Can you hold ' + (state.remind.review) + ' Saturdays for a 10-minute money review with me? Tap the attachment to add it to your calendar.' }).then(done, function () {}); return; } } catch (e) {}
     }
@@ -1879,7 +1879,7 @@ function nextTarget(state) {
     var evs = calEvents(), r = state.remind;
     return '<details id="calCard"><summary>Reminders and calendar</summary><div class="stack"><p class="hint" style="margin:0">The app cannot send notifications on its own yet. Calendar events can. Add these and your phone reminds you.</p>' +
       '<div class="two"><div><label class="f" for="rmRecon">Reconcile time (Saturdays)</label><input type="time" id="rmRecon" value="' + esc(r.recon) + '"></div><div><label class="f" for="rmReview">Review time (Saturdays)</label><input type="time" id="rmReview" value="' + esc(r.review) + '"></div></div>' +
-      '<ul class="list">' + evs.map(function (e) { return '<li class="row" style="grid-template-columns:1fr"><div><div class="nm">' + esc(e.label) + (r.added[e.id] ? '<span class="tag paid">Added</span>' : '') + '</div><div class="d">' + esc(e.title) + '</div></div><div class="actions" style="margin-top:8px"><button class="btn alt" type="button" data-act="cal" data-id="' + e.id + '">' + (r.added[e.id] ? 'Add again' : 'Add to my calendar') + '</button>' + (e.partner ? '<button class="btn" type="button" data-act="calPartner" data-id="' + e.id + '">Invite ' + esc(state.partner) + '</button>' : '') + '</div></li>'; }).join('') + '</ul><p class="hint" id="calMsg" role="status"></p></div></details>';
+      '<ul class="list">' + evs.map(function (e) { return '<li class="row" style="grid-template-columns:1fr"><div><div class="nm">' + esc(e.label) + (r.added[e.id] ? '<span class="tag paid">Added</span>' : '') + '</div><div class="d">' + esc(e.title) + '</div></div><div class="actions" style="margin-top:8px"><button class="btn alt" type="button" data-act="cal" data-id="' + e.id + '">' + (r.added[e.id] ? 'Add again' : 'Add to my calendar') + '</button>' + (e.partner ? '<button class="btn" type="button" data-act="calPartner" data-id="' + e.id + '">Invite accountability partner</button>' : '') + '</div></li>'; }).join('') + '</ul><p class="hint" id="calMsg" role="status"></p></div></details>';
   }
   function renderCal() { var c = $('#calCard'); if (c) { var open = c.open; c.outerHTML = calHTML(); var n = $('#calCard'); if (n) n.open = open; } }
   /* ---------- REVIEW ---------- */
@@ -1925,7 +1925,7 @@ function nextTarget(state) {
       var ctx = cv.getContext('2d'); ctx.scale(2, 2); ctx.drawImage(img, 0, 0); URL.revokeObjectURL(url);
       cv.toBlob(function (png) {
         var name = 'take-control-week-' + toISO(ws.s) + '.png', text = (meName() ? meName() + '\'s' : 'My') + ' week in Take Control, ' + dShort(ws.s) + ' to ' + dShort(ws.e) + '.';
-        var done = function () { state.lastShareWeek = ws.s; save(); if (msg) msg.textContent = 'Sent. Now do the review below after you talk.'; renderReview(); };
+        var done = function () { state.lastShareWeek = ws.s; save(); if (msg) msg.textContent = 'Sent to your accountability partner. Now do the review below after you talk.'; renderReview(); };
         try {
           var file = new File([png], name, { type: 'image/png' });
           if (navigator.canShare && navigator.canShare({ files: [file] })) { navigator.share({ files: [file], text: text, title: 'Take Control weekly' }).then(done, function () { if (msg) msg.textContent = 'Share cancelled.'; }); return; }
@@ -1939,11 +1939,11 @@ function nextTarget(state) {
     var root = $('#reviewRoot'), today = V.today, ws = weekOf(today), wst = weekStats(state, ws, today), svg = weekGraphicSVG(ws, wst);
     var cur0 = state.reviews.find(function (r) { return r.s === ws.s; }), prev = state.reviews.filter(function (r) { return r.s < ws.s; }).sort(function (a, b) { return b.s - a.s; });
     var last = prev[0], who = state.partner || 'your accountability partner';
-    var h = '<section class="card"><div class="row" style="grid-template-columns:minmax(0,1fr) auto;padding:0;border:0"><h2 style="margin:0">Week of ' + dShort(ws.s) + ' to ' + dShort(ws.e) + '</h2>' + (state.partner ? '<span class="pill ' + (state.lastShareWeek === ws.s ? 'ok' : 'tight') + '">' + (state.lastShareWeek === ws.s ? 'Sent to ' + esc(state.partner) : 'Share with ' + esc(state.partner)) + '</span>' : '') + '</div>' +
+    var h = '<section class="card"><div class="row" style="grid-template-columns:minmax(0,1fr) auto;padding:0;border:0"><h2 style="margin:0">Week of ' + dShort(ws.s) + ' to ' + dShort(ws.e) + '</h2>' + (state.partner ? '<span class="pill ' + (state.lastShareWeek === ws.s ? 'ok' : 'tight') + '">' + (state.lastShareWeek === ws.s ? 'Sent' : 'Not sent yet') + '</span>' : '') + '</div>' +
       '<p class="sub">' + (state.lastImportDay === today ? 'Reconcile done today. ' : (new Date(today * DAY).getUTCDay() === 6 ? 'Do the Saturday reconcile first so this is complete. ' : 'Week to date. ')) + 'This is the one screen ' + esc(who) + ' sees.</p>' +
       '<div class="wkgraphic">' + svg + '</div>' +
-      '<button class="btn" type="button" data-act="shareWeek" style="width:100%;margin-top:12px">' + (state.partner ? 'Send this week to ' + esc(state.partner) : 'Share this week') + '</button><p class="hint" id="shareMsg" role="status"></p>' +
-      (state.partner && !state.remind.added.review ? '<div class="actions" style="margin-top:8px"><button class="btn alt" type="button" data-act="cal" data-id="review">Add the weekly review to my calendar</button><button class="btn alt" type="button" data-act="calPartner" data-id="review">Send ' + esc(state.partner) + ' a calendar invite</button></div><p class="hint" id="calMsg" role="status"></p>' : '') +
+      '<button class="btn" type="button" data-act="shareWeek" style="width:100%;margin-top:12px">' + 'Send to accountability partner</button><p class="hint" id="shareMsg" role="status"></p>' +
+      (state.partner && !state.remind.added.review ? '<div class="actions" style="margin-top:8px"><button class="btn alt" type="button" data-act="cal" data-id="review">Add the weekly review to my calendar</button><button class="btn alt" type="button" data-act="calPartner" data-id="review">Send my accountability partner a calendar invite</button></div><p class="hint" id="calMsg" role="status"></p>' : '') +
       (!state.partner ? '<p class="hint">No accountability partner yet. Add one in Plan, then Settings. A weekly look from someone you trust is what makes this stick.</p>' : '') + '</section>';
     if (last && last.kept == null) h += '<section class="card"><h2>Last week\'s commitment</h2><p class="headline" style="margin:4px 0 10px">' + esc(last.commit || 'No commitment recorded.') + '</p><div class="actions"><button class="btn" type="button" data-act="kept" data-s="' + last.s + '" data-v="1">I kept it</button><button class="btn alt" type="button" data-act="kept" data-s="' + last.s + '" data-v="0">Not this time</button></div></section>';
     h += '<section class="card"><h2>This week\'s review</h2><p class="sub">Two minutes, after you talk with ' + esc(who) + '.</p><form class="stack" data-form="review" data-s="' + ws.s + '" autocomplete="off" style="margin-top:0">' +
@@ -2265,7 +2265,7 @@ function nextTarget(state) {
     if (!state.budget.done) return;
     var t = todayNum(), sat = new Date(t * DAY).getUTCDay() === 6, el = $('#nudgeBanner');
     var txt = '';
-    if (sat && state.lastImportDay !== t) txt = 'It is Saturday. Reconcile this week, then send the summary to ' + (state.partner || 'your partner') + '.';
+    if (sat && state.lastImportDay !== t) txt = 'It is Saturday. Reconcile this week, then send the summary to your accountability partner.';
     else { var pd = paydayInfo(state, t); if (pd && pd.next === t) txt = 'Payday. Give and save first, then the rest is yours. See the split on Today.'; }
     if (!txt) { el.hidden = true; return; }
     try { if (localStorage.getItem('moneyAhead.nudge') === String(t)) { el.hidden = true; return; } } catch (e) {}
