@@ -982,7 +982,7 @@ function nextTarget(state) {
     var base = Date.now() - 1000000;
     var s = makeBlank();
     s.sample = true;
-    s.names = ['Jordan', 'Casey']; s.partner = 'Dad';
+    s.names = ['Jordan', 'Casey']; s.partner = '';
     s.goals = { asked: true, picks: ['payday', 'debt'], ef: { target: 100000, base: 15000, baseDay: t - 12, baseTs: base, has: 'under' } };
     s.anchor = { day: t - 12, ts: base, balance: 118000 };
     s.budget.done = true; s.budget.step = 0;
@@ -1548,7 +1548,7 @@ function nextTarget(state) {
     var n = state.names;
     return '<section class="card"><h2>Settings</h2>' +
       '<details open style="border-top:0;margin-top:0;padding-top:0"><summary>Names and this phone</summary><form class="stack" data-form="namesEdit" autocomplete="off"><div class="two"><div><label class="f" for="en1">First name</label><input type="text" id="en1" name="n1" maxlength="20" value="' + esc(n[0] || '') + '"></div><div><label class="f" for="en2">Partner\'s first name (optional)</label><input type="text" id="en2" name="n2" maxlength="20" value="' + esc(n[1] || '') + '"></div></div>' +
-      '<div><label class="f" for="enP">Accountability partner</label><input type="text" id="enP" name="partner" maxlength="24" value="' + esc(state.partner || '') + '" placeholder="Dad, Mom, a friend"></div>' +
+      '<div><label class="f" for="enP">Accountability partner</label><input type="text" id="enP" name="partner" maxlength="24" value="' + esc(state.partner || '') + '" placeholder="A parent, sibling or friend"></div>' +
       (n.length > 1 ? '<div><label class="f" for="enMe">This phone belongs to</label><select id="enMe" name="me">' + n.map(function (x, i) { return '<option value="' + i + '"' + (i === meIdx ? ' selected' : '') + '>' + esc(x) + '</option>'; }).join('') + '</select></div>' : '') +
       '<button class="btn alt" type="submit">Save names</button><p class="err" role="alert"></p></form></details>' +
       '<details><summary>Cushion and spending pace</summary><form class="stack" data-form="prefs" autocomplete="off">' +
@@ -1563,7 +1563,7 @@ function nextTarget(state) {
   function welcomeHTML() {
     return '<section class="card"><h2>Welcome to Take Control</h2><p class="hint" style="margin:-6px 0 10px;font-weight:600">Take control of your finances. One day at a time.</p><p class="sub">Prices are up, subscriptions hide, and it feels like the money runs the show. This app flips that. Your numbers stay on this phone and are never sent anywhere. Setup takes about ten minutes. First, what should I call you?</p>' +
       '<form class="fields" data-form="names" autocomplete="off"><div class="two"><div><label class="f" for="nm1">Your first name</label><input type="text" id="nm1" name="n1" maxlength="20" autocomplete="given-name"></div><div><label class="f" for="nm2">Partner\'s first name (optional)</label><input type="text" id="nm2" name="n2" maxlength="20"></div></div>' +
-      '<div><label class="f" for="nmP">Accountability partner (optional)</label><input type="text" id="nmP" name="partner" maxlength="24" placeholder="Dad, Mom, a friend"><p class="hint">Someone you will send a one-screen summary to every Saturday. A weekly look from someone you trust is what makes this stick.</p></div>' +
+      '<div><label class="f" for="nmP">Accountability partner (optional)</label><input type="text" id="nmP" name="partner" maxlength="24" placeholder="A parent, sibling or friend"><p class="hint">Someone you will send a one-screen summary to every Saturday. A weekly look from someone you trust is what makes this stick.</p></div>' +
       '<ol class="todo" style="margin:6px 0 4px"><li><b>Goals.</b> Tell the app where you stand. The first goal is a $1,000 emergency fund, and the app builds a plan to get you there.</li><li><b>Plan.</b> Enter what you make, then give every dollar a job: bills, savings and everyday spending limits.</li><li><b>Today.</b> Log what you spend each day. The app shows what is left for today, how your money looks over the next week and month, and how each purchase affects your goal.</li><li><b>Month.</b> Once a month, check what went over, then set up next month.</li></ol>' +
       lessonLink('zero') + '<div class="actions"><button class="btn" type="submit">Build my budget</button><button class="btn alt" type="button" data-act="startExample">See an example first</button></div><p class="err" role="alert"></p></form>' +
       '<details><summary>Already set up on another phone, or have a backup?</summary><div class="stack"><div class="actions"><label class="btn alt" style="display:inline-flex;align-items:center;cursor:pointer">Restore from a backup file<input type="file" id="restoreFile" accept=".json,application/json" style="display:none"></label></div><p class="hint" id="backupFileMsg" role="status"></p><p class="hint" style="margin:0">Or, on the other phone, open Plan, then Settings, then Sync. Tap Copy my data, send it to this phone, and paste it here.</p><textarea id="backup" aria-label="Pasted data" spellcheck="false"></textarea><div class="actions"><button class="btn alt" type="button" data-act="restoreBackup">Load it on this phone</button></div><p class="hint" id="backupMsg" role="status"></p></div></details></section>';
@@ -2300,6 +2300,6 @@ function nextTarget(state) {
 })();
 </script>
 
-<script>if("serviceWorker"in navigator&&location.protocol==="https:"){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})})}</script>
+<script>if("serviceWorker"in navigator&&location.protocol==="https:"){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").then(function(r){r.update()}).catch(function(){})})}</script>
 </body>
 </html>
