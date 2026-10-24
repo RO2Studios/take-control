@@ -1938,7 +1938,7 @@ function nextTarget(state) {
   function renderReview() {
     var root = $('#reviewRoot'), today = V.today, ws = weekOf(today), wst = weekStats(state, ws, today), svg = weekGraphicSVG(ws, wst);
     var cur0 = state.reviews.find(function (r) { return r.s === ws.s; }), prev = state.reviews.filter(function (r) { return r.s < ws.s; }).sort(function (a, b) { return b.s - a.s; });
-    var last = prev[0], who = state.partner || 'your accountability partner';
+    var last = prev[0], who = 'your accountability partner';
     var h = '<section class="card"><div class="row" style="grid-template-columns:minmax(0,1fr) auto;padding:0;border:0"><h2 style="margin:0">Week of ' + dShort(ws.s) + ' to ' + dShort(ws.e) + '</h2>' + (state.partner ? '<span class="pill ' + (state.lastShareWeek === ws.s ? 'ok' : 'tight') + '">' + (state.lastShareWeek === ws.s ? 'Sent' : 'Not sent yet') + '</span>' : '') + '</div>' +
       '<p class="sub">' + (state.lastImportDay === today ? 'Reconcile done today. ' : (new Date(today * DAY).getUTCDay() === 6 ? 'Do the Saturday reconcile first so this is complete. ' : 'Week to date. ')) + 'This is the one screen ' + esc(who) + ' sees.</p>' +
       '<div class="wkgraphic">' + svg + '</div>' +
@@ -1956,7 +1956,7 @@ function nextTarget(state) {
     if (prev.length) h += '<section class="card"><h2>Past reviews</h2><div class="stack" style="margin-top:4px">' + prev.map(function (r, i) {
       return '<div class="wk' + (i > 0 ? ' old' : '') + '"><div class="d">Week of ' + dShort(r.s) + ' to ' + dShort(r.s + 6) + ' \u00b7 ' + fmt(r.in) + ' in \u00b7 ' + fmt(r.out) + ' out</div>' +
         (r.commit ? '<div class="f"><b>Commitment</b>' + esc(r.commit) + '</div>' + (r.kept != null ? '<div class="kept' + (r.kept ? '' : ' no') + '"><span>' + (r.kept ? '\u2713' : '\u2715') + '</span>' + (r.kept ? 'Kept it.' : 'Not that week.') + '</div>' : '') : '') +
-        (r.well ? '<div class="f"><b>Went well</b>' + esc(r.well) + '</div>' : '') + (r.flag ? '<div class="f p"><b>' + esc(state.partner || 'Partner') + ' flagged</b>' + esc(r.flag) + '</div>' : '') + '</div>';
+        (r.well ? '<div class="f"><b>Went well</b>' + esc(r.well) + '</div>' : '') + (r.flag ? '<div class="f p"><b>Accountability partner flagged</b>' + esc(r.flag) + '</div>' : '') + '</div>';
     }).join('') + '</div></section>';
     root.innerHTML = h;
   }
