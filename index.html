@@ -1529,7 +1529,7 @@ function nextTarget(state) {
   }
   function learnHTML() {
     var done = LESSONS.filter(function (L) { return state.learned[L.id]; }).length;
-    return '<section class="card" id="learn"><h2>' + (who() ? esc(who()) + ', learn' : 'Learn') + ' the ideas behind the app</h2><p class="sub">Twelve short lessons, two to three minutes each, with a quick check. ' + done + ' of ' + LESSONS.length + ' done.</p><div class="meter"><i style="width:' + (done / LESSONS.length * 100).toFixed(0) + '%"></i></div>' + (openLesson && openLesson.open ? lessonHTML(LESSONS.find(function (x) { return x.id === openLesson.id; })) : '') + '<div class="lrows">' +
+    return '<section class="card" id="learn"><h2>' + (who() ? esc(who()) + ', learn' : 'Learn') + ' the ideas behind good personal money management</h2><p class="sub">Twelve short lessons, two to three minutes each, with a quick check. ' + done + ' of ' + LESSONS.length + ' done.</p><div class="meter"><i style="width:' + (done / LESSONS.length * 100).toFixed(0) + '%"></i></div>' + (openLesson && openLesson.open ? lessonHTML(LESSONS.find(function (x) { return x.id === openLesson.id; })) : '') + '<div class="lrows">' +
       LESSONS.map(function (L, i) { return '<button class="lrow' + (state.learned[L.id] ? ' done' : '') + '" type="button" data-act="lesson" data-id="' + L.id + '">' + lessonArt(L.id) + '<span class="tt"><b>' + (i + 1) + '. ' + esc(L.title) + '</b><small>' + L.min + ' min</small></span><span class="st">' + (state.learned[L.id] ? '\u2713' : '\u203A') + '</span></button>'; }).join('') + '</div><p class="hint" style="margin-top:10px">Know someone who needs one of these? Open it and tap Share this lesson.</p></section>';
   }
   function lessonOfDay() {
