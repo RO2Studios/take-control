@@ -25,8 +25,9 @@
   --ink-2: #4a5c67;
   --line: #d8e0e5;
   --grid: #e4eaee;
-  --accent: #0a6c74;
+  --accent: #15803d;
   --accent-ink: #ffffff;
+  --brand: #16a34a;
   --pos: #1b7f4f;
   --pos-bg: #dcf1e5;
   --pos-soft: rgba(27, 127, 79, 0.13);
@@ -42,14 +43,14 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #0e171c; --surface: #152229; --surface-2: #1a2b33; --ink: #e7eff3; --ink-2: #9db0ba; --line: #27393f; --grid: #213138;
-    --accent: #4cc2c6; --accent-ink: #06262a; --pos: #53c88f; --pos-bg: #153827; --pos-soft: rgba(83, 200, 143, 0.16);
+    --accent: #4ade80; --accent-ink: #052e16; --brand: #22c55e; --pos: #53c88f; --pos-bg: #153827; --pos-soft: rgba(83, 200, 143, 0.16);
     --neg: #f0766b; --neg-bg: #4a1f1c; --neg-soft: rgba(240, 118, 107, 0.2); --warn: #f1c273; --warn-bg: #43330f; --bill: #e3a33f;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #0e171c; --surface: #152229; --surface-2: #1a2b33; --ink: #e7eff3; --ink-2: #9db0ba; --line: #27393f; --grid: #213138;
-  --accent: #4cc2c6; --accent-ink: #06262a; --pos: #53c88f; --pos-bg: #153827; --pos-soft: rgba(83, 200, 143, 0.16);
+  --accent: #4ade80; --accent-ink: #052e16; --brand: #22c55e; --pos: #53c88f; --pos-bg: #153827; --pos-soft: rgba(83, 200, 143, 0.16);
   --neg: #f0766b; --neg-bg: #4a1f1c; --neg-soft: rgba(240, 118, 107, 0.2); --warn: #f1c273; --warn-bg: #43330f; --bill: #e3a33f;
   color-scheme: dark;
 }
@@ -58,11 +59,24 @@
 body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.45; font-variant-numeric: tabular-nums; }
 *, *::before, *::after { box-sizing: border-box; }
 .wrap { max-width: 1120px; margin: 0 auto; padding-block: 28px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
-header.top { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; margin: 6px 0 20px; }
-h1 { font-family: var(--font-display); font-weight: 700; font-size: 45px; letter-spacing: -0.015em; margin: 0 -16px; padding: 0 16px 12px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; flex-basis: calc(100% + 32px); border-bottom: 3px solid #16a34a; }
+header.top { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; margin: 6px -16px 18px; padding: 0 16px 12px; border-bottom: 3px solid var(--brand); }
+h1 { font-family: var(--font-display); font-weight: 700; font-size: 45px; letter-spacing: -0.015em; margin: 0; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; flex-basis: 100%; }
 h1 .logo { flex: none; width: 62px; height: 62px; border-radius: 15px; }
 h1 .tagline { font-family: var(--font-body); font-weight: 500; font-style: italic; font-size: 19px; color: var(--ink-2); flex-basis: 100%; text-align: left; line-height: 1; margin: -20px 0 0 78px; }
 .today-label { color: var(--ink-2); font-size: 14px; margin-top: 2px; }
+body.compact header.top { flex-wrap: nowrap; align-items: center; padding-bottom: 8px; margin-bottom: 14px; }
+body.compact h1 { font-size: 24px; gap: 10px; flex: 1 1 auto; flex-basis: auto; }
+body.compact h1 .logo { width: 34px; height: 34px; border-radius: 9px; }
+body.compact h1 .tagline { display: none; }
+body.compact .today-label { margin: 0; flex: none; font-size: 13px; white-space: nowrap; }
+.fab { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(84px + env(safe-area-inset-bottom, 0px)); z-index: 19; display: inline-flex; align-items: center; gap: 8px; background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 999px; padding: 0 18px 0 14px; min-height: 48px; font-weight: 700; font-size: 15px; box-shadow: 0 6px 18px rgba(0,0,0,0.18); }
+.fab svg { width: 20px; height: 20px; }
+.fab.off { display: none; }
+@media (min-width: 900px) { .fab { bottom: 24px; } }
+.stats3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 14px; }
+.stats3 > div { background: var(--surface-2); border-radius: 10px; padding: 10px 12px; }
+.stats3 b { display: block; font-family: var(--font-display); font-size: 20px; margin-top: 2px; }
+.mo > div:last-child:nth-child(odd) { grid-column: 1 / -1; }
 h2 { font-family: var(--font-display); font-weight: 700; font-size: 19px; margin: 0 0 8px; letter-spacing: -0.005em; }
 h3 { font-family: var(--font-display); font-weight: 700; font-size: 16px; margin: 0 0 6px; }
 .sub { color: var(--ink-2); font-size: 14px; margin: 0 0 12px; max-width: 64ch; }
@@ -71,14 +85,16 @@ h3 { font-family: var(--font-display); font-weight: 700; font-size: 16px; margin
 
 /* tabs */
 .tabs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; margin-bottom: 16px; max-width: 620px; }
-.tab { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px 6px; min-height: 52px; color: var(--ink-2); display: grid; justify-items: center; align-content: center; }
+.tab { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px 6px; min-height: 52px; color: var(--ink-2); display: grid; justify-items: center; align-content: center; gap: 2px; }
+.tab svg { width: 22px; height: 22px; }
 .tab b { font-size: 15px; color: inherit; }
 .tab small { font-size: 11px; line-height: 1.2; }
 .tab[aria-current="page"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 @media (max-width: 899px) {
   .tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; max-width: none; margin: 0; gap: 6px; background: var(--surface); border-top: 1px solid var(--line); padding: 8px max(12px, env(safe-area-inset-right, 0px)) calc(8px + env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px)); }
-  .tab { border-color: transparent; background: transparent; }
-  .tab[aria-current="page"] { background: var(--accent); }
+  .tab { border-color: transparent; background: transparent; min-height: 50px; padding: 4px 2px; }
+  .tab[aria-current="page"] { background: var(--pos-soft); color: var(--accent); }
+  .tab[aria-current="page"] svg { stroke-width: 2.5; }
   .wrap { padding-bottom: 104px; }
 }
 
@@ -263,7 +279,7 @@ input[type=file] { font-size: 14px; }
 .recon small { font-size: 11px; color: var(--ink-2); }
 .cancel-list .row { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
 .tab small { font-size: 10px; }
-@media (max-width: 899px) { .tab { padding: 6px 2px; } .tab b { font-size: 14px; } .tab small { display: none; } }
+@media (max-width: 899px) { .tab b { font-size: 12px; font-weight: 600; } .tab[aria-current="page"] b { font-weight: 700; } .tab small { display: none; } }
 .ring { display: flex; gap: 14px; align-items: center; margin-top: 10px; }
 .ring svg { flex: none; }
 .ring .rt { font-family: var(--font-display); font-weight: 700; font-size: 15px; fill: var(--ink); }
@@ -361,12 +377,13 @@ input[type=file] { font-size: 14px; }
   </div>
 
   <nav class="tabs" id="tabs" aria-label="Sections">
-    <button class="tab" type="button" data-act="tab" data-view="plan"><b>Plan</b><small>Build the budget</small></button>
-    <button class="tab" type="button" data-act="tab" data-view="today"><b>Today</b><small>Spend and track</small></button>
-    <button class="tab" type="button" data-act="tab" data-view="review"><b>Review</b><small>Weekly</small></button>
-    <button class="tab" type="button" data-act="tab" data-view="month"><b>Month</b><small>Reset</small></button>
-    <button class="tab" type="button" data-act="tab" data-view="learn"><b>Learn</b><small>Lessons</small></button>
+    <button class="tab" type="button" data-act="tab" data-view="plan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg><b>Plan</b><small>Build the budget</small></button>
+    <button class="tab" type="button" data-act="tab" data-view="today"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><b>Today</b><small>Spend and track</small></button>
+    <button class="tab" type="button" data-act="tab" data-view="review"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 20V10M12 20V4M6 20v-6"/></svg><b>Review</b><small>Weekly</small></button>
+    <button class="tab" type="button" data-act="tab" data-view="month"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><b>Month</b><small>Reset</small></button>
+    <button class="tab" type="button" data-act="tab" data-view="learn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><b>Learn</b><small>Lessons</small></button>
   </nav>
+  <button class="fab" id="fab" type="button" data-act="quickAdd" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Log a spend</button>
 
   <main>
     <section id="v-plan" data-v="plan"><div id="planRoot"></div></section>
@@ -1065,6 +1082,7 @@ function nextTarget(state) {
     if (!state.budget.done) v = 'plan';
     if (v !== cur) openLesson = null;
     cur = v;
+    document.body.classList.toggle('compact', v !== 'today');
     ['plan', 'today', 'review', 'month', 'learn'].forEach(function (k) { $('#v-' + k).hidden = k !== v; });
     document.querySelectorAll('.tab').forEach(function (b) { if (b.getAttribute('data-view') === v) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
     render();
@@ -1073,7 +1091,8 @@ function nextTarget(state) {
   function render() {
     V = compute();
     var dateStr = new Date(V.today * DAY).toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-    $('#todayLabel').textContent = (meName() ? greet() + ', ' + meName() + '. ' : '') + dateStr;
+    $('#todayLabel').textContent = cur === 'today' ? (meName() ? greet() + ', ' + meName() + '. ' : '') + dateStr : new Date(V.today * DAY).toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'short', month: 'short', day: 'numeric' });
+    $('#fab').hidden = !state.budget.done;
     var needWho = state.names.length > 1 && meIdx == null;
     $('#whoBanner').hidden = !needWho;
     if (needWho) $('#whoBtns').innerHTML = state.names.map(function (n, i) { return '<button class="btn" type="button" data-act="iam" data-i="' + i + '">' + esc(n) + '</button>'; }).join('');
@@ -1652,18 +1671,29 @@ function nextTarget(state) {
     var left = dp.left, pct = dp.allowance > 0 ? Math.min(dp.spentToday / dp.allowance, 1) * 100 : (dp.spentToday > 0 ? 100 : 0);
     var cls = left < 0 ? 'short' : (dp.allowance > 0 && dp.spentToday > dp.allowance * 0.8 ? 'tight' : '');
     var sub = dp.remaining >= 0 ? 'You have ' + fmt(dp.remaining) + ' left of your ' + fmt(dp.total) + ' everyday budget for ' + monthName(key) + ', with ' + dp.daysLeft + ' day' + (dp.daysLeft === 1 ? '' : 's') + ' to go.' : 'You are ' + fmt(-dp.remaining) + ' past your ' + monthName(key) + ' everyday budget. Spend only what you must until the month turns over.';
-    el.innerHTML = '<div class="lbl">Left to spend today</div><div class="big ' + (left < 0 ? 'neg' : 'pos') + '">' + fmt(left) + '</div>' +
-      '<p class="headline" style="margin-bottom:10px">' + (who() ? esc(who()) + ', today\'s' : 'Today\'s') + ' allowance is <b>' + fmt(dp.allowance) + '</b> and you have spent <b>' + fmt(dp.spentToday) + '</b>. ' + esc(sub) + '</p>' +
+    el.innerHTML = '<div class="lbl">Left to spend today</div><div class="big ' + (left < 0 ? 'neg' : 'pos') + '" id="heroNum" data-v="' + left + '">' + fmt(left) + '</div>' +
       '<div class="meter" role="img" aria-label="Spent today compared with allowance"><i class="' + cls + '" style="width:' + pct.toFixed(1) + '%"></i></div>' +
+      '<div class="stats3"><div><span class="lbl">Allowance</span><b>' + fmt(dp.allowance) + '</b></div><div><span class="lbl">Spent</span><b>' + fmt(dp.spentToday) + '</b></div><div><span class="lbl">Days left</span><b>' + dp.daysLeft + '</b></div></div>' +
+      '<p class="hint" style="margin:10px 0 0">' + (dp.remaining >= 0 ? fmt(dp.remaining) + ' left of ' + fmt(dp.total) + ' for ' + monthName(key) + '.' : esc(sub)) + '</p>' +
       (over.length ? '<p class="hint neg" style="margin-top:10px">Over limit this month: ' + over.map(function (c) { return esc(c.name) + ' by ' + fmt(ms.spent[c.id] - ms.lim[c.id]); }).join(', ') + '.</p>' : '') +
       streakLine() + paydayHTML() + challengeHTML() + bankNudge();
+    countUp();
+  }
+  var counted = false;
+  function countUp() {
+    if (counted || cur !== 'today') return; counted = true;
+    var n = $('#heroNum'); if (!n) return;
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var target = Number(n.getAttribute('data-v')) || 0, t0 = null, dur = 650;
+    function step(ts) { if (t0 == null) t0 = ts; var k = Math.min(1, (ts - t0) / dur); k = 1 - Math.pow(1 - k, 3); n.textContent = fmt(Math.round(target * k)); if (k < 1) requestAnimationFrame(step); else n.textContent = fmt(target); }
+    requestAnimationFrame(step);
   }
   function bankNudge() { if (state.sample) return ''; var since = state.lastImportDay == null ? null : V.today - state.lastImportDay, sat = new Date(V.today * DAY).getUTCDay() === 6; if (!(sat && since !== 0) && !(since != null && since >= 8)) return ''; return '<p class="hint" style="margin-top:12px"><button class="link" type="button" data-act="sub" data-sub="bank" style="padding:0;min-height:0">' + (sat ? 'Saturday reconcile is due. Bring in this week\'s bank transactions.' : 'It has been ' + since + ' days since your last reconcile.') + '</button></p>'; }
   function streakLine() {
     var sk = streakInfo(state, V.today), pr = state.goals.ef ? efProject(state, V.today) : null;
     if (!sk.tracked) return '';
-    var t = sk.today ? (who() ? who() + ', you are under' : 'Under') + ' allowance so far today. ' + (sk.n > 0 ? 'Finish the day this way and the streak hits ' + (sk.n + 1) + '.' : 'Finish the day this way and your streak starts.') : 'Over today\'s allowance. The streak pauses, it does not reset. Tomorrow counts again.';
-    var goal = pr && pr.remaining > 0 && pr.eta != null ? ' Every under-budget day keeps your fund on track for ' + dFull(pr.eta) + '.' : '';
+    var t = sk.today ? 'Under allowance so far. ' + (sk.n > 0 ? 'Finish the day this way and it hits ' + (sk.n + 1) + '.' : 'Finish the day this way and it starts.') : 'Over today\'s allowance. The streak pauses, it does not reset.';
+    var goal = pr && pr.remaining > 0 && pr.eta != null ? ' Fund on track for ' + dShort(pr.eta) + '.' : '';
     return '<div style="margin-top:10px"><span class="streak' + (sk.today ? '' : ' paused') + '">' + (sk.today ? '\u2605 ' : '\u23F8 ') + (sk.n === 0 ? (sk.today ? 'Streak starts today' : 'Streak paused') : sk.n + '-day streak') + '</span></div><p class="hint" style="margin-top:6px">' + esc(t) + esc(goal) + '</p>';
   }
   function paydayHTML() {
@@ -1918,7 +1948,7 @@ function nextTarget(state) {
     var W = 720, pad = 36, y = 0, pr = state.goals.ef ? efProject(state, V.today) : null, sk = streakInfo(state, V.today);
     var cats = wst.cats.filter(function (c) { return c.spent > 0 || c.lim > 0; }).slice(0, 6);
     var H = 446 + cats.length * 64 + 190;
-    var col = { bg: '#ffffff', ink: '#12222c', ink2: '#4a5c67', line: '#e4eaee', acc: '#0a6c74', pos: '#1b7f4f', neg: '#c23b30', bill: '#8a5a12' };
+    var col = { bg: '#ffffff', ink: '#12222c', ink2: '#4a5c67', line: '#e4eaee', acc: '#15803d', pos: '#1b7f4f', neg: '#c23b30', bill: '#8a5a12' };
     var s = '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" font-family="Avenir Next, Segoe UI, Helvetica, Arial, sans-serif">';
     s += '<rect width="' + W + '" height="' + H + '" rx="24" fill="' + col.bg + '"/>';
     y = pad + 40;
@@ -1943,7 +1973,8 @@ function nextTarget(state) {
       s += '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="' + col.line + '" stroke-width="16"/><circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="' + col.pos + '" stroke-width="16" stroke-linecap="round" stroke-dasharray="' + c0.toFixed(1) + '" stroke-dashoffset="' + (c0 * (1 - pr.pct)).toFixed(1) + '" transform="rotate(-90 ' + cx + ' ' + cy + ')"/><text x="' + cx + '" y="' + (cy + 7) + '" font-size="26" font-weight="800" text-anchor="middle" fill="' + col.ink + '">' + Math.round(pr.pct * 100) + '%</text>';
       var tx0 = cx + r + 24;
       s += '<text x="' + tx0 + '" y="' + (cy - 30) + '" font-size="18" fill="' + col.ink2 + '" letter-spacing="2">EMERGENCY FUND</text><text x="' + tx0 + '" y="' + (cy + 8) + '" font-size="32" font-weight="800" fill="' + col.ink + '">' + fmt(pr.saved) + ' of ' + fmt(pr.target) + '</text>';
-      s += '<text x="' + tx0 + '" y="' + (cy + 42) + '" font-size="20" fill="' + col.ink2 + '">' + (wst.saved ? '+' + fmt(wst.saved) + ' this week. ' : '') + (pr.remaining > 0 ? (pr.eta != null ? 'On track for ' + dFull(pr.eta) + '.' : 'No date yet.') : 'Full.') + (sk.n ? ' Streak: ' + sk.n + ' days.' : '') + '</text>';
+      s += '<text x="' + tx0 + '" y="' + (cy + 38) + '" font-size="20" fill="' + col.ink2 + '">' + (wst.saved ? '+' + fmt(wst.saved) + ' this week. ' : '') + (pr.remaining > 0 ? (pr.eta != null ? 'On track for ' + dFull(pr.eta) + '.' : 'No date yet.') : 'Full.') + '</text>';
+      if (sk.n) s += '<text x="' + tx0 + '" y="' + (cy + 62) + '" font-size="20" fill="' + col.ink2 + '">Streak: ' + sk.n + ' day' + (sk.n === 1 ? '' : 's') + '.</text>';
       y += 2 * r + 24;
     }
     s += '<text x="' + (W - pad) + '" y="' + (H - 24) + '" font-size="18" fill="' + col.ink2 + '" text-anchor="end">' + (state.partner ? 'For ' + esc(state.partner) + ' \u00b7 ' : '') + dLong(V.today) + '</text>';
@@ -2164,12 +2195,15 @@ function nextTarget(state) {
     if (t.id === 'eDate') updatePreview();
   });
 
+  document.addEventListener('focusin', function (e) { if (e.target.closest && e.target.closest('#entryForm')) $('#fab').classList.add('off'); });
+  document.addEventListener('focusout', function (e) { if (e.target.closest && e.target.closest('#entryForm')) setTimeout(function () { if (!document.activeElement || !document.activeElement.closest('#entryForm')) $('#fab').classList.remove('off'); }, 150); });
   document.addEventListener('click', function (e) {
     var b = e.target.closest('[data-act]');
     if (!b) return;
     var act = b.getAttribute('data-act'), id = b.getAttribute('data-id');
     switch (act) {
       case 'tab': setView(b.getAttribute('data-view')); break;
+      case 'quickAdd': setView('today'); setSub('spend'); { var ae = $('#add'); if (ae) ae.scrollIntoView({ behavior: 'smooth', block: 'start' }); var ai = $('#eAmt'); if (ai) setTimeout(function () { ai.focus(); }, 350); } break;
       case 'sub': setSub(b.getAttribute('data-sub')); window.scrollTo({ top: 0 }); break;
       case 'cal': { var ce = calEvents().find(function (e) { return e.id === b.getAttribute('data-id'); }); if (ce) shareICS(ce, false); break; }
       case 'calPartner': { var cp = calEvents().find(function (e) { return e.id === b.getAttribute('data-id'); }); if (cp) shareICS(cp, true); break; }
