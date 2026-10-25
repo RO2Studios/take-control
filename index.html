@@ -219,6 +219,21 @@ summary { cursor: pointer; font-weight: 700; min-height: 32px; }
 .stackbar i, .split3 i { background: var(--k); }
 .tgrid > div[class^="k-"], .mo > div[class^="k-"] { border-left: 4px solid var(--k); padding-left: 10px; }
 .legend b { color: var(--ink); font-weight: 600; }
+.recat { font: inherit; font-size: 13px; color: var(--ink-2); background: transparent; border: 0; border-bottom: 1px dashed var(--line); padding: 0 2px; width: 8.5em; }
+body.compact .fab, body[data-sub="bank"]:not(.compact) .fab { } body[data-sub="bank"]:not(.compact) .fab { display: none; }
+.payday { border-color: var(--accent); background: linear-gradient(180deg, var(--pos-soft), transparent 70%); }
+.payday .big { font-size: 34px; }
+.week1 ol { margin: 10px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.week1 li { display: flex; align-items: center; gap: 10px; color: var(--ink-2); }
+.week1 li span.n { flex: none; width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--line); display: grid; place-items: center; font-size: 12px; font-weight: 700; }
+.week1 li.done { text-decoration: line-through; } .week1 li.done span.n { background: var(--pos); border-color: var(--pos); color: #fff; }
+.week1 li.now { color: var(--ink); font-weight: 700; } .week1 li.now span.n { border-color: var(--accent); color: var(--accent); }
+.recap { display: grid; gap: 8px; margin: 10px 0 6px; }
+.recap > div { background: var(--surface-2); border-radius: 10px; padding: 10px 12px; display: grid; grid-template-columns: 1fr auto; align-items: baseline; gap: 2px 10px; }
+.recap .lbl { grid-column: 1 / -1; }
+.recap b { font-family: var(--font-display); font-size: 22px; }
+.recap small { color: var(--ink-2); font-size: 13px; text-align: right; }
+@media (min-width: 900px) { .recap { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 .stackbar.over { border-color: var(--neg); }
 .wiz-nav { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .catrow { display: grid; grid-template-columns: minmax(0, 1fr) 128px auto; gap: 8px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); }
@@ -442,6 +457,7 @@ input[type=file] { font-size: 14px; }
             <div>
               <label class="f" for="eNote">Note (optional)</label>
               <input type="text" id="eNote" placeholder="Where or what for" maxlength="60">
+              <p class="hint" id="noteHint" style="margin:4px 0 0"></p>
             </div>
             <div class="impact" id="impact" aria-live="polite"></div>
             <button class="btn" type="submit" id="eBtn">Add spending</button>
@@ -824,9 +840,15 @@ function parseBank(text) {
   return { items: items, err: items.length ? '' : 'No transactions were recognized in that file.' };
 }
 const KEYWORDS = [[/doordash|uber ?eats|grubhub|postmates|chick-fil|mcdonald|starbucks|chipotle|taco|wendy|sonic|whataburger|pizza|restaurant|cafe|coffee|grill|bar & |kitchen|burger|wing/, 'Dining out'], [/walmart|kroger|heb|h-e-b|aldi|costco|sam's|target|trader joe|whole foods|randalls|tom thumb|market|grocery|publix/, 'Groceries'], [/shell|exxon|chevron|buc-ee|valero|texaco|racetrac|qt |quiktrip|gas|fuel|uber(?! ?eats)|lyft|parking|toll/, 'Gas & transport'], [/amazon|amzn|ebay|etsy|best buy|nike|foot locker|old navy|ross|marshalls|tj ?maxx|apple\.com|shein|temu/, 'Shopping'], [/cvs|walgreens|pharmacy|clinic|dental|doctor|urgent/, 'Health'], [/netflix|spotify|hulu|disney|max|apple|playstation|xbox|steam|movie|cinema|amc|bowling|gym|planet fitness/, 'Fun']];
+function ruleFor(state, desc) {
+  const k = merchantKey(desc); if (!k || !state.rules) return '';
+  if (state.rules[k]) return state.rules[k];
+  const w = k.split(' ')[0]; if (!w || w.length < 4 || /^\d+$/.test(w)) return '';
+  for (const key in state.rules) if (key.split(' ')[0] === w) return state.rules[key];
+  return '';
+}
 function guessCat(state, desc) {
-  const k = merchantKey(desc);
-  if (state.rules && state.rules[k]) return state.rules[k];
+  const rf = ruleFor(state, desc); if (rf) return rf;
   const d = String(desc).toLowerCase();
   for (const kw of KEYWORDS) if (kw[0].test(d)) { const c = state.budget.cats.find(function (x) { return x.name === kw[1]; }); if (c) return c.name; }
   return '';
@@ -1011,7 +1033,7 @@ function nextTarget(state) {
   /* ---------- state ---------- */
   function defaultCats() { return DEFAULT_CATS.map(function (c, i) { return { id: 'c' + i, name: c[0], grp: c[1], limit: 0 }; }); }
   function makeBlank() {
-    return { v: 2, sample: false, anchor: { day: todayNum(), ts: Date.now(), balance: 0 }, buffer: 0, dailyOverride: null, recs: [], tx: [], budget: { done: false, step: -1, cats: defaultCats(), months: {} }, saved: {}, names: [], deleted: {}, updated: 0, goals: { asked: false, picks: [], ef: null }, rules: {}, inbox: [], imported: {}, cancel: [], cancelled: 0, lastImportDay: null, speak: true, partner: '', reviews: [], challenge: null, milestones: {}, learned: {}, givePct: 0, remind: { recon: '09:00', review: '10:00', added: {} } };
+    return { v: 2, sample: false, anchor: { day: todayNum(), ts: Date.now(), balance: 0 }, buffer: 0, dailyOverride: null, recs: [], tx: [], budget: { done: false, step: -1, cats: defaultCats(), months: {} }, saved: {}, names: [], deleted: {}, updated: 0, goals: { asked: false, picks: [], ef: null }, rules: {}, inbox: [], imported: {}, startDay: null, paydays: {}, weekDone: false, cancel: [], cancelled: 0, lastImportDay: null, speak: true, partner: '', reviews: [], challenge: null, milestones: {}, learned: {}, givePct: 0, remind: { recon: '09:00', review: '10:00', added: {} } };
   }
   function makeSample() {
     var t = todayNum(), p = parts(t);
@@ -1051,12 +1073,12 @@ function nextTarget(state) {
     try { var raw = localStorage.getItem(KEY); if (raw) { var s = JSON.parse(raw); if (valid(s)) return norm(s); } } catch (e) {}
     return makeBlank();
   }
-  function norm(s) { if (!s.remind) s.remind = { recon: '09:00', review: '10:00', added: {} }; if (!s.remind.added) s.remind.added = {}; if (!s.learned) s.learned = {}; if (!s.givePct) s.givePct = 0; if (!s.partner) s.partner = ''; if (!Array.isArray(s.reviews)) s.reviews = []; if (!s.milestones) s.milestones = {}; if (!Array.isArray(s.cancel)) s.cancel = []; if (!s.cancelled) s.cancelled = 0; if (!s.rules) s.rules = {}; if (!Array.isArray(s.inbox)) s.inbox = []; if (!s.imported) s.imported = {}; if (!s.goals) s.goals = { asked: false, picks: [], ef: null }; if (!Array.isArray(s.goals.picks)) s.goals.picks = []; if (!s.budget.months) s.budget.months = {}; if (!s.saved) s.saved = {}; if (!Array.isArray(s.names)) s.names = []; if (!s.deleted) s.deleted = {}; if (!s.updated) s.updated = 0; return s; }
+  function norm(s) { if (!s.paydays) s.paydays = {}; if (s.startDay === undefined) s.startDay = null; if (s.budget && s.budget.done && s.startDay == null) s.startDay = todayNum(); if (!s.remind) s.remind = { recon: '09:00', review: '10:00', added: {} }; if (!s.remind.added) s.remind.added = {}; if (!s.learned) s.learned = {}; if (!s.givePct) s.givePct = 0; if (!s.partner) s.partner = ''; if (!Array.isArray(s.reviews)) s.reviews = []; if (!s.milestones) s.milestones = {}; if (!Array.isArray(s.cancel)) s.cancel = []; if (!s.cancelled) s.cancelled = 0; if (!s.rules) s.rules = {}; if (!Array.isArray(s.inbox)) s.inbox = []; if (!s.imported) s.imported = {}; if (!s.goals) s.goals = { asked: false, picks: [], ef: null }; if (!Array.isArray(s.goals.picks)) s.goals.picks = []; if (!s.budget.months) s.budget.months = {}; if (!s.saved) s.saved = {}; if (!Array.isArray(s.names)) s.names = []; if (!s.deleted) s.deleted = {}; if (!s.updated) s.updated = 0; return s; }
   function save() { state.updated = Date.now(); try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { storeOk = false; $('#storeBanner').hidden = false; } }
   function probeStorage() { try { localStorage.setItem(KEY + '.t', '1'); localStorage.removeItem(KEY + '.t'); } catch (e) { storeOk = false; } }
   var meIdx = null, lastDone = false, sub = 'spend';
   try { var sv = localStorage.getItem('moneyAhead.sub'); if (['spend', 'goals', 'outlook', 'bank'].indexOf(sv) >= 0) sub = sv; } catch (e) {}
-  function setSub(k) { sub = k; try { localStorage.setItem('moneyAhead.sub', k); } catch (e) {} document.querySelectorAll('#subs button').forEach(function (b) { b.setAttribute('aria-current', b.getAttribute('data-sub') === k ? 'true' : 'false'); }); document.querySelectorAll('#todayGrid > .card').forEach(function (c) { c.classList.toggle('show', c.getAttribute('data-sub') === k); }); renderChart(); }
+  function setSub(k) { sub = k; document.body.setAttribute('data-sub', k); try { localStorage.setItem('moneyAhead.sub', k); } catch (e) {} document.querySelectorAll('#subs button').forEach(function (b) { b.setAttribute('aria-current', b.getAttribute('data-sub') === k ? 'true' : 'false'); }); document.querySelectorAll('#todayGrid > .card').forEach(function (c) { c.classList.toggle('show', c.getAttribute('data-sub') === k); }); renderChart(); }
   function loadMe() { try { var v = localStorage.getItem('moneyAhead.me'); meIdx = v == null ? null : parseInt(v, 10); } catch (e) { meIdx = null; } if (meIdx != null && (isNaN(meIdx) || !state.names[meIdx])) meIdx = null; }
   function setMe(i) { meIdx = i; try { localStorage.setItem('moneyAhead.me', String(i)); } catch (e) {} }
   function house() { return state.names.join(' and '); }
@@ -1096,6 +1118,7 @@ function nextTarget(state) {
     var dateStr = new Date(V.today * DAY).toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
     $('#todayLabel').textContent = cur === 'today' ? (meName() ? greet() + ', ' + meName() + '. ' : '') + dateStr : new Date(V.today * DAY).toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'short', month: 'short', day: 'numeric' });
     $('#fab').hidden = !state.budget.done;
+    try { var pdq = paydayInfo(state, V.today); if (pdq && pdq.next === V.today && !state.sample && localStorage.getItem('moneyAhead.pdOpen') !== String(V.today)) { localStorage.setItem('moneyAhead.pdOpen', String(V.today)); if (cur === 'today') setSub('spend'); } } catch (e) {}
     var needWho = state.names.length > 1 && meIdx == null;
     $('#whoBanner').hidden = !needWho;
     if (needWho) $('#whoBtns').innerHTML = state.names.map(function (n, i) { return '<button class="btn" type="button" data-act="iam" data-i="' + i + '">' + esc(n) + '</button>'; }).join('');
@@ -1290,6 +1313,7 @@ function nextTarget(state) {
       '<dl class="proj">' + cell('1 month', 1) + cell('6 months', 6) + cell('1 year', 12, true) + cell('3 years', 36) + cell('5 years', 60, true) + '</dl>' +
       '<p class="hint">The small number is with a 4% high-yield savings account. Starting matters more than the amount: ' + fmt(w) + ' a week is ' + fmt(growth(m, 60, apy)) + ' in five years.</p>';
   }
+  var PAGE = 10;
   function inboxRow(it, i) {
     var rc = matchRec(state, it), g = rc ? '' : guessCat(state, it.desc);
     var sub = it.sub && it.type === 'out' && !(rc && !rc.virtual);
@@ -1308,9 +1332,10 @@ function nextTarget(state) {
     var h = '<p class="sub">Once a week, export the week\'s transactions from your bank as a CSV and bring them in. Everything you logged by hand gets matched off. What is left is what slipped by: forgotten purchases and subscriptions you did not know were still running.</p>';
     if (!state.remind.added.recon && !ib.length) h += '<p class="hint" style="margin:0 0 10px"><button class="link" type="button" data-act="cal" data-id="recon" style="padding:0;min-height:0">Put the Saturday reconcile on my calendar</button></p>';
     if (due && !ib.length && !state.sample) h += '<div class="banner" style="margin-bottom:12px"><span>' + (dow === 6 ? 'It is Saturday. ' : '') + (since == null ? 'No reconcile yet. ' : since + ' days since your last one. ') + 'Open your bank app, export this week as CSV, and bring it in.</span></div>';
-    if (ib.length) h += '<div class="recon"><div><b>' + (state.reconTotal || 0) + '</b><small>from the bank</small></div><div><b class="pos">' + (state.reconMatched || 0) + '</b><small>matched what you logged</small></div><div><b class="neg">' + ib.length + '</b><small>slipped by</small></div></div>';
+    var ra = state.reconAuto || { skip: 0, add: 0 }, autoN = (ra.skip || 0) + (ra.add || 0);
+    if (ib.length) h += '<div class="recon"><div><b>' + (state.reconTotal || 0) + '</b><small>from the bank</small></div><div><b class="pos">' + ((state.reconMatched || 0) + autoN) + '</b><small>' + (autoN ? 'matched or auto-sorted' : 'matched what you logged') + '</small></div><div><b class="neg">' + ib.length + '</b><small>slipped by</small></div></div>';
     if (!ib.length) h += '<form class="stack" data-form="csv" autocomplete="off" style="margin-top:0"><div class="drop"><label for="csvFile" style="display:block;font-weight:600;color:var(--ink)">Choose the CSV from your bank</label><input type="file" id="csvFile" accept=".csv,text/csv" style="margin-top:8px"></div><details style="margin-top:4px"><summary>Or paste the text here</summary><textarea id="csvText" aria-label="Pasted CSV" placeholder="Date,Description,Amount" spellcheck="false"></textarea><button class="btn alt" type="submit" style="margin-top:8px">Read pasted text</button></details><p class="err" id="csvErr" role="alert"></p></form>';
-    else h += '<div class="inbox"><p class="headline" style="margin:0 0 8px;font-size:15px">' + ib.length + ' transaction' + (ib.length === 1 ? '' : 's') + ' to sort. Bills and paychecks already in your plan are marked to skip.</p><ul class="list">' + ib.map(inboxRow).join('') + '</ul><div class="actions" style="margin-top:12px"><button class="btn" type="button" data-act="applyInbox">Add these to my budget</button><button class="btn alt" type="button" data-act="clearInbox">Cancel</button></div><p class="err" id="inboxErr" role="alert"></p></div>';
+    else { var page = ib.slice(0, PAGE), more = ib.length - page.length; h += '<div class="inbox"><p class="headline" style="margin:0 0 8px;font-size:15px">' + (more > 0 ? 'Sort these ' + page.length + ' first. ' + more + ' more come after, in small batches.' : page.length + ' transaction' + (page.length === 1 ? '' : 's') + ' to sort.') + ' Pick a category once and the app remembers it next time.</p><ul class="list">' + page.map(inboxRow).join('') + '</ul><div class="actions" style="margin-top:12px"><button class="btn" type="button" data-act="applyInbox">' + (more > 0 ? 'Add these ' + page.length + ', show the next batch' : 'Add these to my budget') + '</button><button class="btn alt" type="button" data-act="clearInbox">Cancel</button></div><p class="err" id="inboxErr" role="alert"></p></div>'; }
     if (last && !ib.length) h += '<div class="answer" style="margin-top:12px"><div class="say">' + esc(last.head) + '</div>' + last.body + '</div>';
     if (!ib.length) h += '<div class="actions" style="margin-top:12px"><button class="btn alt" type="button" data-act="backupFile">Save a backup to iCloud</button></div><p class="hint" id="backupFileMsg" role="status" style="margin-top:4px">' + (state.lastBackupDay == null ? 'No backup yet. The app asks for one after every Saturday reconcile. Save it to the same iCloud Drive folder each time.' : state.lastBackupDay === todayNum() ? 'Backed up today.' : 'Last backup was ' + (todayNum() - state.lastBackupDay) + ' days ago. The app asks after every Saturday reconcile.') + '</p>';
     if (state.cancel.length || state.cancelled) {
@@ -1325,23 +1350,29 @@ function nextTarget(state) {
     if (r.err) { err.textContent = r.err; return; }
     var items = r.items.filter(function (it) { return !state.imported[importKey(it)]; }), matched = 0, used = {};
     if (!items.length) { err.textContent = 'All ' + r.items.length + ' of those are already in your budget.'; return; }
-    var rest = [];
+    var rest = [], autoSkip = 0, autoAdd = 0, autoSpent = 0;
     items.forEach(function (it) {
       var t = findLogged(state, it);
-      if (t && !used[t.id]) { used[t.id] = 1; t.bank = 1; if (t.amt !== it.amt) { t.amt = it.amt; } state.imported[importKey(it)] = 1; matched += 1; }
-      else { it.sub = looksRecurring(state, it); rest.push(it); }
+      if (t && !used[t.id]) { used[t.id] = 1; t.bank = 1; if (t.amt !== it.amt) { t.amt = it.amt; } state.imported[importKey(it)] = 1; matched += 1; return; }
+      it.sub = looksRecurring(state, it);
+      var rc = matchRec(state, it);
+      if (rc && !rc.virtual && !it.sub) { state.imported[importKey(it)] = 1; autoSkip += 1; return; }
+      var rf = it.type === 'out' && !it.sub ? ruleFor(state, it.desc) : '', known = rf && catNames().indexOf(rf) >= 0;
+      if (known) { state.imported[importKey(it)] = 1; state.tx.push({ id: newId('t'), ts: Date.now() + autoAdd, day: it.day, type: 'out', amt: it.amt, cat: rf, note: it.desc, by: meName(), bank: 1, auto: 1 }); autoAdd += 1; autoSpent += it.amt; return; }
+      rest.push(it);
     });
     rest.sort(function (a, b) { return (b.sub ? 1 : 0) - (a.sub ? 1 : 0) || b.day - a.day; });
-    state.inbox = rest.slice(0, 200); state.reconMatched = matched; state.reconTotal = items.length; state.lastImportDay = todayNum();
-    if (!rest.length) state.lastImport = { head: (who() ? who() + ', all ' : 'All ') + matched + ' bank transactions matched what you logged this week. Nothing slipped by.', body: '' };
+    state.inbox = rest.slice(0, 200); state.reconMatched = matched; state.reconTotal = items.length; state.reconAuto = { skip: autoSkip, add: autoAdd, spent: autoSpent }; state.reconRun = { added: 0, spent: 0 }; state.lastImportDay = todayNum();
+    if (!rest.length) state.lastImport = { head: (who() ? who() + ', ' : '') + (matched ? matched + ' matched what you logged. ' : '') + (autoAdd ? autoAdd + ' sorted automatically from what you taught the app (' + fmt(autoSpent) + '). ' : '') + (autoSkip ? autoSkip + ' bill' + (autoSkip === 1 ? '' : 's') + ' already in your plan. ' : '') + 'Nothing to sort by hand.', body: '' };
     save(); render(); setSub('bank'); window.scrollTo({ top: 0 });
   }
   function applyInbox() {
     var sels = document.querySelectorAll('select[data-inbox]'), missing = 0, before = snapFor(state), today = todayNum();
     var added = [], bills = 0, cancels = 0;
-    state.inbox.forEach(function (it, i) { var v = sels[i] ? sels[i].value : ''; if (!v) missing += 1; });
+    var batch = state.inbox.slice(0, PAGE), remaining = state.inbox.slice(PAGE);
+    batch.forEach(function (it, i) { var v = sels[i] ? sels[i].value : ''; if (!v) missing += 1; });
     if (missing) { $('#inboxErr').textContent = 'Pick a category for every line, or choose Skip.'; return; }
-    state.inbox.forEach(function (it, i) {
+    batch.forEach(function (it, i) {
       var v = sels[i].value; state.imported[importKey(it)] = 1;
       if (v === '__skip') return;
       if (v === '__bill') { state.recs.push({ id: newId('r'), type: 'out', name: titleCase(merchantKey(it.desc)) || 'Subscription', amt: it.amt, freq: 'monthly', start: toISO(it.day), day2: 15, cat: 'Subscriptions' }); bills += 1; return; }
@@ -1351,13 +1382,16 @@ function nextTarget(state) {
       if (it.type === 'out' && v !== '__ef') state.rules[merchantKey(it.desc)] = v;
       state.tx.push(t); added.push(t);
     });
-    state.inbox = [];
+    state.inbox = remaining;
     var after = snapFor(state), ms1 = monthStats(state, mkey(today), today), spent = 0, byCat = {};
     added.forEach(function (t) { if (t.type === 'out' && !t.goal) { spent += t.amt; byCat[t.cat] = (byCat[t.cat] || 0) + t.amt; } });
     var cats = Object.keys(byCat).sort(function (a, b) { return byCat[b] - byCat[a]; });
     var lines = cats.slice(0, 4).map(function (n) { var c = state.budget.cats.find(function (x) { return x.name === n; }); var left = c ? ms1.lim[c.id] - ms1.spent[c.id] : null; return '<div class="ln"><span>' + esc(n) + ' ' + fmt(byCat[n]) + '</span><span>' + (left == null ? '' : (left >= 0 ? fmt(left) + ' left' : '<span class="neg">' + fmt(-left) + ' over</span>')) + '</span></div>'; }).join('');
     var d = after.dp.allowance - before.dp.allowance;
-    state.lastImport = { head: (who() ? who() + ', ' : '') + (state.reconMatched ? state.reconMatched + ' matched what you logged. ' : '') + 'Added ' + added.length + ' you did not know about, ' + fmt(spent) + ' of spending.' + (bills ? ' ' + bills + ' subscription' + (bills === 1 ? '' : 's') + ' added to your bills.' : '') + (cancels ? ' ' + fmt(cancels) + ' a month moved to your cancel list.' : ''), body: lines + '<div class="ln"><span>Daily allowance for the rest of ' + monthName(mkey(today)) + '</span><span><b>' + fmt(before.dp.allowance) + '</b> → <b>' + fmt(after.dp.allowance) + '</b> <span class="' + (d >= 0 ? 'pos' : 'neg') + '">(' + (d === 0 ? 'no change' : sgn(d)) + ')</span></span></div><div class="ln"><span>Balance in 30 days</span><span><b>' + fmt(before.d30) + '</b> → <b>' + fmt(after.d30) + '</b></span></div>' };
+    if (!state.reconRun) state.reconRun = { added: 0, spent: 0 }; state.reconRun.added += added.length; state.reconRun.spent += spent;
+    var ra2 = state.reconAuto || { add: 0, spent: 0 };
+    state.lastImport = { head: (who() ? who() + ', ' : '') + (state.reconMatched ? state.reconMatched + ' matched what you logged. ' : '') + (ra2.add ? ra2.add + ' sorted automatically from what you taught the app. ' : '') + 'Added ' + state.reconRun.added + ' you did not know about, ' + fmt(state.reconRun.spent) + ' of spending.' + (bills ? ' ' + bills + ' subscription' + (bills === 1 ? '' : 's') + ' added to your bills.' : '') + (cancels ? ' ' + fmt(cancels) + ' a month moved to your cancel list.' : ''), body: lines + '<div class="ln"><span>Daily allowance for the rest of ' + monthName(mkey(today)) + '</span><span><b>' + fmt(before.dp.allowance) + '</b> → <b>' + fmt(after.dp.allowance) + '</b> <span class="' + (d >= 0 ? 'pos' : 'neg') + '">(' + (d === 0 ? 'no change' : sgn(d)) + ')</span></span></div><div class="ln"><span>Balance in 30 days</span><span><b>' + fmt(before.d30) + '</b> → <b>' + fmt(after.d30) + '</b></span></div>' };
+    if (remaining.length) { state.lastImport.head = 'Batch done. ' + remaining.length + ' left to sort.'; save(); render(); setSub('bank'); window.scrollTo({ top: 0 }); return; }
     save(); render();
     setSub('bank');
     var bm = $('#backupFileMsg'); if (bm) bm.textContent = 'Reconcile done. Saving a backup next.';
@@ -1645,7 +1679,7 @@ function nextTarget(state) {
     if (b.step === 1 && !state.recs.some(function (r) { return r.type === 'in'; })) { wizNote = 'Add at least one paycheck or source of income to continue.'; return renderPlan(); }
     if (b.step === STEPS.length - 1) {
       if (t.left < 0) { wizNote = 'Your plan spends ' + fmt(-t.left) + ' more than you bring in each month. Go back and lower a bill or an everyday limit.'; return renderPlan(); }
-      b.done = true; b.step = 1; save(); setView('today'); return;
+      b.done = true; b.step = 1; if (state.startDay == null) state.startDay = todayNum(); save(); setView('today'); return;
     }
     b.step += 1; save(); renderPlan(); window.scrollTo({ top: 0 });
   }
@@ -1675,7 +1709,7 @@ function nextTarget(state) {
     var left = dp.left, pct = dp.allowance > 0 ? Math.min(dp.spentToday / dp.allowance, 1) * 100 : (dp.spentToday > 0 ? 100 : 0);
     var cls = left < 0 ? 'short' : (dp.allowance > 0 && dp.spentToday > dp.allowance * 0.8 ? 'tight' : '');
     var sub = dp.remaining >= 0 ? 'You have ' + fmt(dp.remaining) + ' left of your ' + fmt(dp.total) + ' everyday budget for ' + monthName(key) + ', with ' + dp.daysLeft + ' day' + (dp.daysLeft === 1 ? '' : 's') + ' to go.' : 'You are ' + fmt(-dp.remaining) + ' past your ' + monthName(key) + ' everyday budget. Spend only what you must until the month turns over.';
-    el.innerHTML = '<div class="lbl">Left to spend today</div><div class="big ' + (left < 0 ? 'neg' : 'pos') + '" id="heroNum" data-v="' + left + '">' + fmt(left) + '</div>' +
+    el.innerHTML = paydayCard() + weekOneCard() + '<div class="lbl">Left to spend today</div><div class="big ' + (left < 0 ? 'neg' : 'pos') + '" id="heroNum" data-v="' + left + '">' + fmt(left) + '</div>' +
       '<div class="meter" role="img" aria-label="Spent today compared with allowance"><i class="' + cls + '" style="width:' + pct.toFixed(1) + '%"></i></div>' +
       '<div class="stats3"><div><span class="lbl">Allowance</span><b>' + fmt(dp.allowance) + '</b></div><div><span class="lbl">Spent</span><b>' + fmt(dp.spentToday) + '</b></div><div><span class="lbl">Days left</span><b>' + dp.daysLeft + '</b></div></div>' +
       '<p class="hint" style="margin:10px 0 0">' + (dp.remaining >= 0 ? fmt(dp.remaining) + ' left of ' + fmt(dp.total) + ' for ' + monthName(key) + '.' : esc(sub)) + '</p>' +
@@ -1691,6 +1725,36 @@ function nextTarget(state) {
     var target = Number(n.getAttribute('data-v')) || 0, t0 = null, dur = 650;
     function step(ts) { if (t0 == null) t0 = ts; var k = Math.min(1, (ts - t0) / dur); k = 1 - Math.pow(1 - k, 3); n.textContent = fmt(Math.round(target * k)); if (k < 1) requestAnimationFrame(step); else n.textContent = fmt(target); }
     requestAnimationFrame(step);
+  }
+  function paydayCard() {
+    if (state.sample) return '';
+    var ps = paycheckSplit(state, V.today); if (!ps || ps.day !== V.today || !ps.amt) return '';
+    var done = state.paydays && state.paydays[V.today];
+    var w = function (x) { return Math.max(0, Math.min(100, x / ps.amt * 100)).toFixed(1) + '%'; };
+    var h = '<section class="card payday" style="margin:-18px -18px 18px;border-radius:12px 12px 0 0;border-width:0 0 1px"><div class="lbl">Payday' + (who() ? ', ' + esc(who()) : '') + '</div><div class="big pos">' + fmt(ps.amt) + '</div>' +
+      '<div class="split3" role="img" aria-label="Paycheck split"><i class="sp-give" style="width:' + w(ps.give) + '"></i><i class="sp-bill" style="width:' + w(ps.bills) + '"></i><i class="sp-save" style="width:' + w(ps.save) + '"></i><i class="sp-you" style="width:' + w(Math.max(ps.yours, 0)) + '"></i></div>' +
+      '<div class="stats3" style="margin-top:10px">' + (ps.give ? '<div class="k-give"><span class="lbl">Give</span><b>' + fmt(ps.give) + '</b></div>' : '<div class="k-bill"><span class="lbl">Bills</span><b>' + fmt(ps.bills) + '</b></div>') + '<div class="k-save"><span class="lbl">Save</span><b>' + fmt(ps.save) + '</b></div><div class="k-every"><span class="lbl">Yours</span><b class="' + (ps.yours < 0 ? 'neg' : '') + '">' + fmt(ps.yours) + '</b></div></div>';
+    if (done) h += '<p class="hint pos" style="margin:10px 0 0"><b>Done.</b> ' + (ps.give ? 'Giving and savings' : 'Savings') + ' are handled.' + (ps.yours >= 0 ? ' ' + fmt(ps.yours) + ' is yours until ' + dShort(ps.next) + ', about ' + fmt(ps.perDay) + ' a day.' : '') + '</p>' + (ps.yours < 0 ? '<p class="hint neg" style="margin:6px 0 0">This check is ' + fmt(-ps.yours) + ' short of the bills due before ' + dShort(ps.next) + '. Open Month and move a bill or lower a limit.</p>' : '');
+    else if (ps.save > 0 || ps.give > 0) h += '<p class="hint" style="margin:10px 0 8px">One job today, before anything else: move the money.</p><button class="btn" type="button" data-act="paydayDone">' + (ps.give && ps.save ? 'I gave ' + fmt(ps.give) + ' and saved ' + fmt(ps.save) : ps.save ? 'I moved ' + fmt(ps.save) + ' to savings' : 'I gave ' + fmt(ps.give)) + '</button>';
+    else h += '<p class="hint" style="margin:10px 0 0">No savings line yet. Add one in Plan so payday has a job.</p>';
+    return h + '</section>';
+  }
+  function weekOneCard() {
+    if (state.sample || state.weekDone || state.startDay == null) return '';
+    var dayN = V.today - state.startDay + 1;
+    var steps = [
+      { n: 1, t: 'Build your budget', ok: true },
+      { n: 2, t: 'Log one spend', ok: state.tx.some(function (t) { return !t.goal && !t.bank && t.type === 'out'; }), act: 'focusAdd', btn: 'Log a spend' },
+      { n: 3, t: 'Read your first lesson', ok: Object.keys(state.learned || {}).length > 0 || !!(window.__read && Object.keys(window.__read).length), act: 'tab', view: 'learn', btn: 'Open Learn' },
+      { n: 4, t: 'Invite your accountability partner', ok: !!state.partner, act: 'tab', view: 'plan', btn: 'Add a partner' },
+      { n: 5, t: 'First Saturday reconcile', ok: state.lastImportDay != null, act: 'sub', sub: 'bank', btn: 'Open Reconcile' }
+    ];
+    var allDone = steps.every(function (x) { return x.ok; });
+    if (allDone || dayN > 10) { if (allDone) { state.weekDone = true; save(); } return allDone ? '' : ''; }
+    var now = steps.find(function (x) { return !x.ok; });
+    return '<section class="card week1" style="margin:-18px -18px 18px;border-radius:12px 12px 0 0;border-width:0 0 1px"><div class="lbl">Your first week · day ' + Math.min(dayN, 7) + ' of 7</div><h3 style="margin:4px 0 0">' + esc(now.t) + '</h3><p class="hint" style="margin:2px 0 0">One job at a time. That is the whole week.</p>' +
+      '<ol>' + steps.map(function (x) { return '<li class="' + (x.ok ? 'done' : x === now ? 'now' : '') + '"><span class="n">' + (x.ok ? '\u2713' : x.n) + '</span>' + esc(x.t) + '</li>'; }).join('') + '</ol>' +
+      '<div class="actions" style="margin-top:12px"><button class="btn" type="button" data-act="' + now.act + '"' + (now.view ? ' data-view="' + now.view + '"' : '') + (now.sub ? ' data-sub="' + now.sub + '"' : '') + '>' + now.btn + '</button></div></section>';
   }
   function bankNudge() { if (state.sample) return ''; var since = state.lastImportDay == null ? null : V.today - state.lastImportDay, sat = new Date(V.today * DAY).getUTCDay() === 6; if (!(sat && since !== 0) && !(since != null && since >= 8)) return ''; return '<p class="hint" style="margin-top:12px"><button class="link" type="button" data-act="sub" data-sub="bank" style="padding:0;min-height:0">' + (sat ? 'Saturday reconcile is due. Bring in this week\'s bank transactions.' : 'It has been ' + since + ' days since your last reconcile.') + '</button></p>'; }
   function streakLine() {
@@ -1810,7 +1874,8 @@ function nextTarget(state) {
     if (!list.length) { ul.innerHTML = '<li class="empty">No entries yet. Add your first purchase to see it here.</li>'; return; }
     ul.innerHTML = list.map(function (t) {
       var when = t.day === today ? 'Today' : t.day === today - 1 ? 'Yesterday' : dShort(t.day);
-      return '<li class="row"><div><div class="nm">' + esc(t.note || t.cat) + '</div><div class="d">' + when + ' · ' + esc(t.cat) + (state.names.length > 1 && t.by ? ' · ' + esc(t.by) : '') + (t.bank ? ' · matched to bank' : '') + '<button class="mini" type="button" data-act="del" data-id="' + esc(t.id) + '">Remove</button></div></div>' +
+      var catSel = t.type === 'out' && !t.goal ? '<select class="recat" data-recat="' + esc(t.id) + '" aria-label="Change category">' + catNames().map(function (c) { return '<option' + (c === t.cat ? ' selected' : '') + '>' + esc(c) + '</option>'; }).join('') + '</select>' : esc(t.cat);
+      return '<li class="row"><div><div class="nm">' + esc(t.note || t.cat) + '</div><div class="d">' + when + ' · ' + catSel + (state.names.length > 1 && t.by ? ' · ' + esc(t.by) : '') + (t.bank ? ' · matched to bank' : '') + (t.auto ? ' · auto-sorted' : '') + '<button class="mini" type="button" data-act="del" data-id="' + esc(t.id) + '">Remove</button></div></div>' +
         '<div class="am ' + (t.type === 'in' ? 'pos' : '') + '">' + (t.type === 'in' ? '+' : '−') + fmtC(t.amt) + '</div></li>';
     }).join('');
   }
@@ -1839,6 +1904,23 @@ function nextTarget(state) {
     var min = 0, k = cur0;
     while (k > first && min > -36) { k = addMonth(k, -1); min -= 1; }
     return { min: min, max: 1 };
+  }
+  function recapHTML(curKey) {
+    var pk = addMonth(curKey, -1), ppk = addMonth(curKey, -2), today = V.today;
+    var pr = monthRange(pk), had = state.tx.some(function (t) { return !t.goal && t.type === 'out' && t.day >= pr[0] && t.day <= pr[1]; });
+    if (!had) return '';
+    var m1 = monthStats(state, pk, pr[1]), m0 = monthStats(state, ppk, monthRange(ppk)[1]);
+    var diff = m1.totalLimit - m1.totalSpent;
+    var ef = state.goals.ef ? efSaved(state, pr[1]) - efSaved(state, pr[0] - 1) : null;
+    var best = null;
+    state.budget.cats.forEach(function (c) { var d = (m0.spent[c.id] || 0) - (m1.spent[c.id] || 0); if (m0.spent[c.id] > 0 && d > 0 && (!best || d > best.d)) best = { c: c, d: d }; });
+    var under = 0; for (var n = pr[0]; n <= pr[1]; n++) if (spentOn(state, n) <= allowanceOn(state, n)) under += 1;
+    var habit = best ? '<b>' + esc(best.c.name) + '</b><small>down ' + fmt(best.d) + ' vs ' + monthName(ppk) + '</small>' : '<b>' + under + ' days</b><small>under allowance</small>';
+    return '<section class="card" id="recap" style="margin-bottom:16px"><h2>' + monthName(pk) + ' in three numbers</h2><div class="recap">' +
+      '<div><span class="lbl">Spent vs plan</span><b class="' + (diff >= 0 ? 'pos' : 'neg') + '">' + (diff >= 0 ? fmt(diff) + ' under' : fmt(-diff) + ' over') + '</b><small>' + fmt(m1.totalSpent) + ' of ' + fmt(m1.totalLimit) + '</small></div>' +
+      '<div><span class="lbl">Fund</span>' + (ef == null ? '<b>—</b><small>no goal set</small>' : '<b class="pos">' + (ef >= 0 ? '+' : '') + fmt(ef) + '</b><small>' + fmt(efSaved(state, pr[1])) + ' total</small>') + '</div>' +
+      '<div><span class="lbl">One habit</span>' + habit + '</div></div>' +
+      '<p class="hint" style="margin:6px 0 0">' + (diff >= 0 ? (who() ? esc(who()) + ', that' : 'That') + ' is a month that worked. Same plan again.' : 'Over by ' + fmt(-diff) + '. Not a failure, a number. Lower one limit or raise one line, then move on.') + '</p></section>';
   }
   function renderMonth() {
     var today = V.today, curKey = mkey(today), key = addMonth(curKey, monthOffset), bnd = monthBounds();
@@ -1895,7 +1977,7 @@ function nextTarget(state) {
         '<form class="stack" data-form="next" data-key="' + nextKey + '" autocomplete="off"><div>' + rows + '</div><div class="totals" id="nextTotals"></div><button class="btn" type="submit">Save ' + esc(monthName(nextKey)) + ' plan</button><p class="hint" id="nextMsg" role="status">' + (state.saved[nextKey] ? esc(monthName(nextKey)) + ' plan saved. It starts on the 1st.' : '') + '</p></form></li></ol></section>';
     }
     var root = $('#monthRoot');
-    root.innerHTML = nav + '<div class="grid' + (check ? '' : ' no-check') + '" id="monthGrid">' + sum + check + catCard + billCard + '</div>';
+    root.innerHTML = nav + (isCur ? recapHTML(curKey) : '') + '<div class="grid' + (check ? '' : ' no-check') + '" id="monthGrid">' + sum + check + catCard + billCard + '</div>';
     if (check) updateNextTotals();
   }
   function updateNextTotals() {
@@ -2088,6 +2170,7 @@ function nextTarget(state) {
     var type = document.querySelector('input[name=etype]:checked').value;
     var before = snapFor(state);
     var t = { id: newId('t'), ts: Date.now(), day: parseISO(ds), type: type, amt: amt, cat: $('#eCat').value, note: $('#eNote').value.trim(), by: meName() };
+    if (type === 'out' && t.note && merchantKey(t.note)) state.rules[merchantKey(t.note)] = t.cat;
     state.tx.push(t); save();
     $('#eAmt').value = ''; $('#eNote').value = '';
     lastDone = true;
@@ -2184,6 +2267,7 @@ function nextTarget(state) {
     } else if (i.id === 'efAmt') { efDraft.amt = i.value;
     } else if (i.getAttribute && i.getAttribute('data-eftarget')) { var tv = money(i.value); if (tv > 0 && state.goals.ef) { state.goals.ef.target = tv; save(); }
     } else if (i.id === 'eAmt') { updatePreview();
+    } else if (i.id === 'eNote') { var gc = document.querySelector('input[name=etype]:checked').value === 'out' ? guessCat(state, i.value) : ''; var sel = $('#eCat'); if (gc && sel && sel.value !== gc && Array.prototype.some.call(sel.options, function (o) { return o.value === gc; })) { sel.value = gc; catHint(); updatePreview(); var nh = $('#noteHint'); if (nh) nh.textContent = 'Category set to ' + gc + ' from last time. Change it above if that is wrong.'; }
     } else if (i.getAttribute && i.getAttribute('data-nl')) { updateNextTotals(); var nf = $('form[data-form=next]'); if (nf) { state.saved[nf.getAttribute('data-key')] = false; $('#nextMsg').textContent = ''; } }
   });
   document.addEventListener('change', function (e) {
@@ -2195,7 +2279,8 @@ function nextTarget(state) {
     if (t.id === 'csvFile' && t.files && t.files[0]) { var rd = new FileReader(); rd.onload = function () { loadCSV(String(rd.result)); }; rd.readAsText(t.files[0]); }
     if (t.name === 'efhas') { efDraft.has = t.value; var aw = $('#efAmtWrap'); if (aw) { aw.hidden = t.value === 'no'; var ai = $('#efAmt'); if (ai) ai.placeholder = t.value === 'yes' ? '1,000' : '0.00'; } }
     if (t.name === 'etype') { fillCats(); updatePreview(); }
-    if (t.id === 'eCat') { catHint(); updatePreview(); }
+    if (t.id === 'eCat') { catHint(); updatePreview(); var nh0 = $('#noteHint'); if (nh0) nh0.textContent = ''; }
+    if (t.getAttribute && t.getAttribute('data-recat')) { var rt = state.tx.find(function (x) { return x.id === t.getAttribute('data-recat'); }); if (rt) { rt.cat = t.value; if (rt.note && merchantKey(rt.note)) state.rules[merchantKey(rt.note)] = t.value; save(); render(); } }
     if (t.id === 'eDate') updatePreview();
   });
 
@@ -2207,6 +2292,8 @@ function nextTarget(state) {
     var act = b.getAttribute('data-act'), id = b.getAttribute('data-id');
     switch (act) {
       case 'tab': setView(b.getAttribute('data-view')); break;
+      case 'paydayDone': { if (!state.paydays) state.paydays = {}; state.paydays[todayNum()] = 1; save(); render(); break; }
+      case 'focusAdd':
       case 'quickAdd': setView('today'); setSub('spend'); { var ae = $('#add'); if (ae) ae.scrollIntoView({ behavior: 'smooth', block: 'start' }); var ai = $('#eAmt'); if (ai) setTimeout(function () { ai.focus(); }, 350); } break;
       case 'sub': setSub(b.getAttribute('data-sub')); window.scrollTo({ top: 0 }); break;
       case 'cal': { var ce = calEvents().find(function (e) { return e.id === b.getAttribute('data-id'); }); if (ce) shareICS(ce, false); break; }
