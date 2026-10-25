@@ -36,7 +36,8 @@
   --neg-soft: rgba(194, 59, 48, 0.16);
   --warn: #7a4a00;
   --warn-bg: #fbebcb;
-  --bill: #8a5a12;
+  --bill: #2563eb;
+  --c-give: #d97706; --c-bill: #2563eb; --c-save: #1b7f4f; --c-every: #475569;
   --font-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
   --font-body: "Figtree", "Avenir Next", "Segoe UI", system-ui, sans-serif;
 }
@@ -44,14 +45,14 @@
   :root:not([data-theme="light"]) {
     --bg: #0e171c; --surface: #152229; --surface-2: #1a2b33; --ink: #e7eff3; --ink-2: #9db0ba; --line: #27393f; --grid: #213138;
     --accent: #4ade80; --accent-ink: #052e16; --brand: #22c55e; --pos: #53c88f; --pos-bg: #153827; --pos-soft: rgba(83, 200, 143, 0.16);
-    --neg: #f0766b; --neg-bg: #4a1f1c; --neg-soft: rgba(240, 118, 107, 0.2); --warn: #f1c273; --warn-bg: #43330f; --bill: #e3a33f;
+    --neg: #f0766b; --neg-bg: #4a1f1c; --neg-soft: rgba(240, 118, 107, 0.2); --warn: #f1c273; --warn-bg: #43330f; --bill: #60a5fa; --c-give: #fbbf24; --c-bill: #60a5fa; --c-save: #53c88f; --c-every: #94a3b8;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #0e171c; --surface: #152229; --surface-2: #1a2b33; --ink: #e7eff3; --ink-2: #9db0ba; --line: #27393f; --grid: #213138;
   --accent: #4ade80; --accent-ink: #052e16; --brand: #22c55e; --pos: #53c88f; --pos-bg: #153827; --pos-soft: rgba(83, 200, 143, 0.16);
-  --neg: #f0766b; --neg-bg: #4a1f1c; --neg-soft: rgba(240, 118, 107, 0.2); --warn: #f1c273; --warn-bg: #43330f; --bill: #e3a33f;
+  --neg: #f0766b; --neg-bg: #4a1f1c; --neg-soft: rgba(240, 118, 107, 0.2); --warn: #f1c273; --warn-bg: #43330f; --bill: #60a5fa; --c-give: #fbbf24; --c-bill: #60a5fa; --c-save: #53c88f; --c-every: #94a3b8;
   color-scheme: dark;
 }
 [hidden] { display: none !important; }
@@ -129,7 +130,7 @@ h3 { font-family: var(--font-display); font-weight: 700; font-size: 16px; margin
 @media (max-width: 520px) { .stats { grid-template-columns: 1fr; } .stats > div { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 10px; } .stats dd { font-size: 18px; } .big { font-size: 40px; } }
 .meter { height: 10px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 999px; overflow: hidden; margin-top: 8px; }
 .meter > i { display: block; height: 100%; border-radius: 999px; background: var(--accent); }
-.meter > i.tight { background: var(--bill); } .meter > i.short { background: var(--neg); }
+.meter > i.tight { background: #b45309; } .meter > i.short { background: var(--neg); }
 button, input, select, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -185,7 +186,7 @@ textarea { min-height: 90px; font-family: ui-monospace, Menlo, Consolas, monospa
 .bar-top { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; flex-wrap: wrap; }
 .bar { position: relative; height: 10px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 999px; margin-top: 5px; }
 .bar > i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent); border-radius: 999px; }
-.bar > i.ahead { background: var(--bill); } .bar > i.over { background: var(--neg); }
+.bar > i.ahead { background: #b45309; } .bar > i.over { background: var(--neg); }
 .bar > u { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--ink); text-decoration: none; opacity: 0.7; }
 .bar-note { font-size: 12px; color: var(--ink-2); margin-top: 3px; }
 details { border-top: 1px solid var(--line); padding: 12px 0 0; margin-top: 16px; }
@@ -214,7 +215,10 @@ summary { cursor: pointer; font-weight: 700; min-height: 32px; }
 .totals .tgrid b { display: block; font-family: var(--font-display); font-size: 19px; }
 .stackbar { display: flex; height: 12px; border-radius: 999px; overflow: hidden; background: var(--surface); border: 1px solid var(--line); }
 .stackbar i { display: block; height: 100%; }
-.stackbar .s-give { background: #7c3aed; } .stackbar .s-bill { background: var(--bill); } .stackbar .s-save { background: var(--pos); } .stackbar .s-every { background: var(--accent); }
+.stackbar .s-give, .sp-give, .k-give { --k: var(--c-give); } .stackbar .s-bill, .sp-bill, .k-bill { --k: var(--c-bill); } .stackbar .s-save, .sp-save, .k-save { --k: var(--c-save); } .stackbar .s-every, .sp-you, .k-every { --k: var(--c-every); } .k-inc { --k: var(--pos); }
+.stackbar i, .split3 i { background: var(--k); }
+.tgrid > div[class^="k-"], .mo > div[class^="k-"] { border-left: 4px solid var(--k); padding-left: 10px; }
+.legend b { color: var(--ink); font-weight: 600; }
 .stackbar.over { border-color: var(--neg); }
 .wiz-nav { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .catrow { display: grid; grid-template-columns: minmax(0, 1fr) 128px auto; gap: 8px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); }
@@ -291,7 +295,6 @@ input[type=file] { font-size: 14px; }
 .badge.won { background: var(--pos-bg); color: var(--pos); border-color: transparent; }
 .split3 { display: flex; height: 14px; border-radius: 999px; overflow: hidden; background: var(--surface-2); border: 1px solid var(--line); margin-top: 8px; }
 .split3 i { display: block; height: 100%; }
-.sp-give { background: #7c3aed; } .sp-bill { background: var(--bill); } .sp-save { background: var(--pos); } .sp-you { background: var(--accent); }
 .wk { border-left: 3px solid var(--accent); padding: 4px 0 4px 12px; }
 .wk.old { border-color: var(--line); }
 .wk .d { font-size: 12px; color: var(--ink-2); }
@@ -1154,9 +1157,10 @@ function nextTarget(state) {
     var pill = t.inc === 0 ? '' : t.left === 0 ? '<span class="pill ok">Every dollar has a job</span>' : t.left > 0 ? '<span class="pill tight">' + fmt(t.left) + ' left to assign</span>' : '<span class="pill short">Over by ' + fmt(-t.left) + '</span>';
     var w = function (x) { return Math.max(0, Math.min(100, x / inc * 100)).toFixed(1) + '%'; };
     return '<div class="totals" id="planTotals"><div class="tgrid">' +
-      '<div><span class="lbl">Take-home</span><b>' + fmt(t.inc) + '</b></div><div><span class="lbl">Bills</span><b>' + fmt(t.fixed) + '</b></div>' +
-      (t.give ? '<div><span class="lbl">Giving</span><b>' + fmt(t.give) + '</b></div>' : '') + '<div><span class="lbl">Savings</span><b>' + fmt(t.save) + '</b></div><div><span class="lbl">Everyday</span><b>' + fmt(t.every) + '</b></div></div>' +
+      '<div class="k-inc"><span class="lbl">Take-home</span><b>' + fmt(t.inc) + '</b></div><div class="k-bill"><span class="lbl">Bills</span><b>' + fmt(t.fixed) + '</b></div>' +
+      (t.give ? '<div class="k-give"><span class="lbl">Giving</span><b>' + fmt(t.give) + '</b></div>' : '') + '<div class="k-save"><span class="lbl">Savings</span><b>' + fmt(t.save) + '</b></div><div class="k-every"><span class="lbl">Everyday</span><b>' + fmt(t.every) + '</b></div></div>' +
       '<div class="stackbar' + (t.left < 0 ? ' over' : '') + '" role="img" aria-label="How take-home pay is assigned"><i class="s-give" style="width:' + w(t.give) + '"></i><i class="s-bill" style="width:' + w(t.fixed) + '"></i><i class="s-save" style="width:' + w(t.save) + '"></i><i class="s-every" style="width:' + w(t.every) + '"></i></div>' +
+      '<div class="legend">' + (t.give ? '<span><i style="background:var(--c-give)"></i>Giving</span>' : '') + '<span><i style="background:var(--c-bill)"></i>Bills</span><span><i style="background:var(--c-save)"></i>Savings</span><span><i style="background:var(--c-every)"></i>Everyday</span></div>' +
       '<div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center"><span class="hint" style="margin:0">Monthly, based on an average month</span>' + pill + '</div></div>';
   }
   function updatePlanTotals() { var el = $('#planTotals'); if (el) el.outerHTML = totalsHTML(); }
@@ -1478,13 +1482,13 @@ function nextTarget(state) {
   function lessonLink(id) { var L = LESSONS.find(function (x) { return x.id === id; }); if (!L) return ''; return '<p class="hint" style="margin-top:10px"><button class="link" type="button" data-act="lesson" data-id="' + id + '" style="padding:0;min-height:0">' + (state.learned[id] ? '✓ ' : '') + 'Lesson: ' + esc(L.title) + ' (' + L.min + ' min)</button></p>'; }
 
   var ART = {
-    zero: ['#0a6c74', '#063f46', '<g fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><circle cx="50" cy="50" r="30"/><path d="M38 50h24M50 38v24"/></g><rect x="18" y="86" width="64" height="6" rx="3" fill="#fff" opacity=".6"/>'],
+    zero: ['#15803d', '#064e3b', '<g fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><circle cx="50" cy="50" r="30"/><path d="M38 50h24M50 38v24"/></g><rect x="18" y="86" width="64" height="6" rx="3" fill="#fff" opacity=".6"/>'],
     pay: ['#1b7f4f', '#0d4a2d', '<g fill="#fff"><rect x="22" y="44" width="56" height="36" rx="6" opacity=".9"/><rect x="36" y="26" width="28" height="22" rx="4" opacity=".55"/></g><path d="M50 50v18M43 61l7 7 7-7" fill="none" stroke="#0d4a2d" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>'],
     ef: ['#c23b30', '#6b1b14', '<path d="M50 16l30 10v22c0 20-13 33-30 40-17-7-30-20-30-40V26z" fill="#fff" opacity=".92"/><path d="M38 52l8 8 16-18" fill="none" stroke="#c23b30" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>'],
     needs: ['#7a4a00', '#3d2500', '<g fill="#fff"><rect x="18" y="52" width="18" height="32" rx="3"/><rect x="41" y="36" width="18" height="48" rx="3" opacity=".8"/><rect x="64" y="60" width="18" height="24" rx="3" opacity=".6"/></g>'],
     subs: ['#7c3aed', '#3b0764', '<g fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round"><path d="M24 40a26 26 0 0 1 48-10"/><path d="M76 60a26 26 0 0 1-48 10"/><path d="M72 20v12h-12"/><path d="M28 80V68h12"/></g>'],
     time: ['#1f5fd1', '#0b2d6b', '<circle cx="50" cy="50" r="30" fill="none" stroke="#fff" stroke-width="6"/><path d="M50 30v22l14 8" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>'],
-    paycheck: ['#0a6c74', '#063f46', '<g fill="#fff"><rect x="16" y="30" width="68" height="44" rx="6" opacity=".92"/><circle cx="50" cy="52" r="10" fill="#0a6c74"/></g><rect x="24" y="80" width="52" height="5" rx="2.5" fill="#fff" opacity=".5"/>'],
+    paycheck: ['#0f766e', '#134e4a', '<g fill="#fff"><rect x="16" y="30" width="68" height="44" rx="6" opacity=".92"/><circle cx="50" cy="52" r="10" fill="#0f766e"/></g><rect x="24" y="80" width="52" height="5" rx="2.5" fill="#fff" opacity=".5"/>'],
     debt: ['#b45309', '#5a2a04', '<g fill="#fff"><circle cx="32" cy="66" r="14" opacity=".55"/><circle cx="54" cy="56" r="18" opacity=".75"/><circle cx="72" cy="42" r="10"/></g><path d="M22 86h56" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".6"/>'],
     give: ['#9333ea', '#4c1d95', '<path d="M50 80s-26-16-26-34a13 13 0 0 1 26-6 13 13 0 0 1 26 6c0 18-26 34-26 34z" fill="#fff" opacity=".92"/>'],
     balance: ['#12222c', '#2b3f4b', '<path d="M50 24v52M26 42l24-18 24 18" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><path d="M18 60l8-18 8 18zM66 60l8-18 8 18z" fill="#fff" opacity=".85"/>'],
@@ -1703,7 +1707,7 @@ function nextTarget(state) {
     var w = function (x) { return Math.max(0, Math.min(100, x / ps.amt * 100)).toFixed(1) + '%'; };
     return '<details style="margin-top:12px"' + (soon <= 1 ? ' open' : '') + '><summary>' + (soon === 0 ? 'Payday is today' : soon === 1 ? 'Payday is tomorrow' : 'Payday in ' + soon + ' days') + ': your ' + fmt(ps.amt) + ' split</summary>' +
       '<div class="split3" role="img" aria-label="Paycheck split"><i class="sp-give" style="width:' + w(ps.give) + '"></i><i class="sp-bill" style="width:' + w(ps.bills) + '"></i><i class="sp-save" style="width:' + w(ps.save) + '"></i><i class="sp-you" style="width:' + w(Math.max(ps.yours, 0)) + '"></i></div>' +
-      '<div class="tgrid" style="display:grid;grid-template-columns:repeat(' + (ps.give ? 4 : 3) + ',1fr);gap:8px;margin-top:8px">' + (ps.give ? '<div><span class="lbl">Giving</span><b style="display:block" style="color:#7c3aed">' + fmt(ps.give) + '</b></div>' : '') + '<div><span class="lbl">Bills until next pay</span><b style="display:block">' + fmt(ps.bills) + '</b></div><div><span class="lbl">Pay yourself first</span><b style="display:block" class="pos">' + fmt(ps.save) + '</b></div><div><span class="lbl">Yours for ' + ps.days + ' days</span><b style="display:block" class="' + (ps.yours < 0 ? 'neg' : '') + '">' + fmt(ps.yours) + '</b></div></div>' +
+      '<div class="tgrid" style="display:grid;grid-template-columns:repeat(' + (ps.give ? 4 : 3) + ',1fr);gap:8px;margin-top:8px">' + (ps.give ? '<div class="k-give"><span class="lbl">Giving</span><b style="display:block">' + fmt(ps.give) + '</b></div>' : '') + '<div class="k-bill"><span class="lbl">Bills until next pay</span><b style="display:block">' + fmt(ps.bills) + '</b></div><div class="k-save"><span class="lbl">Pay yourself first</span><b style="display:block" class="pos">' + fmt(ps.save) + '</b></div><div class="k-every"><span class="lbl">Yours for ' + ps.days + ' days</span><b style="display:block" class="' + (ps.yours < 0 ? 'neg' : '') + '">' + fmt(ps.yours) + '</b></div></div>' +
       '<p class="hint">' + (ps.yours < 0 ? 'This paycheck does not cover the bills before the next one. Check the Month tab and move a bill or lower a limit.' : (ps.give ? 'Give the ' + fmt(ps.give) + ' and move the ' + fmt(ps.save) + ' to savings the day it lands, before anything else.' : 'Move the ' + fmt(ps.save) + ' to savings the day it lands, before anything else.') + ' Then ' + fmt(ps.yours) + ' is yours, about ' + fmt(ps.perDay) + ' a day until ' + dShort(ps.next) + '.') + '</p></details>';
   }
   function challengeHTML() {
@@ -1847,7 +1851,7 @@ function nextTarget(state) {
     // summary
     var inc3 = ms.sch.inc ? ms.sch.bills.length : 0;
     var sum = '<section class="card" id="msum"><h2>The plan for ' + monthName(key) + '</h2>' +
-      '<div class="mo"><div><span class="lbl">Income</span><b class="pos">' + fmt(ms.income) + '</b></div><div><span class="lbl">Bills</span><b>' + fmt(ms.sch.fixed) + '</b></div>' + (ms.sch.give ? '<div><span class="lbl">Giving</span><b>' + fmt(ms.sch.give) + '</b></div>' : '') + '<div><span class="lbl">Savings</span><b>' + fmt(ms.sch.save) + '</b></div><div><span class="lbl">Everyday limits</span><b>' + fmt(ms.totalLimit) + '</b></div></div>' +
+      '<div class="mo"><div class="k-inc"><span class="lbl">Income</span><b class="pos">' + fmt(ms.income) + '</b></div><div class="k-bill"><span class="lbl">Bills</span><b>' + fmt(ms.sch.fixed) + '</b></div>' + (ms.sch.give ? '<div class="k-give"><span class="lbl">Giving</span><b>' + fmt(ms.sch.give) + '</b></div>' : '') + '<div class="k-save"><span class="lbl">Savings</span><b>' + fmt(ms.sch.save) + '</b></div><div class="k-every"><span class="lbl">Everyday limits</span><b>' + fmt(ms.totalLimit) + '</b></div></div>' +
       '<p class="headline" style="font-size:15px;margin-bottom:6px">' + (left === 0 ? (who() ? esc(who()) + ', every' : 'Every') + ' dollar has a job this month.' : left > 0 ? fmt(left) + ' of this month\'s income has no job yet. Raise a limit or add it to savings.' : 'This month plans to spend ' + fmt(-left) + ' more than comes in.') + '</p>' +
       (ms.income !== planTotals(state).inc ? '<p class="hint">This month has ' + (ms.income > planTotals(state).inc ? 'more' : 'less') + ' income than an average month because of how paydays fall.</p>' : '') +
       (isFuture ? '' : '<div style="margin-top:12px"><span class="lbl">Everyday spending so far</span><div class="bar-top" style="margin-top:4px"><span><b>' + fmt(ms.totalSpent) + '</b> of ' + fmt(ms.totalLimit) + '</span><span class="' + (ms.totalSpent > ms.totalLimit ? 'neg' : 'pos') + '"><b>' + (ms.totalSpent > ms.totalLimit ? fmt(ms.totalSpent - ms.totalLimit) + ' over' : fmt(ms.totalLimit - ms.totalSpent) + ' left') + '</b></span></div>' +
@@ -1948,7 +1952,7 @@ function nextTarget(state) {
     var W = 720, pad = 36, y = 0, pr = state.goals.ef ? efProject(state, V.today) : null, sk = streakInfo(state, V.today);
     var cats = wst.cats.filter(function (c) { return c.spent > 0 || c.lim > 0; }).slice(0, 6);
     var H = 446 + cats.length * 64 + 190;
-    var col = { bg: '#ffffff', ink: '#12222c', ink2: '#4a5c67', line: '#e4eaee', acc: '#15803d', pos: '#1b7f4f', neg: '#c23b30', bill: '#8a5a12' };
+    var col = { bg: '#ffffff', ink: '#12222c', ink2: '#4a5c67', line: '#e4eaee', acc: '#15803d', pos: '#1b7f4f', neg: '#c23b30', bill: '#2563eb' };
     var s = '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" font-family="Avenir Next, Segoe UI, Helvetica, Arial, sans-serif">';
     s += '<rect width="' + W + '" height="' + H + '" rx="24" fill="' + col.bg + '"/>';
     y = pad + 40;
