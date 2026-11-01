@@ -96,8 +96,8 @@ test('rejects malformed amounts and keeps exact cents', () => {
 test('every inline script parses and the offline shell contains the new stylesheet', () => {
   for (const match of html.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g)) new vm.Script(match[1]);
   const sw = fs.readFileSync(path.join(__dirname, '..', 'sw.js'), 'utf8');
-  assert.match(sw, /'ui\.css'/);
-  assert.match(html, /href="ui\.css"/);
+  const stylesheet = html.match(/href="(ui\.css[^"]*)"/)[1];
+  assert.ok(sw.includes("'" + stylesheet + "'"), 'offline shell caches the versioned stylesheet');
 });
 
 test('the original example warns for $400 groceries tomorrow', () => {
