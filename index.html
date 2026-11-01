@@ -70,10 +70,6 @@ body.compact h1 { font-size: 24px; gap: 10px; flex: 1 1 auto; flex-basis: auto; 
 body.compact h1 .logo { width: 34px; height: 34px; border-radius: 9px; }
 body.compact h1 .tagline { display: none; }
 body.compact .today-label { margin: 0; flex: none; font-size: 13px; white-space: nowrap; }
-.fab { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(84px + env(safe-area-inset-bottom, 0px)); z-index: 19; display: inline-flex; align-items: center; gap: 8px; background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 999px; padding: 0 18px 0 14px; min-height: 48px; font-weight: 700; font-size: 15px; box-shadow: 0 6px 18px rgba(0,0,0,0.18); }
-.fab svg { width: 20px; height: 20px; }
-.fab.off { display: none; }
-@media (min-width: 900px) { .fab { bottom: 24px; } }
 .stats3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 14px; }
 .stats3 > div { background: var(--surface-2); border-radius: 10px; padding: 10px 12px; }
 .stats3 b { display: block; font-family: var(--font-display); font-size: 20px; margin-top: 2px; }
@@ -220,7 +216,6 @@ summary { cursor: pointer; font-weight: 700; min-height: 32px; }
 .tgrid > div[class^="k-"], .mo > div[class^="k-"] { border-left: 4px solid var(--k); padding-left: 10px; }
 .legend b { color: var(--ink); font-weight: 600; }
 .recat { font: inherit; font-size: 13px; color: var(--ink-2); background: transparent; border: 0; border-bottom: 1px dashed var(--line); padding: 0 2px; width: 8.5em; }
-body.compact .fab, body[data-sub="bank"]:not(.compact) .fab { } body[data-sub="bank"]:not(.compact) .fab { display: none; }
 .payday { border-color: var(--accent); background: linear-gradient(180deg, var(--pos-soft), transparent 70%); }
 .payday .big { font-size: 34px; }
 .week1 ol { margin: 10px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; }
@@ -361,19 +356,22 @@ input[type=file] { font-size: 14px; }
 .install .row-a { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 </style>
 <style>html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);-webkit-text-size-adjust:100%}body{margin:0;min-height:100vh;-webkit-tap-highlight-color:transparent}button{-webkit-appearance:none;appearance:none}</style>
+<link rel="stylesheet" href="ui.css">
 </head>
 <body>
 
 
 <div class="wrap">
   <header class="top">
-    <h1><svg class="logo" width="34" height="34" viewBox="0 0 512 512" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#16a34a"/><stop offset="1" stop-color="#064e3b"/></linearGradient></defs><rect width="512" height="512" rx="110" fill="url(#lg)"/><text x="256" y="372" text-anchor="middle" font-family="Helvetica Neue, Arial, sans-serif" font-weight="800" font-size="340" fill="#fff">$</text></svg><span>Take Control</span><small class="tagline">of your finances</small></h1>
-    <div class="today-label" id="todayLabel"></div>
+    <h1><span class="brand-mark" aria-hidden="true">$</span><span>Take Control</span></h1>
+    <button class="profile" type="button" data-act="openSettings" aria-label="Open settings" id="profileBtn">TC</button>
   </header>
-
-  <div class="banner" id="sampleBanner" hidden>
-    <span>You are looking at example numbers so you can see how it works. When you are ready, clear them and build your own budget.</span>
-    <button class="btn" type="button" data-act="clearSample">Clear examples and start my budget</button>
+  <div class="greeting-row" id="greetingRow">
+    <div><p class="greeting" id="greeting"></p><div class="today-label" id="todayLabel"></div></div>
+    <details class="sample-note" id="sampleBanner" hidden>
+      <summary>Example numbers</summary>
+      <div><p>Explore with example numbers. Your own budget starts fresh.</p><button class="btn" type="button" data-act="clearSample">Build my budget</button></div>
+    </details>
   </div>
   <div class="banner" id="storeBanner" hidden>
     <span>This browser is not saving data, so entries will be lost when you close the page. Open the page in a regular browser window to keep them.</span>
@@ -395,42 +393,61 @@ input[type=file] { font-size: 14px; }
   </div>
 
   <nav class="tabs" id="tabs" aria-label="Sections">
+    <button class="tab" type="button" data-act="tab" data-view="today"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg><b>Today</b><small>Spend and track</small></button>
     <button class="tab" type="button" data-act="tab" data-view="plan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg><b>Plan</b><small>Build the budget</small></button>
-    <button class="tab" type="button" data-act="tab" data-view="today"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><b>Today</b><small>Spend and track</small></button>
     <button class="tab" type="button" data-act="tab" data-view="review"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 20V10M12 20V4M6 20v-6"/></svg><b>Review</b><small>Weekly</small></button>
     <button class="tab" type="button" data-act="tab" data-view="month"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><b>Month</b><small>Reset</small></button>
     <button class="tab" type="button" data-act="tab" data-view="learn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><b>Learn</b><small>Lessons</small></button>
   </nav>
-  <button class="fab" id="fab" type="button" data-act="quickAdd" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Log a spend</button>
+
 
   <main>
     <section id="v-plan" data-v="plan"><div id="planRoot"></div></section>
 
     <section id="v-today" data-v="today" hidden>
       <nav class="subs" id="subs" aria-label="Today sections">
-        <button type="button" data-act="sub" data-sub="spend">Spend</button>
+        <button type="button" data-act="sub" data-sub="spend">Overview</button>
         <button type="button" data-act="sub" data-sub="goals">Goals</button>
         <button type="button" data-act="sub" data-sub="outlook">Forecast</button>
-        <button type="button" data-act="sub" data-sub="bank">Reconcile</button>
+        <button type="button" data-act="sub" data-sub="bank">Bank match</button>
       </nav>
       <div class="grid" id="todayGrid">
         <section class="card" id="daily" data-sub="spend" aria-labelledby="dailyH">
-          <h2 id="dailyH" style="position:absolute;left:-9999px">Left to spend today</h2>
+          <h2 id="dailyH" class="sr-only" tabindex="-1">Today’s budget</h2>
           <div id="dailyDyn"></div>
         </section>
 
-        <section class="card" id="ask" data-sub="spend" aria-labelledby="askH">
-          <h2 id="askH">Ask before you spend</h2>
-          <p class="sub">Type a question like "If I spend $100 on Jordans today, how does that hit my budget?"</p>
-          <form data-form="ask" autocomplete="off">
-            <div class="askrow"><input type="text" id="askQ" placeholder="If I spend $60 on dinner tonight..." maxlength="140" aria-label="Your question"></div>
-            <div class="actions" style="margin-top:8px"><button class="btn" type="submit">Ask</button><button class="btn alt" type="button" data-act="askHow">How am I doing?</button></div>
+        <section class="card" id="dayUpcoming" data-sub="spend" aria-labelledby="dayUpcomingH">
+          <div class="lbl" id="dayUpcomingH">Coming up</div><div id="dayUpcomingDyn"></div>
+        </section>
+        <section class="card home-actions" id="homeActions" data-sub="spend" aria-label="Money actions">
+          <button class="btn primary-add" type="button" data-act="quickAdd"><span aria-hidden="true">＋</span> Log a purchase</button>
+          <button class="purchase-link" type="button" data-act="openCheck"><span class="action-icon" aria-hidden="true">↗</span><span><b>Thinking about a purchase?</b><small>Check its impact before you spend</small></span><span aria-hidden="true">›</span></button>
+          <button class="link forecast-link" type="button" data-act="sub" data-sub="outlook">View forecast <span aria-hidden="true">›</span></button>
+        </section>
+        <section class="card" id="dailyExtras" data-sub="spend" aria-label="Progress and habits"><details><summary>Progress and habits</summary><div id="dailyExtrasDyn"></div></details></section>
+        <section class="card focused-panel" id="ask" data-sub="check" aria-labelledby="askH">
+          <button class="back-link" type="button" data-act="backToday">← Back to Today</button>
+          <h2 id="askH" tabindex="-1">Check a purchase</h2>
+          <p class="sub">See the impact before you decide.</p>
+          <form data-form="purchase" id="purchaseForm" class="fields" autocomplete="off">
+            <div class="purchase-amount"><label class="f" for="checkAmt">Amount</label><div class="currency-input"><span aria-hidden="true">$</span><input type="text" id="checkAmt" inputmode="decimal" placeholder="0.00" required aria-describedby="checkErr"></div></div>
+            <div class="two"><div><label class="f" for="checkCat">Category</label><select id="checkCat"></select></div><div><label class="f" for="checkWhen">When</label><select id="checkWhen"><option value="today">Today</option><option value="tomorrow">Tomorrow</option><option value="custom">Choose a date</option></select></div></div>
+            <div id="checkDateWrap" hidden><label class="f" for="checkDate">Purchase date</label><input type="date" id="checkDate"></div>
+            <button class="btn" type="submit">Check impact</button>
+            <p class="err" id="checkErr" role="alert"></p>
           </form>
-          <div class="answer" id="askOut" aria-live="polite"></div>
+          <div id="purchaseResult" aria-live="polite" aria-atomic="true"></div>
+          <p class="estimate-note">Estimate based on your entries and scheduled bills. This does not log a purchase.</p>
+          <details class="natural-ask"><summary>Or type a question</summary><p class="hint">Try “If I spend $60 on dinner tomorrow.” Confirm the amount, category and date in the answer.</p>
+            <form data-form="ask" autocomplete="off"><label class="f" for="askQ">Your question</label><input type="text" id="askQ" placeholder="If I spend $60 on dinner tomorrow…" maxlength="140"><button class="btn alt" type="submit">Check question</button></form>
+            <div class="answer" id="askOut" aria-live="polite"></div>
+          </details>
         </section>
 
-        <section class="card" id="add" data-sub="spend" aria-labelledby="addH">
-          <h2 id="addH">Add today's money</h2>
+        <section class="card focused-panel" id="add" data-sub="entry" aria-labelledby="addH">
+          <button class="back-link" type="button" data-act="backToday">← Back to Today</button>
+          <h2 id="addH" tabindex="-1">Log your money</h2>
           <p class="sub">Log each purchase or deposit as it happens.</p>
           <form id="entryForm" class="fields" autocomplete="off" data-form="entry">
             <div class="seg-wrap">
@@ -612,6 +629,25 @@ function roomPerDay(f, buffer) {
   let m = Infinity;
   for (const d of f.days) { const v = (f.bal0 + d.cumSched - buffer) / d.i; if (v < m) m = v; }
   return Math.floor(m);
+}
+// Keep the spending pace fixed to isolate this purchase from the existing forecast.
+function purchaseImpact(state, today, purchase) {
+  const pace = dailyEstimate(state, today);
+  const before = forecast(state, today, 30, pace);
+  const trial = Object.assign({}, state, { tx: state.tx.concat([purchase]) });
+  const after = forecast(trial, today, 30, pace);
+  function lowest(f) {
+    return f.days.reduce(function (low, d) { return d.bal < low.bal ? { bal: d.bal, n: d.n } : low; }, { bal: f.bal0, n: today });
+  }
+  const low = lowest(after), buffer = state.buffer || 0;
+  const firstShort = after.bal0 < buffer ? { bal: after.bal0, n: today } : after.days.find(function (d) { return d.bal < buffer; }) || null;
+  const key = mkey(purchase.day), range = monthRange(key);
+  const cat = state.budget.cats.find(function (c) { return c.name === purchase.cat; });
+  let committed = 0;
+  trial.tx.forEach(function (t) { if (t.type === 'out' && !t.goal && t.cat === purchase.cat && t.day >= range[0] && t.day <= range[1]) committed += t.amt; });
+  const categoryLeft = cat && purchase.type === 'out' ? limitFor(state, cat, key) - committed : null;
+  return { before: before, after: after, low: low, beforeLow: lowest(before), firstShort: firstShort, buffer: buffer,
+    categoryLeft: categoryLeft, categoryMonth: key, dailyLeft: purchase.day === today && purchase.type === 'out' ? dayPlan(trial, today).left : null };
 }
 function fixedGroup(cat) {
   const g = { Housing: 'need', Utilities: 'need', Transportation: 'need', Insurance: 'need', Childcare: 'need', 'Debt payments': 'need', Subscriptions: 'want', 'Other bills': 'need', Savings: 'save', Giving: 'give' }[cat];
@@ -1018,6 +1054,16 @@ function nextTarget(state) {
     return (v < 0 && Math.round(Math.abs(v)) > 0 ? '−' : '') + s;
   }
   function fmtC(c) { var v = c / 100; return (v < 0 ? '−' : '') + Math.abs(v).toLocaleString('en-US', { style: 'currency', currency: 'USD' }); }
+  function icon(name) {
+    var paths = { check: '<path d="m5 12 4 4L19 6"/>', warn: '<path d="m12 3 10 18H2zM12 9v5M12 17h.01"/>', bank: '<path d="m3 8 9-5 9 5M3 9h18M5 10v8M10 10v8M14 10v8M19 10v8M3 21h18"/>', calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 11h18"/>' };
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (paths[name] || paths.check) + '</svg>';
+  }
+  function strictMoney(value) {
+    var raw = String(value).trim().replace(/^\$\s*/, '');
+    if (!/^(?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d{1,2})?$/.test(raw)) return null;
+    var cents = Math.round(Number(raw.replace(/,/g, '')) * 100);
+    return Number.isSafeInteger(cents) ? cents : null;
+  }
   function sgn(c) { return (c > 0 ? '+' : c < 0 ? '−' : '') + fmt(Math.abs(c)); }
   function sgnC(c) { return (c > 0 ? '+' : c < 0 ? '−' : '') + fmtC(Math.abs(c)); }
   function dShort(n) { return new Date(n * DAY).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' }); }
@@ -1078,7 +1124,16 @@ function nextTarget(state) {
   function probeStorage() { try { localStorage.setItem(KEY + '.t', '1'); localStorage.removeItem(KEY + '.t'); } catch (e) { storeOk = false; } }
   var meIdx = null, lastDone = false, sub = 'spend';
   try { var sv = localStorage.getItem('moneyAhead.sub'); if (['spend', 'goals', 'outlook', 'bank'].indexOf(sv) >= 0) sub = sv; } catch (e) {}
-  function setSub(k) { sub = k; document.body.setAttribute('data-sub', k); try { localStorage.setItem('moneyAhead.sub', k); } catch (e) {} document.querySelectorAll('#subs button').forEach(function (b) { b.setAttribute('aria-current', b.getAttribute('data-sub') === k ? 'true' : 'false'); }); document.querySelectorAll('#todayGrid > .card').forEach(function (c) { c.classList.toggle('show', c.getAttribute('data-sub') === k); }); renderChart(); }
+  function setSub(k) {
+    if (['spend', 'goals', 'outlook', 'bank', 'entry', 'check'].indexOf(k) < 0) k = 'spend';
+    sub = k; document.body.setAttribute('data-sub', k);
+    if (['entry', 'check'].indexOf(k) < 0) try { localStorage.setItem('moneyAhead.sub', k); } catch (e) {}
+    document.querySelectorAll('#subs button').forEach(function (b) { b.setAttribute('aria-current', b.getAttribute('data-sub') === k ? 'true' : 'false'); });
+    $('#subs').hidden = k === 'entry' || k === 'check';
+    document.querySelectorAll('#todayGrid > .card').forEach(function (c) { c.classList.toggle('show', c.getAttribute('data-sub') === k); });
+    if (k === 'check') fillCheckCats();
+    renderChart();
+  }
   function loadMe() { try { var v = localStorage.getItem('moneyAhead.me'); meIdx = v == null ? null : parseInt(v, 10); } catch (e) { meIdx = null; } if (meIdx != null && (isNaN(meIdx) || !state.names[meIdx])) meIdx = null; }
   function setMe(i) { meIdx = i; try { localStorage.setItem('moneyAhead.me', String(i)); } catch (e) {} }
   function house() { return state.names.join(' and '); }
@@ -1107,7 +1162,7 @@ function nextTarget(state) {
     if (!state.budget.done) v = 'plan';
     if (v !== cur) openLesson = null;
     cur = v;
-    document.body.classList.toggle('compact', v !== 'today');
+    document.body.classList.add('compact');
     ['plan', 'today', 'review', 'month', 'learn'].forEach(function (k) { $('#v-' + k).hidden = k !== v; });
     document.querySelectorAll('.tab').forEach(function (b) { if (b.getAttribute('data-view') === v) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
     render();
@@ -1115,9 +1170,10 @@ function nextTarget(state) {
   }
   function render() {
     V = compute();
-    var dateStr = new Date(V.today * DAY).toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-    $('#todayLabel').textContent = cur === 'today' ? (meName() ? greet() + ', ' + meName() + '. ' : '') + dateStr : new Date(V.today * DAY).toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'short', month: 'short', day: 'numeric' });
-    $('#fab').hidden = !state.budget.done;
+    $('#greeting').textContent = cur === 'today' ? greet() + (who() ? ', ' + who() : '') : '';
+    $('#todayLabel').textContent = new Date(V.today * DAY).toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'long', month: 'long', day: 'numeric' });
+    var profileName = meName() || house();
+    $('#profileBtn').textContent = profileName ? profileName.split(/\s+/).map(function (n) { return n[0]; }).slice(0, 2).join('').toUpperCase() : 'TC';
     try { var pdq = paydayInfo(state, V.today); if (pdq && pdq.next === V.today && !state.sample && localStorage.getItem('moneyAhead.pdOpen') !== String(V.today)) { localStorage.setItem('moneyAhead.pdOpen', String(V.today)); if (cur === 'today') setSub('spend'); } } catch (e) {}
     var needWho = state.names.length > 1 && meIdx == null;
     $('#whoBanner').hidden = !needWho;
@@ -1128,7 +1184,7 @@ function nextTarget(state) {
     if (cur !== 'plan') $('#planRoot').innerHTML = '';
     if (cur !== 'today') { $('#goalDyn').innerHTML = ''; $('#coachDyn').innerHTML = ''; $('#savDyn').innerHTML = ''; $('#impDyn').innerHTML = ''; }
     if (cur === 'plan') renderPlan();
-    if (cur === 'today') { setSub(sub); renderDaily(); renderGoal(); renderCoach(); renderSavings(); renderImport(); renderSummary(); renderChart(); renderUpcoming(); renderRecent(); fillCats(); updatePreview(); }
+    if (cur === 'today') { setSub(sub); renderDaily(); renderDayUpcoming(); renderGoal(); renderCoach(); renderSavings(); renderImport(); renderSummary(); renderChart(); renderUpcoming(); renderRecent(); fillCats(); updatePreview(); }
     if (cur === 'month') renderMonth();
     if (cur === 'review') renderReview(); else $('#reviewRoot').innerHTML = '';
     if (cur === 'learn') $('#learnRoot').innerHTML = learnHTML(); else $('#learnRoot').innerHTML = '';
@@ -1436,31 +1492,44 @@ function nextTarget(state) {
     if (inc) cat = 'Paycheck';
     return { amt: amt, day: day, type: inc ? 'in' : 'out', cat: cat, what: what };
   }
+  function fillCheckCats() {
+    var sel = $('#checkCat'), prev = sel.value;
+    sel.innerHTML = catNames().map(function (c) { return '<option>' + esc(c) + '</option>'; }).join('');
+    if (catNames().indexOf(prev) >= 0) sel.value = prev;
+    $('#checkDate').min = toISO(todayNum()); $('#checkDate').max = toISO(todayNum() + 30);
+    if (!$('#checkDate').value) $('#checkDate').value = toISO(todayNum() + 1);
+  }
+  function purchaseResultHTML(purchase, result) {
+    var out = purchase.type === 'out', short = !!result.firstShort;
+    var over = out && result.categoryLeft != null && result.categoryLeft < 0;
+    var tight = out && result.dailyLeft != null && result.dailyLeft < 0;
+    var warn = short || over || tight, title, reason;
+    if (short) {
+      title = result.low.bal < 0 ? 'Wait — cash gets tight' : 'Wait — protect your cushion';
+      reason = result.low.bal < 0 ? 'Your projected account balance would fall below zero on ' + dLong(result.firstShort.n) + '.' : 'Your projected balance would fall below your ' + fmtC(result.buffer) + ' cushion on ' + dLong(result.firstShort.n) + '.';
+    } else if (over) { title = 'This exceeds your category budget'; reason = purchase.cat + ' would be ' + fmtC(-result.categoryLeft) + ' over its ' + monthName(result.categoryMonth) + ' limit, including planned purchases.'; }
+    else if (tight) { title = 'This uses more than today’s allowance'; reason = 'You would be ' + fmtC(-result.dailyLeft) + ' over today’s budget. Your forecast still covers scheduled bills.'; }
+    else { title = out ? 'This fits your current plan' : 'Here is the impact of that deposit'; reason = 'Your projected balance stays ' + (result.buffer ? 'above your ' + fmtC(result.buffer) + ' cushion' : 'at or above zero') + ' throughout the next 30 days.'; }
+    var category = result.categoryLeft == null ? '' : '<div class="result-row"><span>' + esc(purchase.cat) + ' left in ' + monthName(result.categoryMonth) + '</span><b class="' + (over ? 'neg' : '') + '">' + fmtC(result.categoryLeft) + '</b></div>';
+    return '<div class="purchase-verdict ' + (warn ? 'warning' : 'covered') + '"><h3>' + icon(warn ? 'warn' : 'check') + esc(title) + '</h3><p>' + esc(reason) + '</p><div class="result-row lowest"><div><span>Lowest balance</span><strong class="' + (result.low.bal < result.buffer ? 'neg' : '') + '">' + fmtC(result.low.bal) + '</strong></div><span>' + dLong(result.low.n) + '</span></div><div class="result-row"><span>Balance in 30 days</span><b>' + fmtC(result.after.days[29].bal) + '</b></div>' + category + (short ? '<p class="hint">A positive ending balance can still hide a shortfall.</p>' : '') + '</div>' + (out ? '<button class="btn alt retry-purchase" type="button" data-act="retryPurchase">Try ' + (warn ? 'a smaller' : 'another') + ' amount</button>' : '');
+  }
+  function checkPurchase() {
+    var amt = strictMoney($('#checkAmt').value), err = $('#checkErr'), when = $('#checkWhen').value;
+    var day = when === 'today' ? todayNum() : when === 'tomorrow' ? todayNum() + 1 : parseISO($('#checkDate').value);
+    $('#purchaseResult').innerHTML = ''; err.textContent = '';
+    if (!(amt > 0)) { err.textContent = 'Enter an amount greater than zero, with up to two decimal places.'; return; }
+    if (!Number.isFinite(day) || day < todayNum() || day > todayNum() + 30) { err.textContent = 'Choose a date within the next 30 days.'; return; }
+    var p = { id: 'purchase-check', ts: Date.now(), day: day, type: 'out', amt: amt, cat: $('#checkCat').value };
+    $('#purchaseResult').innerHTML = purchaseResultHTML(p, purchaseImpact(state, todayNum(), p));
+  }
+  function clearPurchaseResult() { $('#purchaseResult').innerHTML = ''; $('#checkErr').textContent = ''; $('#askOut').innerHTML = ''; }
   function answerAsk(q) {
-    var out = $('#askOut'), me = meName() || 'there';
-    if (!state.budget.done) { out.innerHTML = '<div class="say">Finish your budget in Plan first and I can answer that.</div>'; return; }
-    if (/how am i|how are we|doing|on track|where do i stand|status/.test(q.toLowerCase()) && !/\d/.test(q)) return answerHow();
+    var out = $('#askOut');
+    if (!state.budget.done) { out.textContent = 'Finish your budget in Plan first.'; return; }
     var a = parseAsk(q);
-    if (!a.amt) { out.innerHTML = '<div class="say">Tell me the amount, like "if I spend $80 on shoes tomorrow".</div>'; speak('Tell me the amount, like: if I spend eighty dollars on shoes tomorrow.'); return; }
-    var tx = { id: 'ask', ts: Date.now(), day: a.day, type: a.type, amt: a.amt, cat: a.cat, note: a.what };
-    var before = snapFor(state), after = snapFor(Object.assign({}, state, { tx: state.tx.concat([tx]) }));
-    var c = state.budget.cats.find(function (x) { return x.name === a.cat; }), left = c ? after.ms.lim[c.id] - after.ms.spent[c.id] : null;
-    var when = a.day === todayNum() ? 'today' : 'on ' + dShort(a.day), parts2 = [], verdict;
-    if (a.type === 'in') verdict = 'Nice. ' + fmtC(a.amt) + ' ' + when + ' takes your 30-day balance from ' + fmt(before.d30) + ' to ' + fmt(after.d30) + '. Put part of it in your emergency fund before it blends into everyday money.';
-    else {
-      parts2.push('Spending ' + fmtC(a.amt) + (a.what ? ' on ' + a.what : '') + ' ' + when + (a.day === todayNum() ? ' leaves ' + (after.dp.left >= 0 ? fmt(after.dp.left) + ' of today\'s allowance' : 'you ' + fmt(-after.dp.left) + ' over today\'s allowance') : ' changes your forecast for that day') + '.');
-      if (c && c.limit) parts2.push(a.cat + ' would have ' + (left >= 0 ? fmt(left) + ' left for the month' : fmt(-left) + ' over its limit') + '.');
-      parts2.push('Your 30-day balance goes from ' + fmt(before.d30) + ' to ' + fmt(after.d30) + '.');
-      if (before.ef && before.ef.remaining > 0 && before.ef.eta != null && after.ef.eta != null && after.ef.eta !== before.ef.eta) parts2.push('Your emergency fund date moves ' + (after.ef.eta - before.ef.eta) + ' days later, to ' + dFull(after.ef.eta) + '.');
-      var bad = after.d30 < (state.buffer || 0) || (left != null && left < 0 && c.limit), tight = after.dp.left < 0;
-      if (bad) verdict = 'My take, ' + me + ': wait. ' + (after.d30 < (state.buffer || 0) ? 'It pushes you below your cushion within 30 days.' : 'It blows through your ' + a.cat + ' limit.') + ' Put it on next month\'s plan if you still want it.';
-      else if (before.ef && before.ef.remaining > 0 && before.ef.eta != null && after.ef.eta != null && after.ef.eta - before.ef.eta >= 14) verdict = 'It fits the budget, ' + me + ', but it pushes your emergency fund back ' + (after.ef.eta - before.ef.eta) + ' days. If you buy it, match it with a skipped ' + (state.budget.cats.find(function (x) { return x.grp === 'want' && x.name !== a.cat; }) || { name: 'want' }).name.toLowerCase() + ' purchase this week.';
-      else if (tight) verdict = 'You can do it, ' + me + ', but it uses more than today\'s allowance. Keep the rest of the week to about ' + fmt(Math.max(0, after.rest || 0)) + ' a day and you stay on plan.';
-      else verdict = 'You are good, ' + me + '. It fits today\'s allowance and ' + a.cat + ' stays under its limit.';
-    }
-    var plain = (a.type === 'in' ? '' : parts2.join(' ') + ' ') + verdict;
-    out.innerHTML = '<div class="say">' + esc(verdict) + '</div>' + (a.type === 'in' ? '' : '<div>' + esc(parts2.join(' ')) + '</div>') + '<div class="hint" style="margin-top:8px">I read that as ' + fmtC(a.amt) + ' in ' + esc(a.cat) + ' ' + esc(when) + '. Change the wording if that is off.</div>';
-    speak(plain);
+    if (!a.amt || a.amt <= 0) { out.textContent = 'Include a positive amount, like “spend $80 on shoes tomorrow”.'; return; }
+    var p = { id: 'ask', ts: Date.now(), day: a.day, type: a.type, amt: a.amt, cat: a.cat };
+    out.innerHTML = '<p class="hint">I read that as ' + fmtC(a.amt) + ' ' + (a.type === 'out' ? 'spent in ' : 'received in ') + esc(a.cat) + ' on ' + dLong(a.day) + '. Check these details before using the estimate.</p>' + purchaseResultHTML(p, purchaseImpact(state, todayNum(), p));
   }
   function answerHow() {
     var out = $('#askOut'), me = meName() || 'there', dp = dayPlan(state, V.today), tips = coachTips(state, V.today), warn = tips.find(function (t) { return t.kind === 'warn'; });
@@ -1634,7 +1703,7 @@ function nextTarget(state) {
   }
   function settingsHTML() {
     var n = state.names;
-    return '<section class="card"><h2>Settings</h2>' +
+    return '<section class="card" id="settingsCard"><h2 tabindex="-1">Settings</h2>' +
       '<details open style="border-top:0;margin-top:0;padding-top:0"><summary>Names and this phone</summary><form class="stack" data-form="namesEdit" autocomplete="off"><div class="two"><div><label class="f" for="en1">First name</label><input type="text" id="en1" name="n1" maxlength="20" value="' + esc(n[0] || '') + '"></div><div><label class="f" for="en2">Partner\'s first name (optional)</label><input type="text" id="en2" name="n2" maxlength="20" value="' + esc(n[1] || '') + '"></div></div>' +
       '<div><label class="f" for="enP">Accountability partner</label><input type="text" id="enP" name="partner" maxlength="24" value="' + esc(state.partner || '') + '" placeholder="A parent, sibling or friend"></div>' +
       (n.length > 1 ? '<div><label class="f" for="enMe">This phone belongs to</label><select id="enMe" name="me">' + n.map(function (x, i) { return '<option value="' + i + '"' + (i === meIdx ? ' selected' : '') + '>' + esc(x) + '</option>'; }).join('') + '</select></div>' : '') +
@@ -1700,31 +1769,26 @@ function nextTarget(state) {
   /* ---------- TODAY ---------- */
   function renderDaily() {
     var dp = dayPlan(state, V.today), el = $('#dailyDyn');
-    var key = mkey(V.today), ms = monthStats(state, key, V.today);
-    if (dp.total === 0) {
-      el.innerHTML = '<div class="lbl">Left to spend today</div><div class="big">—</div><p class="headline">Set monthly limits for everyday spending in Plan and your daily number shows up here.</p><button class="btn" type="button" data-act="tab" data-view="plan">Open Plan</button>';
-      return;
-    }
-    var over = state.budget.cats.filter(function (c) { return ms.spent[c.id] > ms.lim[c.id] && ms.lim[c.id] > 0; });
-    var left = dp.left, pct = dp.allowance > 0 ? Math.min(dp.spentToday / dp.allowance, 1) * 100 : (dp.spentToday > 0 ? 100 : 0);
-    var cls = left < 0 ? 'short' : (dp.allowance > 0 && dp.spentToday > dp.allowance * 0.8 ? 'tight' : '');
-    var sub = dp.remaining >= 0 ? 'You have ' + fmt(dp.remaining) + ' left of your ' + fmt(dp.total) + ' everyday budget for ' + monthName(key) + ', with ' + dp.daysLeft + ' day' + (dp.daysLeft === 1 ? '' : 's') + ' to go.' : 'You are ' + fmt(-dp.remaining) + ' past your ' + monthName(key) + ' everyday budget. Spend only what you must until the month turns over.';
-    el.innerHTML = paydayCard() + weekOneCard() + '<div class="lbl">Left to spend today</div><div class="big ' + (left < 0 ? 'neg' : 'pos') + '" id="heroNum" data-v="' + left + '">' + fmt(left) + '</div>' +
-      '<div class="meter" role="img" aria-label="Spent today compared with allowance"><i class="' + cls + '" style="width:' + pct.toFixed(1) + '%"></i></div>' +
-      '<div class="stats3"><div><span class="lbl">Allowance</span><b>' + fmt(dp.allowance) + '</b></div><div><span class="lbl">Spent</span><b>' + fmt(dp.spentToday) + '</b></div><div><span class="lbl">Days left</span><b>' + dp.daysLeft + '</b></div></div>' +
-      '<p class="hint" style="margin:10px 0 0">' + (dp.remaining >= 0 ? fmt(dp.remaining) + ' left of ' + fmt(dp.total) + ' for ' + monthName(key) + '.' : esc(sub)) + '</p>' +
-      (over.length ? '<p class="hint neg" style="margin-top:10px">Over limit this month: ' + over.map(function (c) { return esc(c.name) + ' by ' + fmt(ms.spent[c.id] - ms.lim[c.id]); }).join(', ') + '.</p>' : '') +
-      streakLine() + paydayHTML() + challengeHTML() + bankNudge();
-    countUp();
+    var short = V.low.bal < V.buf, status = short ? 'warn' : 'check';
+    var statusText = short ? (V.low.bal < 0 ? 'Cash shortfall ahead' : 'Your cushion is at risk') : 'Upcoming bills covered';
+    var detail = short ? 'Lowest projected balance: ' + fmtC(V.low.bal) + ' · ' + dLong(V.low.n) : 'Based on your current spending pace.';
+    var matchDay = state.lastBalanceMatchDay;
+    if (matchDay > V.today) matchDay = null;
+    var matchText = state.sample ? 'Example bank balance' : matchDay == null ? 'Match your bank balance' : matchDay === V.today ? 'Bank balance matched today' : matchDay === V.today - 1 ? 'Bank balance matched yesterday' : 'Bank balance matched ' + dShort(matchDay);
+    var pct = dp.allowance > 0 ? Math.max(0, Math.min(1, dp.left / dp.allowance)) * 100 : 0;
+    var value = dp.total > 0 ? fmtC(dp.left) : '—';
+    el.innerHTML = '<div class="lbl">Today’s budget</div><div class="daily-amount' + (dp.left < 0 ? ' neg' : '') + '">' + value + '</div>' +
+      '<p class="daily-caption">' + (dp.left < 0 ? 'over today’s allowance' : 'left to spend') + '</p>' +
+      (dp.total > 0 ? '<div class="meter" role="img" aria-label="' + esc(fmtC(Math.max(0, dp.left)) + ' remaining of ' + fmtC(dp.allowance)) + '"><i style="width:' + pct.toFixed(1) + '%"></i></div><dl class="daily-stats"><div><dt>Daily allowance</dt><dd>' + fmtC(dp.allowance) + '</dd></div><div><dt>Spent</dt><dd>' + fmtC(dp.spentToday) + '</dd></div></dl>' : '<p class="hint">Set everyday spending limits in Plan to see your daily budget.</p><button class="link" type="button" data-act="tab" data-view="plan">Set spending limits</button>') +
+      '<div class="cash-status ' + (short ? 'cash-warning' : '') + '"><div class="status-line">' + icon(status) + '<b>' + statusText + '</b></div><p>' + esc(detail) + '</p><button class="balance-match" type="button" data-act="gomatch">' + icon('bank') + '<span>' + esc(matchText) + '</span><span aria-hidden="true">›</span></button></div>';
+    $('#dailyExtrasDyn').innerHTML = '<p class="hint">' + (dp.remaining >= 0 ? fmtC(dp.remaining) + ' left in ' + monthName(mkey(V.today)) + ' · ' + dp.daysLeft + ' days to go' : fmtC(-dp.remaining) + ' over your monthly budget') + '</p>' + paydayCard() + weekOneCard() + streakLine() + paydayHTML() + challengeHTML() + bankNudge();
   }
-  var counted = false;
-  function countUp() {
-    if (counted || cur !== 'today') return; counted = true;
-    var n = $('#heroNum'); if (!n) return;
-    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    var target = Number(n.getAttribute('data-v')) || 0, t0 = null, dur = 650;
-    function step(ts) { if (t0 == null) t0 = ts; var k = Math.min(1, (ts - t0) / dur); k = 1 - Math.pow(1 - k, 3); n.textContent = fmt(Math.round(target * k)); if (k < 1) requestAnimationFrame(step); else n.textContent = fmt(target); }
-    requestAnimationFrame(step);
+  function renderDayUpcoming() {
+    var next = V.f.days.find(function (d) { return d.ev.some(function (e) { return e.amt < 0; }); });
+    var el = $('#dayUpcomingDyn');
+    if (!next) { el.innerHTML = '<h2>No bills coming up</h2><p class="hint">Nothing is scheduled in the next 30 days.</p><button class="link" type="button" data-act="tab" data-view="plan">Review scheduled bills</button>'; return; }
+    var bills = next.ev.filter(function (e) { return e.amt < 0; }), total = bills.reduce(function (a, e) { return a - e.amt; }, 0);
+    el.innerHTML = '<button class="coming-button" type="button" data-act="sub" data-sub="outlook"><span class="coming-title">' + esc(bills.map(function (e) { return e.name; }).join(' + ')) + '</span><span aria-hidden="true">›</span><strong>' + fmtC(total) + '</strong></button><div class="coming-detail"><span>' + icon('calendar') + esc(dLong(next.n)) + '</span><span>Projected balance after bills:<b class="' + (next.bal < V.buf ? 'neg' : '') + '">' + fmtC(next.bal) + '</b></span></div>';
   }
   function paydayCard() {
     if (state.sample) return '';
@@ -1894,7 +1958,7 @@ function nextTarget(state) {
     if (!c) { h.textContent = ''; return; }
     var ms = monthStats(state, mkey(todayNum()), todayNum()), left = ms.lim[c.id] - ms.spent[c.id];
     h.className = 'hint ' + (left < 0 ? 'neg' : '');
-    h.textContent = ms.lim[c.id] ? (left >= 0 ? fmt(left) + ' left of ' + fmt(ms.lim[c.id]) + ' this month' : fmt(-left) + ' over the ' + fmt(ms.lim[c.id]) + ' limit this month') : 'No limit set for this category';
+    h.textContent = ms.lim[c.id] ? (left >= 0 ? fmtC(left) + ' left of ' + fmtC(ms.lim[c.id]) + ' this month' : fmtC(-left) + ' over the ' + fmtC(ms.lim[c.id]) + ' limit this month') : 'No limit set for this category';
   }
 
   /* ---------- MONTH ---------- */
@@ -2112,24 +2176,24 @@ function nextTarget(state) {
   /* ---------- actions ---------- */
   function snapFor(st) {
     var today = todayNum(), f = forecast(st, today, 30), dp = dayPlan(st, today), ms = monthStats(st, mkey(today), today);
-    return { ef: efProject(st, today), b0: f.bal0, d7: f.days[6].bal, d30: f.days[29].bal, dp: dp, ms: ms, rest: dp.daysLeft > 1 ? Math.floor(Math.max(dp.remaining, 0) / (dp.daysLeft - 1)) : null };
+    return { low: f.days.reduce(function (low, d) { return d.bal < low.bal ? { bal: d.bal, n: d.n } : low; }, { bal: f.bal0, n: today }), ef: efProject(st, today), b0: f.bal0, d7: f.days[6].bal, d30: f.days[29].bal, dp: dp, ms: ms, rest: dp.daysLeft > 1 ? Math.floor(Math.max(dp.remaining, 0) / (dp.daysLeft - 1)) : null };
   }
   function impactHTML(tx, before, after, done) {
     var today = todayNum(), now = tx.day <= today, out = tx.type === 'out';
     var c = state.budget.cats.find(function (x) { return x.name === tx.cat; });
     var cb = c ? before.ms.lim[c.id] - before.ms.spent[c.id] : null, ca = c ? after.ms.lim[c.id] - after.ms.spent[c.id] : null;
-    function line(lbl, x, y) { var d = y - x; return '<div class="ln"><span>' + lbl + '</span><span><b>' + fmt(x) + '</b> → <b>' + fmt(y) + '</b> <span class="' + (d >= 0 ? 'pos' : 'neg') + '">(' + (d === 0 ? 'no change' : sgn(d)) + ')</span></span></div>'; }
+    function line(lbl, x, y) { var d = y - x; return '<div class="ln"><span>' + lbl + '</span><span><b>' + fmtC(x) + '</b> → <b>' + fmtC(y) + '</b> <span class="' + (d >= 0 ? 'pos' : 'neg') + '">(' + (d === 0 ? 'no change' : sgnC(d)) + ')</span></span></div>'; }
     var msgs = [], bad = false;
     if (out && now) {
-      if (after.dp.left < 0) { bad = true; msgs.push('That is ' + fmt(-after.dp.left) + ' over today\'s allowance.'); }
-      if (c && ca < 0) { bad = true; msgs.push(esc(c.name) + (cb < 0 ? ' is now ' + fmt(-ca) + ' over its limit.' : ' goes over its limit by ' + fmt(-ca) + '.')); }
+      if (after.dp.left < 0) { bad = true; msgs.push('That is ' + fmtC(-after.dp.left) + ' over today\'s allowance.'); }
+      if (c && ca < 0) { bad = true; msgs.push(esc(c.name) + (cb < 0 ? ' is now ' + fmtC(-ca) + ' over its limit.' : ' goes over its limit by ' + fmtC(-ca) + '.')); }
     }
-    if (after.d30 < 0 && before.d30 >= 0) { bad = true; msgs.push('This pushes your 30-day balance below zero.'); }
+    if (after.low.bal < (state.buffer || 0)) { bad = true; msgs.push('Projected balance reaches ' + fmtC(after.low.bal) + ' on ' + dShort(after.low.n) + ', below ' + ((state.buffer || 0) > 0 ? 'your cushion.' : 'zero.')); }
     var verdict;
     if (bad) verdict = '<div class="verdict bad">' + msgs.join(' ') + '</div>';
     else if (!out) verdict = '<div class="verdict ok">That adds to your balance and your forecast.</div>';
     else if (!now) verdict = '<div class="verdict ok">Planned for ' + dShort(tx.day) + '. It shows up in your forecast on that day.</div>';
-    else verdict = '<div class="verdict ok">Still within today\'s allowance, with ' + fmt(after.dp.left) + ' left today.</div>';
+    else verdict = '<div class="verdict ok">Still within today\'s allowance, with ' + fmtC(after.dp.left) + ' left today.</div>';
     var head = (done ? (out ? 'Logged ' : 'Added ') : (out ? 'If you spend ' : 'If you receive ')) + fmtC(tx.amt) + (tx.cat ? ' (' + esc(tx.cat) + ')' : '') + (!now ? ', planned for ' + dShort(tx.day) : '');
     var rows = '';
     if (out && now) {
@@ -2143,10 +2207,10 @@ function nextTarget(state) {
       if (x == null) txt = '<b>' + dFull(y) + '</b>';
       else if (y == null) txt = '<b>' + dFull(x) + '</b> → <b>no date</b>';
       else { var dd = y - x; txt = '<b>' + dFull(x) + '</b> → <b>' + dFull(y) + '</b> <span class="' + (dd <= 0 ? 'pos' : 'neg') + '">(' + (dd === 0 ? 'no change' : Math.abs(dd) + ' day' + (Math.abs(dd) === 1 ? '' : 's') + (dd > 0 ? ' later' : ' sooner')) + ')</span>'; }
-      rows += '<div class="ln"><span>Emergency fund hits ' + fmt(before.ef.target) + '</span><span>' + txt + '</span></div>';
+      rows += '<div class="ln"><span>Emergency fund hits ' + fmtC(before.ef.target) + '</span><span>' + txt + '</span></div>';
     }
     var note = now && !counts({ day: tx.day, ts: Date.now() }, state.anchor) ? '<div class="hint">This date is before your last balance match, so it does not change today\'s balance.</div>' : '';
-    var fut = out && c && c.grp === 'want' && tx.amt >= 2000 ? '<div class="future">Future you: that ' + fmt(tx.amt) + ' invested at 7% a year is <b>' + fmt(futureYou(tx.amt)) + '</b> in 30 years. Not a no. Just the number.</div>' : '';
+    var fut = out && c && c.grp === 'want' && tx.amt >= 2000 ? '<div class="future">Future you: that ' + fmtC(tx.amt) + ' invested at 7% a year is <b>' + fmtC(futureYou(tx.amt)) + '</b> in 30 years. Not a no. Just the number.</div>' : '';
     var needle = done && out && now && after.dp.left >= 0 ? '<div class="needle">Still under today\'s allowance. ' + (function () { var sk = streakInfo(state, todayNum()); return sk.n > 0 ? 'Keep it there and the streak hits ' + (sk.n + 1) + ' tonight.' : 'Finish the day this way and your streak starts.'; })() + '</div>' : '';
     return '<div class="hd">' + head + '</div>' + verdict + rows + fut + needle + note;
   }
@@ -2227,9 +2291,10 @@ function nextTarget(state) {
       var c = money($('#matchAmt').value);
       if (c == null) { $('#matchErr').textContent = 'Enter the balance as a number, like 1250.40.'; return; }
       $('#matchErr').textContent = '';
-      state.anchor = { day: todayNum(), ts: Date.now(), balance: c };
+      state.anchor = { day: todayNum(), ts: Date.now(), balance: c }; state.lastBalanceMatchDay = todayNum();
       save(); $('#matchForm').classList.remove('open'); $('#matchBtn').setAttribute('aria-expanded', 'false'); render(); return;
     }
+    if (k === 'purchase') { checkPurchase(); return; }
     if (k === 'ask') { answerAsk($('#askQ').value.trim()); return; }
     if (k === 'review') {
       var rs = parseInt(f.getAttribute('data-s'), 10), ws2 = { s: rs, e: rs + 6 }, wst2 = weekStats(state, ws2, todayNum());
@@ -2260,6 +2325,7 @@ function nextTarget(state) {
 
   document.addEventListener('input', function (e) {
     var i = e.target;
+    if (i.closest && i.closest('#purchaseForm')) clearPurchaseResult();
     if (i.getAttribute && i.getAttribute('data-limit')) {
       var c = state.budget.cats.find(function (x) { return x.id === i.getAttribute('data-limit'); });
       if (c) { var v = money(i.value); c.limit = v > 0 ? v : 0; delete state.budget.months[mkey(todayNum())]; save(); updatePlanTotals(); }
@@ -2272,8 +2338,9 @@ function nextTarget(state) {
   });
   document.addEventListener('change', function (e) {
     var t = e.target;
+    if (t.closest && t.closest('#purchaseForm')) { clearPurchaseResult(); $('#checkDateWrap').hidden = $('#checkWhen').value !== 'custom'; }
     if (t.name === 'freq' && t.closest('form')) { var d2 = t.closest('form').querySelector('.day2'); if (d2) d2.hidden = t.value !== 'twice'; }
-    if (t.id === 'startBal') { var c = money(t.value); if (c != null) { state.anchor = { day: todayNum(), ts: Date.now(), balance: c }; save(); } }
+    if (t.id === 'startBal') { var c = money(t.value); if (c != null) { state.anchor = { day: todayNum(), ts: Date.now(), balance: c }; state.lastBalanceMatchDay = todayNum(); save(); } }
     if (t.id === 'rmRecon' || t.id === 'rmReview') { if (/^\d\d:\d\d$/.test(t.value)) { state.remind[t.id === 'rmRecon' ? 'recon' : 'review'] = t.value; save(); renderCal(); } }
     if (t.id === 'restoreFile' && t.files && t.files[0]) { restoreFile(t.files[0]); t.value = ''; }
     if (t.id === 'csvFile' && t.files && t.files[0]) { var rd = new FileReader(); rd.onload = function () { loadCSV(String(rd.result)); }; rd.readAsText(t.files[0]); }
@@ -2284,17 +2351,19 @@ function nextTarget(state) {
     if (t.id === 'eDate') updatePreview();
   });
 
-  document.addEventListener('focusin', function (e) { if (e.target.closest && e.target.closest('#entryForm')) $('#fab').classList.add('off'); });
-  document.addEventListener('focusout', function (e) { if (e.target.closest && e.target.closest('#entryForm')) setTimeout(function () { if (!document.activeElement || !document.activeElement.closest('#entryForm')) $('#fab').classList.remove('off'); }, 150); });
   document.addEventListener('click', function (e) {
     var b = e.target.closest('[data-act]');
     if (!b) return;
     var act = b.getAttribute('data-act'), id = b.getAttribute('data-id');
     switch (act) {
-      case 'tab': setView(b.getAttribute('data-view')); break;
+      case 'tab': setView(b.getAttribute('data-view')); if (cur === 'today') setSub('spend'); break;
+      case 'openSettings': setView('plan'); { var settings = $('#settingsCard'); if (settings) { settings.scrollIntoView({ block: 'start' }); settings.querySelector('h2').focus({ preventScroll: true }); } } break;
+      case 'openCheck': setView('today'); setSub('check'); clearPurchaseResult(); window.scrollTo({ top: 0 }); $('#askH').focus({ preventScroll: true }); break;
+      case 'backToday': setSub('spend'); window.scrollTo({ top: 0 }); $('#dailyH').focus({ preventScroll: true }); break;
+      case 'retryPurchase': $('#checkAmt').value = ''; clearPurchaseResult(); $('#checkAmt').focus(); break;
       case 'paydayDone': { if (!state.paydays) state.paydays = {}; state.paydays[todayNum()] = 1; save(); render(); break; }
       case 'focusAdd':
-      case 'quickAdd': setView('today'); setSub('spend'); { var ae = $('#add'); if (ae) ae.scrollIntoView({ behavior: 'smooth', block: 'start' }); var ai = $('#eAmt'); if (ai) setTimeout(function () { ai.focus(); }, 350); } break;
+      case 'quickAdd': setView('today'); setSub('entry'); { var ae = $('#add'); if (ae) ae.scrollIntoView({ behavior: 'smooth', block: 'start' }); var ai = $('#eAmt'); if (ai) setTimeout(function () { ai.focus(); }, 350); } break;
       case 'sub': setSub(b.getAttribute('data-sub')); window.scrollTo({ top: 0 }); break;
       case 'cal': { var ce = calEvents().find(function (e) { return e.id === b.getAttribute('data-id'); }); if (ce) shareICS(ce, false); break; }
       case 'calPartner': { var cp = calEvents().find(function (e) { return e.id === b.getAttribute('data-id'); }); if (cp) shareICS(cp, true); break; }
@@ -2399,6 +2468,7 @@ function nextTarget(state) {
     out.budget.months = Object.assign({}, older.budget.months, newer.budget.months);
     out.saved = Object.assign({}, older.saved, newer.saved);
     out.anchor = clone(a.anchor.ts >= b.anchor.ts ? a.anchor : b.anchor);
+    out.lastBalanceMatchDay = (a.anchor.ts >= b.anchor.ts ? a : b).lastBalanceMatchDay;
     if (!out.names.length) out.names = clone(older.names || []);
     out.updated = Math.max(a.updated || 0, b.updated || 0);
     var ga = a.goals || {}, gb = b.goals || {}, ea2 = ga.ef, eb2 = gb.ef;
