@@ -10,12 +10,12 @@ body .wrap h1 { font-size: 20px; letter-spacing: -.035em; font-weight: 700; flex
 .greeting { font-family: var(--font-display); margin: 0 0 3px; font-size: 23px; font-weight: 650; line-height: 1.25; letter-spacing: -.035em; }
 body .wrap .today-label { font-size: 13px; white-space: normal; color: var(--ink-2); }
 body:not([data-sub="spend"]) .greeting { font-size: 18px; }
-.sample-note { position: relative; margin: 3px 0 0; padding: 0; border: 0; flex: none; z-index: 25; }
-.sample-note summary { list-style: none; white-space: nowrap; padding: 6px 10px; border-radius: 999px; background: var(--surface-2); color: var(--ink-2); border: 1px solid var(--line); font-size: 10px; font-weight: 500; }
-.sample-note summary::-webkit-details-marker { display: none; }
-.sample-note > div { position: absolute; right: 0; top: 34px; width: min(280px, calc(100vw - 40px)); padding: 16px; background: var(--surface); border: 1px solid var(--line); box-shadow: 0 8px 26px #0003; border-radius: 12px; }
-.sample-note p { margin: 0 0 12px; font-size: 14px; }
-.sample-note .btn { width: 100%; }
+/* A visible invitation, rather than an action hidden inside an example badge. */
+.sample-note { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 18px; margin: -4px 0 20px; padding: 14px 16px; border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 12px; background: var(--surface); }
+.sample-note p { margin: 0; font-size: 13px; font-weight: 600; }
+.sample-note p span { display: block; margin-top: 3px; font-size: 12px; font-weight: 400; color: var(--ink-2); }
+.sample-note .btn { flex: none; min-height: 44px; font-size: 13px; padding: 0 14px; }
+.sample-note .btn span { margin-left: 5px; }
 .card { border-radius: var(--radius); padding: 22px; }
 .tabs { max-width: none; margin-bottom: 20px; }
 .tab { border-radius: 12px; }
@@ -117,7 +117,7 @@ body[data-sub="entry"] #todayGrid, body[data-sub="check"] #todayGrid { display: 
 }
 @media (max-width: 359px) {
   .greeting-row { flex-wrap: wrap; }
-  .sample-note { margin-top: 0; }
+  .sample-note .btn { width: 100%; }
   .subs { justify-content: space-between; gap: 12px; }
   .coming-detail { grid-template-columns: 1fr; }
   .coming-detail > span + span { padding: 0; border: 0; }

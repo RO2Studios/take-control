@@ -368,11 +368,11 @@ input[type=file] { font-size: 14px; }
   </header>
   <div class="greeting-row" id="greetingRow">
     <div><p class="greeting" id="greeting"></p><div class="today-label" id="todayLabel"></div></div>
-    <details class="sample-note" id="sampleBanner" hidden>
-      <summary>Example numbers</summary>
-      <div><p>Explore with example numbers. Your own budget starts fresh.</p><button class="btn" type="button" data-act="clearSample">Build my budget</button></div>
-    </details>
   </div>
+  <aside class="sample-note" id="sampleBanner" aria-label="Example budget" hidden>
+    <p>You’re viewing an example budget.<span>Start fresh with your own numbers.</span></p>
+    <button class="btn" type="button" data-act="clearSample">Create my budget <span aria-hidden="true">→</span></button>
+  </aside>
   <div class="banner" id="storeBanner" hidden>
     <span>This browser is not saving data, so entries will be lost when you close the page. Open the page in a regular browser window to keep them.</span>
   </div>
