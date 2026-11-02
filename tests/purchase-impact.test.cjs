@@ -129,3 +129,17 @@ test('new example budget includes Visa Mastercard and American Express card netw
  const networks=sample.recs.filter(r=>r.kind==='credit').map(r=>r.cardNetwork).sort();
  assert.equal(networks.join(','),'americanexpress,mastercard,visa');
 });
+
+test('actual demo and an identical real budget earn the same level and overall progress',()=>{
+ evaluate(fs.readFileSync(path.join(__dirname,'..','money-levels.js'),'utf8'));
+ const result=evaluate(`(() => {
+  const sample=makeSample(),real=JSON.parse(JSON.stringify(sample));real.sample=false;
+  return {demo:TakeControlLevels.progress(sample),real:TakeControlLevels.progress(real)};
+ })()`);
+ assert.deepEqual(JSON.parse(JSON.stringify(result.demo)),JSON.parse(JSON.stringify(result.real)));
+ assert.equal(result.demo.xp,180);
+ assert.equal(result.demo.level,3);
+ assert.equal(result.demo.percent,62);
+ assert.equal(result.demo.levelPercent,8);
+ assert.equal(result.demo.completed,6);
+});

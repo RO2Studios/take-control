@@ -20,6 +20,7 @@ for (let i = 0; i < 4; i++) {
   test(`Level ${i+1} keeps its level artwork and colors when ${status}`, () => {
    // Boundary states (-1 and 4) deliberately exercise all 12 renderer combinations.
    const rendered = c.levelJourneyHTML({index});
+   assert.ok(rendered.includes('--ml-journey-progress:'+Math.max(0,Math.min(100,index/3*100))+'%'));
    const stages = rendered.match(/<div role="listitem"[\s\S]*?<\/div>/g);
    assert.equal(stages.length, 4);
    const stage = stages[i];

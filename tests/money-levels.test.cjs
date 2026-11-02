@@ -48,8 +48,8 @@ test('integrated UI is compact by default, expandable, and retains existing Toda
  assert.ok(html.includes("if(openLesson.pick===L0.q.answer)state.learned[L0.id] = 1"));
  assert.ok(css.includes('@media(prefers-reduced-motion:reduce)'));
  assert.ok(sw.includes("'money-levels.js'"));
- assert.ok(sw.includes('takecontrol-v49'));
- assert.ok(html.includes('ui.css?v=49'));
+ assert.ok(sw.includes('takecontrol-v50'));
+ assert.ok(html.includes('ui.css?v=50'));
  for(const m of html.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g))new vm.Script(m[1]);
 });
 
@@ -93,4 +93,14 @@ test('level badges use the approved cartoon files and include them offline',()=>
  }
  assert.match(html,/ml-approved-badge/);
  assert.match(css,/img\.ml-approved-badge/);
+});
+
+test('journey percentage never resets on promotion and reaches 100 only at Master',()=>{
+ const cases=[[0,1,0],[24,1,8],[50,1,17],[79,1,27],[80,2,27],[169,2,58],[170,3,58],[180,3,62],[289,3,99],[290,4,100],[1000,4,100]];
+ let last=-1;
+ for(const [xp,level,percent] of cases){
+  const s=base();s.moneyXPHigh=xp;const p=L.progress(s);
+  assert.equal(p.level,level);assert.equal(p.percent,percent);assert.ok(p.percent>=last);last=p.percent;
+ }
+ const s=base();s.moneyXPHigh=180;assert.equal(L.progress(s).levelPercent,8);
 });
