@@ -12,5 +12,24 @@ function paycheckAdvice(rec,pays,today,saved){const due=nextDue(rec,today);if(du
 const n=new Set(dates).size;return {remaining,due,payments:n,perPaycheck:n?Math.ceil(remaining/n):null};}
 function foodDelivery(tx,today){const month=datePart(today),start=Math.floor(Date.UTC(month.y,month.m,1)/DAY);const matched=(tx||[]).filter(t=>t.type==='out'&&t.day>=start&&t.day<=today&&(/\b(?:doordash|door dash|ubereats|uber eats|grubhub|postmates)\b/i.test((t.note||'')+' '+(t.cat||''))));return {amount:matched.reduce((a,t)=>a+t.amt,0),count:matched.length};}
 function debtCost(rec){if(!Number.isFinite(rec.apr)||rec.apr<0||rec.apr>100)return null;return Math.round(rec.amt*rec.apr/1200);}
-root.TakeControlInsights={hits,nextDue,subscriptionTotals,paycheckAdvice,foodDelivery,debtCost,parseDate};
+/* Illustrative minimum: interest + 1% of principal, with a $25 floor.
+   All amounts are integer cents. Extra is allocated once per month, highest APR first.
+   Scheduled bill amounts are deliberately not treated as issuer minimums. */
+function creditPayoff(cards,extra){
+ if(!Array.isArray(cards)||!Number.isSafeInteger(extra)||extra<0)return null;
+ if(cards.some(c=>!Number.isSafeInteger(c.cardBalance)||c.cardBalance<0||!Number.isFinite(c.apr)||c.apr<0||c.apr>100))return null;
+ const balances=cards.map(c=>c.cardBalance),paidAt=balances.map(b=>b===0?0:null);
+ const order=cards.map((c,i)=>i).sort((a,b)=>cards[b].apr-cards[a].apr);
+ let months=0,totalInterest=0,totalPaid=0;
+ while(balances.some(b=>b>0)&&months<1200){
+  months++;
+  const interest=balances.map((b,i)=>Math.round(b*cards[i].apr/1200));
+  const payments=balances.map((b,i)=>b?Math.min(b+interest[i],Math.max(2500,interest[i]+Math.ceil(b*.01))):0);
+  let remaining=extra;
+  for(const i of order){const add=Math.min(remaining,balances[i]+interest[i]-payments[i]);payments[i]+=add;remaining-=add;}
+  balances.forEach((b,i)=>{balances[i]=b+interest[i]-payments[i];totalInterest+=interest[i];totalPaid+=payments[i];if(balances[i]===0&&paidAt[i]===null)paidAt[i]=months;});
+ }
+ return {months:balances.some(b=>b>0)?null:months,totalInterest,totalPaid,paidAt};
+}
+root.TakeControlInsights={hits,nextDue,subscriptionTotals,paycheckAdvice,foodDelivery,debtCost,creditPayoff,parseDate};
 })(typeof window!=='undefined'?window:globalThis);
