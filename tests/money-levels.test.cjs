@@ -47,8 +47,8 @@ test('integrated UI is compact by default, expandable, and retains existing Toda
  assert.ok(html.includes("if(openLesson.pick===L0.q.answer)state.learned[L0.id] = 1"));
  assert.ok(css.includes('@media(prefers-reduced-motion:reduce)'));
  assert.ok(sw.includes("'money-levels.js'"));
- assert.ok(sw.includes('takecontrol-v42'));
- assert.ok(html.includes('ui.css?v=42'));
+ assert.ok(sw.includes('takecontrol-v43'));
+ assert.ok(html.includes('ui.css?v=43'));
  for(const m of html.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g))new vm.Script(m[1]);
 });
 
@@ -68,4 +68,15 @@ test('mockup-faithful compact responsive card, connected stages and overlay rema
  assert.ok(html.includes('moneyLevelDetails'));
  assert.ok(html.includes('renderDaily(); renderDayUpcoming();'));
  for(const m of html.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g))new vm.Script(m[1]);
+});
+
+test('mockup exact milestone icon artwork matches four distinct visual states',()=>{
+ const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+ const css=fs.readFileSync(path.join(root,'ui.css'),'utf8');
+ for(const glyph of ['check','sprout','chart','rocket','trophy'])assert.ok(html.includes(glyph+":'"));
+ assert.match(html,/status==='done'\?'check':l\.icon/);
+ assert.ok(html.includes("ml-art-'+name+'"));
+ assert.match(css,/\.ml-stage\.future \.ml-art-rocket/);
+ assert.match(css,/\.ml-stage\.future \.ml-art-trophy/);
+ assert.match(html,/href="ui\.css\?v=43"/);
 });
