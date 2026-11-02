@@ -147,3 +147,56 @@ body { font-family: var(--font-body); }
   .coming-button strong { font-size: 24px; line-height: 1.2; }
   .coming-detail { line-height: 1.3; margin-top: 10px; padding-top: 10px; }
 }
+
+
+/* Money Insights — approved compact expandable card system. */
+.money-insights { padding: 24px; }
+.money-insights > h2 { margin: 0 0 5px; font-size: 23px; letter-spacing: -.025em; }
+.money-insights > .sub { margin: 0 0 20px; }
+.mi-stack { display: grid; gap: 12px; }
+.mi-card { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; box-shadow: 0 5px 16px rgba(20,35,45,.035); }
+.mi-card .mi-toggle { list-style:none; padding: 17px 18px; display:flex; align-items:center; gap:14px; cursor:pointer; min-height:76px; }
+.mi-card .mi-toggle::-webkit-details-marker {display:none}
+.mi-card .mi-toggle::marker {content:""}
+.mi-toggle:focus-visible { outline:3px solid var(--accent); outline-offset:-3px; }
+.mi-icon,.mi-line-icon { flex:none; width:46px; height:46px; background:rgba(20,143,92,.10); color:var(--accent); border-radius:13px; display:grid; place-items:center; }
+.mi-name { flex:1; min-width:0; display:grid; gap:3px; }
+.mi-name strong { font-size:16px; color:var(--ink); line-height:1.2; }
+.mi-name small,.mi-line-text small { color:var(--ink-2); font-size:12px; line-height:1.4; }
+.mi-total { color:var(--ink); font-size:17px; white-space:nowrap; font-weight:750; text-align:right; font-variant-numeric:tabular-nums; }
+.mi-chevron { width:10px; height:10px; border-right:2px solid var(--ink-2); border-bottom:2px solid var(--ink-2); transform:rotate(45deg); transition: transform .18s; margin: -5px 4px 0 7px; flex:none; }
+.mi-card[open] .mi-chevron { transform:rotate(225deg); margin-top:6px; }
+.mi-content { padding:0 20px 18px; }
+.mi-metric { display:flex; justify-content:space-between; gap:12px; align-items:center; border-radius:12px; background:rgba(20,143,92,.095); padding:13px 15px; font-size:15px; color:var(--ink); }
+.mi-metric strong { font-size:18px; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.mi-description {font-size:13px; line-height:1.5; color:var(--ink-2); margin:11px 3px 12px; }
+.mi-secondary {display:flex; justify-content:space-between; gap:10px; padding:10px 14px; font-size:13px; color:var(--ink-2); }
+.mi-secondary b {color:var(--ink); }
+.mi-line {display:flex; align-items:center; gap:12px; padding:12px 3px; border-bottom:1px solid var(--line); }
+.mi-line-icon {width:34px;height:34px;border-radius:10px;}
+.mi-line-icon svg {width:18px;height:18px;}
+.mi-line-text {display:grid; gap:3px; flex:1; min-width:0;}
+.mi-line-text b {font-size:14px; color:var(--ink); overflow-wrap:anywhere;}
+.mi-line-amount {font-size:14px; font-weight:700; font-variant-numeric:tabular-nums; white-space:nowrap; color:var(--ink); text-align:right;}
+.mi-tip {display:flex;align-items:center;gap:13px;margin-top:14px;padding:13px;border-radius:12px;background:rgba(20,143,92,.095);font-size:13px;line-height:1.5;color:var(--ink);}
+.mi-tip svg {width:24px;height:24px;flex:none;color:var(--accent);}
+.mi-disclaimer {display:flex;gap:9px;align-items:flex-start;margin:13px 2px 0;color:var(--ink-2);font-size:12px;line-height:1.5;}
+.mi-disclaimer svg {width:17px;height:17px;flex:none;margin-top:1px;}
+.learn-section-title {font-size:16px;margin:20px 0 12px;color:var(--ink);}
+@media(max-width:600px) {
+ .money-insights{padding:15px;}
+ .money-insights > h2{font-size:20px;}
+ .mi-card .mi-toggle{padding:13px 12px;gap:10px;min-height:70px;}
+ .mi-icon{width:39px;height:39px;border-radius:11px;}
+ .mi-icon svg{width:20px;height:20px;}
+ .mi-name strong{font-size:14px;}
+ .mi-name small{font-size:11px;}
+ .mi-total{font-size:13px;}
+ .mi-chevron{width:8px;height:8px;margin-left:2px;}
+ .mi-content{padding:0 12px 15px;}
+ .mi-line{gap:8px;}
+ .mi-line-amount{font-size:12px;white-space:normal;max-width:35%;}
+ .mi-line-text b{font-size:13px;}
+ .mi-metric{font-size:13px;padding:11px;}
+ .mi-metric strong{font-size:15px;}
+}
