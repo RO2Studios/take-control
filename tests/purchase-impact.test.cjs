@@ -117,9 +117,15 @@ test('example budget demonstrates all new financial insights without changing th
   assert.ok(sample.recs.some(r => r.freq === 'annual' && r.kind === 'bill'));
   assert.ok(sample.recs.some(r => r.freq === 'quarterly'));
   const credit = sample.recs.filter(r => r.kind === 'credit');
-  assert.equal(credit.length, 2);
+  assert.equal(credit.length, 3);
   assert.ok(credit.every(r => Number.isFinite(r.apr) && r.cardBalance > 0));
   assert.ok(sample.tx.some(t => /door.?dash/i.test(t.note)));
   assert.ok(sample.tx.some(t => /uber eats/i.test(t.note)));
   assert.ok(sample.recs.filter(r => ['annual','quarterly'].includes(r.freq)).every(r => r.start > new Date(Date.now()).toISOString().slice(0,10)));
+});
+
+test('new example budget includes Visa Mastercard and American Express card networks',()=>{
+ const sample=evaluate('makeSample()');
+ const networks=sample.recs.filter(r=>r.kind==='credit').map(r=>r.cardNetwork).sort();
+ assert.deepEqual(networks,['americanexpress','mastercard','visa']);
 });
