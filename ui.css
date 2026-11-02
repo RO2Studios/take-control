@@ -326,9 +326,9 @@ form[data-form="rec"]:has(select[name="billKind"] option[value="credit"]:checked
 #moneyLevelRoot .ml-label strong {font-size:15px;letter-spacing:-.018em;font-weight:800;}
 #moneyLevelRoot .ml-label small {font-size:12px;}
 #moneyLevelRoot .ml-pct {padding:5px 9px;color:#12642e;background:#e6f6e9;font-weight:750;}
-#moneyLevelRoot .ml-track {height:21px;background:#d9eddf;isolation:isolate;}
+#moneyLevelRoot .ml-track {height:32px;background:#d9eddf;isolation:isolate;}
 #moneyLevelRoot .ml-fill {position:absolute;left:0;top:0;bottom:0;display:block;min-width:0;transition:width .45s ease;}
-#moneyLevelRoot .ml-bar-label {font-weight:800;font-size:11px;letter-spacing:.01em;color:#143d2b;text-shadow:0 1px 2px #ffffffa8;z-index:1;}
+#moneyLevelRoot .ml-bar-label {font-weight:800;font-size:12px;letter-spacing:.01em;color:#143d2b;text-shadow:0 1px 2px #ffffffa8;z-index:1;}
 #moneyLevelRoot .ml-expanded {padding:14px 0 0;margin-top:14px;border-top:1px solid var(--line);}
 #moneyLevelRoot .ml-caption {margin:0 0 14px;text-align:left;font-size:13px;}
 #moneyLevelRoot .ml-journey {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;position:relative;margin:0 3px 14px;}

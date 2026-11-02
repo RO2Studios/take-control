@@ -52,3 +52,51 @@ for(const width of [320,375,390,768,1440])test(`credit payoff controls and exist
  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
  assert.deepEqual(errors,[]);await context.close();
 });
+
+for(const width of [375,1440])test(`credit lesson illustrations load and work offline at ${width}px`,async()=>{
+ const context=await browser.newContext({viewport:{width,height:1000}}),page=await context.newPage();
+ await page.goto(url);await page.locator('[data-act="startExample"]').click();
+ await page.evaluate(async()=>{await navigator.serviceWorker.register('sw.js');await navigator.serviceWorker.ready;});
+ await page.waitForFunction(()=>navigator.serviceWorker.controller);
+ await page.locator('#tabs [data-view="learn"]').click();
+ const before=await page.evaluate(()=>localStorage.getItem('moneyAhead.v2'));
+ for(const id of ['credit101','creditcost','creditscore']){
+  await page.locator(`[data-act="lesson"][data-id="${id}"]`).click();
+  const image=page.locator('.lesson-open .photo img');
+  await image.evaluate(img=>img.decode());
+  assert.ok((await image.getAttribute('src')).endsWith(id+'.jpg'));
+  const size=await image.evaluate(img=>({width:img.naturalWidth,height:img.naturalHeight}));
+  assert.ok(size.width>=1200);assert.ok(Math.abs(size.width/size.height-16/9)<.01);
+  assert.equal(await page.locator('.photo.failed').count(),0);
+  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+  if(process.env.CREDIT_LESSON_SCREENSHOTS){fs.mkdirSync(process.env.CREDIT_LESSON_SCREENSHOTS,{recursive:true});await page.locator('.lesson-open').screenshot({path:path.join(process.env.CREDIT_LESSON_SCREENSHOTS,`${id}-${width}.png`)});}
+  await page.locator('[data-act="lessonClose"]').click();
+ }
+ assert.equal(await page.evaluate(()=>localStorage.getItem('moneyAhead.v2')),before);
+ await context.setOffline(true);await page.reload();
+ await page.locator('#tabs [data-view="learn"]').click();
+ for(const id of ['credit101','creditcost','creditscore']){
+  await page.locator(`[data-act="lesson"][data-id="${id}"]`).click();
+  await page.locator('.lesson-open .photo img').evaluate(img=>img.decode());
+  assert.equal(await page.locator('.photo.failed').count(),0);
+  await page.locator('[data-act="lessonClose"]').click();
+ }
+ await context.close();
+});
+
+for(const width of [320,375,1440])test(`thicker level indicator stays readable on every page at ${width}px`,async()=>{
+ const context=await browser.newContext({viewport:{width,height:1000},serviceWorkers:'block'}),page=await context.newPage();
+ await page.goto(url);await page.locator('[data-act="startExample"]').click();
+ for(const view of ['today','plan','review','month','learn']){
+  await page.locator(`#tabs [data-view="${view}"]`).click();
+  const track=page.locator('#moneyLevelRoot .ml-track');
+  assert.ok(await track.isVisible());assert.equal(Math.round((await track.boundingBox()).height),32);
+  const label=page.locator('#moneyLevelRoot .ml-bar-label').first();
+  assert.equal(await label.innerText(),'Journey to Money Master · 62%');
+  assert.ok(await label.evaluate(el=>el.scrollWidth<=el.clientWidth),'progress text fits');
+ }
+ await page.locator('#tabs [data-view="today"]').click();
+ await page.locator('[data-act="openCheck"]').click();
+ assert.ok((await page.locator('#ask').innerText()).includes('Give impulse buying a second opinion.'));
+ await context.close();
+});
