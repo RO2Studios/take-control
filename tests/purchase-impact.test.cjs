@@ -127,5 +127,5 @@ test('example budget demonstrates all new financial insights without changing th
 test('new example budget includes Visa Mastercard and American Express card networks',()=>{
  const sample=evaluate('makeSample()');
  const networks=sample.recs.filter(r=>r.kind==='credit').map(r=>r.cardNetwork).sort();
- assert.deepEqual(networks,['americanexpress','mastercard','visa']);
+ assert.equal(networks.join(','),'americanexpress,mastercard,visa');
 });
