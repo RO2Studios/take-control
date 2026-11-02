@@ -1186,7 +1186,7 @@ function nextTarget(state) {
       '<span class="ml-header"><span class="ml-current-icon" style="--stage:'+p.current.color+'">'+moneyLevelIcon(p.current.icon)+'</span>'+
       '<span class="ml-label"><strong>Level '+p.level+' · '+esc(p.current.name)+'</strong><small>'+(p.next?'On your way to Level '+(p.level+1):'Top level reached · Money Master')+'</small></span>'+
       '<span class="ml-pct">'+p.percent+'%</span><span class="ml-arrow" aria-hidden="true"></span></span>'+
-      '<span class="ml-track" aria-label="'+p.percent+'% progress"><span class="ml-fill" style="width:'+p.percent+'%;background:'+p.current.color+'"><span class="ml-inside">'+(p.next?p.percent+'% complete':'Mastered')+'</span></span></span></summary>'+
+      '<span class="ml-track" aria-label="'+p.percent+'% progress toward next level"><span class="ml-fill" style="width:'+p.percent+'%;background:'+p.current.color+'"></span><span class="ml-bar-label">'+esc(p.current.name)+' · '+p.percent+'%</span></span></summary>'+
       '<div class="ml-expanded"><p class="ml-caption">Your journey to Money Master</p>'+levelJourneyHTML(p)+
       '<div class="ml-missions"><strong>'+(!p.next?'You reached Level 4!':p.remaining.length+' missions available')+'</strong>'+
       (mission.length?'<ul>'+mission.map(function(m){return '<li><span>'+esc(m.title)+'</span><button type="button" class="ml-go" data-act="moneyMission" data-view="'+m.view+'">Go</button></li>';}).join('')+'</ul>':'<p>All currently available missions completed.</p>')+
