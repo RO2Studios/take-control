@@ -244,10 +244,15 @@ form[data-form="rec"]:has(select[name="billKind"] option[value="credit"]:checked
     opacity: .84;
   }
   #tabs .tab[aria-current="page"] {
-    background: rgba(255,255,255,.17);
-    border-color: rgba(255,255,255,.22);
-    color: #ffffff;
+    background: #ffffff;
+    border-color: #ffffff;
+    color: #15803d;
     opacity: 1;
+  }
+  #tabs .tab[aria-current="page"] b,
+  #tabs .tab[aria-current="page"] small,
+  #tabs .tab[aria-current="page"] svg {
+    color: #15803d;
   }
   #tabs .tab[aria-current="page"] svg { stroke-width: 2.5; }
   #tabs .tab:focus-visible { outline: 2px solid #ffffff; outline-offset: -3px; }
