@@ -19,7 +19,7 @@ before(async () => {
  browser = await chromium.launch({headless:true,channel:'chromium'});
 });
 after(async()=>{if(browser)await browser.close();if(server)await new Promise(resolve=>server.close(resolve));});
-for (const width of [375,390,1440]) {
+for (const width of [320,375,390,768,1440]) {
  test(`actual Today UI: stable icons, layout and saved data at ${width}px`, async () => {
   const context = await browser.newContext({viewport:{width,height:1000},serviceWorkers:'block'});
   const page = await context.newPage();
@@ -46,9 +46,16 @@ for (const width of [375,390,1440]) {
     assert.ok(await stage.locator('img').evaluate(img=>img.complete && img.naturalWidth===512),'approved image decoded');
     const badge=await stage.locator('img').boundingBox();
     const cell=await stage.boundingBox();
-    assert.ok(badge.width >= 50 && badge.width <= 60);
+    assert.equal(Math.round(badge.width),width<360?56:width<=420?64:width<900?72:88);
     assert.ok(badge.x>=cell.x-1 && badge.x+badge.width<=cell.x+cell.width+1,'badge fits its stage');
    }
+   if(width>=900){
+    const cardBox=await card.boundingBox(),navBox=await page.locator('#tabs').boundingBox();
+    assert.ok(Math.abs(cardBox.x-navBox.x)<1 && Math.abs(cardBox.width-navBox.width)<1,'desktop card spans the content width');
+   }
+   const connector=await card.locator('.ml-journey').evaluate(el=>{const s=getComputedStyle(el,'::before');return parseFloat(s.top)+parseFloat(s.height)/2;});
+   const iconBox=await stages.first().locator('img').boundingBox(),journeyBox=await card.locator('.ml-journey').boundingBox();
+   assert.ok(Math.abs(connector-(iconBox.y+iconBox.height/2-journeyBox.y))<1,'connector remains centered through enlarged badges');
    assert.equal(await card.locator(`.ml-current-icon .ml-badge-${['starter','builder','momentum','master'][index]}`).count(),1);
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'no page overflow');
    const todayText=await page.locator('#todayGrid').innerText();
@@ -80,7 +87,7 @@ test('approved glossy badges are available after an offline reload', async()=>{
  await page.evaluate(async()=>{await navigator.serviceWorker.register('sw.js');await navigator.serviceWorker.ready;localStorage.setItem('moneyAhead.levelExpanded','1');});
  await page.waitForFunction(()=>!!navigator.serviceWorker.controller);
  const assets=['starter','builder','momentum','master'].map(k=>'icons/money-'+k+'-glossy.webp');
- for(const asset of assets)assert.ok(await page.evaluate(async asset=>!!await (await caches.open('takecontrol-v46')).match(asset),asset));
+ for(const asset of assets)assert.ok(await page.evaluate(async asset=>!!await (await caches.open('takecontrol-v47')).match(asset),asset));
  await context.setOffline(true);
  await page.reload();
  const images=page.locator('#moneyLevelRoot .ml-stage img');

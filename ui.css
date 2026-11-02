@@ -450,3 +450,18 @@ form[data-form="rec"]:has(select[name="billKind"] option[value="credit"]:checked
 /* Approved glossy artwork fills the existing responsive badge containers. */
 #moneyLevelRoot .ml-stage-icon img.ml-approved-badge,
 #moneyLevelRoot .ml-current-icon img.ml-approved-badge {display:block;width:100%;height:100%;object-fit:contain;max-width:none;filter:none;}
+
+/* Larger glossy badges; desktop journey aligns with the surrounding page cards. */
+#moneyLevelRoot {--ml-stage-size:72px;--ml-current-size:58px;}
+#moneyLevelRoot .ml-stage-icon {width:var(--ml-stage-size);height:var(--ml-stage-size);}
+#moneyLevelRoot .ml-current-icon {width:var(--ml-current-size);height:var(--ml-current-size);}
+#moneyLevelRoot .ml-journey::before {top:calc(var(--ml-stage-size) / 2 - 1.5px);}
+@media (min-width:900px) {
+ #moneyLevelRoot {max-width:none;--ml-stage-size:88px;--ml-current-size:64px;}
+}
+@media (max-width:420px) {
+ #moneyLevelRoot {--ml-stage-size:64px;--ml-current-size:52px;}
+}
+@media (max-width:359px) {
+ #moneyLevelRoot {--ml-stage-size:56px;--ml-current-size:48px;}
+}
