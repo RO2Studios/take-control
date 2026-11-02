@@ -123,7 +123,7 @@ test('three supported credit networks render local logo assets with generic fall
 test('new and existing cards have a selectable network, only for credit records',()=>{
  assert.match(html,/name="cardNetwork"/);
  assert.match(html,/data-network-id/);
- assert.match(html,/rec\.kind==='credit'/);
+ assert.match(html,/r\.kind==='credit'/);
  assert.match(html,/Generic \/ Unknown/);
  const css=fs.readFileSync(path.join(__dirname,'..','ui.css'),'utf8');
  assert.match(css,/card-network-field/);
