@@ -108,3 +108,18 @@ test('the original example warns for $400 groceries tomorrow', () => {
   assert.equal(r.after.days[29].bal, 37449);
   assert.equal(r.categoryLeft, 37160);
 });
+
+test('example budget demonstrates all new financial insights without changing the v2 schema', () => {
+  const sample = evaluate('makeSample()');
+  assert.equal(sample.v, 2);
+  assert.equal(sample.sample, true);
+  assert.ok(sample.recs.some(r => r.freq === 'annual' && r.kind === 'subscription'));
+  assert.ok(sample.recs.some(r => r.freq === 'annual' && r.kind === 'bill'));
+  assert.ok(sample.recs.some(r => r.freq === 'quarterly'));
+  const credit = sample.recs.filter(r => r.kind === 'credit');
+  assert.equal(credit.length, 2);
+  assert.ok(credit.every(r => Number.isFinite(r.apr) && r.cardBalance > 0));
+  assert.ok(sample.tx.some(t => /door.?dash/i.test(t.note)));
+  assert.ok(sample.tx.some(t => /uber eats/i.test(t.note)));
+  assert.ok(sample.recs.filter(r => ['annual','quarterly'].includes(r.freq)).every(r => r.start > new Date(Date.now()).toISOString().slice(0,10)));
+});
