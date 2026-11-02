@@ -1112,8 +1112,19 @@ function nextTarget(state) {
       ['out', 'Tithe from Paycheck (second earner)', 13650, 'biweekly', toISO(t - 2), 'Giving']
     ];
     recs.forEach(function (r, i) { var rc = { id: 'sr' + i, type: r[0], name: r[1], amt: r[2], freq: r[3], start: r[4], day2: 15, cat: r[5] }; if (r[1] === 'Emergency fund') rc.goal = 'ef'; if (r[5] === 'Giving') rc.auto = true; s.recs.push(rc); });
+    // Feature tour: realistic upcoming obligations without changing the established
+    // first-30-day example forecast used by the purchase checker regression.
+    // These dates remain upcoming whenever a new example budget is created.
+    var examples = [
+      { id: 'demo-annual-insurance', type: 'out', name: 'Annual renters insurance', amt: 72000, freq: 'annual', start: toISO(t + 45), cat: 'Insurance', kind: 'bill' },
+      { id: 'demo-quarterly-bill', type: 'out', name: 'Quarterly water service', amt: 16500, freq: 'quarterly', start: toISO(t + 38), cat: 'Utilities', kind: 'bill' },
+      { id: 'demo-annual-subscription', type: 'out', name: 'Annual cloud storage', amt: 11988, freq: 'annual', start: toISO(t + 52), cat: 'Subscriptions', kind: 'subscription' },
+      { id: 'demo-credit-travel', type: 'out', name: 'Travel credit card payment', amt: 9500, freq: 'monthly', start: toISO(t + 35), cat: 'Debt', kind: 'credit', apr: 24.99, cardBalance: 285000 },
+      { id: 'demo-credit-store', type: 'out', name: 'Store credit card payment', amt: 4500, freq: 'monthly', start: toISO(t + 40), cat: 'Debt', kind: 'credit', apr: 19.49, cardBalance: 112500 }
+    ];
+    examples.forEach(function (r) { s.recs.push(r); });
     s.givePct = 10;
-    var log = [[-12, 'Groceries', 'Weekly shop', 14236], [-12, 'Gas & transport', 'Gas', 4120], [-11, 'Dining out', 'DoorDash', 3865], [-10, 'Kids', 'School supplies', 2799], [-9, 'Groceries', 'Corner market', 2214], [-9, 'Fun', 'Movie tickets', 3150], [-8, 'Dining out', 'DoorDash', 1844], [-7, 'Groceries', 'Weekly shop', 15890], [-6, 'Gas & transport', 'Gas', 3975], [-6, 'Shopping', 'Household items', 4620], [-5, 'Dining out', 'DoorDash', 5240], [-4, 'Health', 'Pharmacy', 2260], [-3, 'Groceries', 'Top-up', 3388], [-2, 'Dining out', 'DoorDash', 2275], [-2, 'Kids', 'Birthday gift', 3500], [-1, 'Gas & transport', 'Gas', 4210], [-1, 'Fun', 'Coffee and treats', 1675], [0, 'Groceries', 'Dinner items', 2840]];
+    var log = [[-12, 'Groceries', 'Weekly shop', 14236], [-12, 'Gas & transport', 'Gas', 4120], [-11, 'Dining out', 'DoorDash', 3865], [-10, 'Kids', 'School supplies', 2799], [-9, 'Groceries', 'Corner market', 2214], [-9, 'Fun', 'Movie tickets', 3150], [-8, 'Dining out', 'DoorDash', 1844], [-7, 'Groceries', 'Weekly shop', 15890], [-6, 'Gas & transport', 'Gas', 3975], [-6, 'Shopping', 'Household items', 4620], [-5, 'Dining out', 'DoorDash', 5240], [-4, 'Health', 'Pharmacy', 2260], [-3, 'Groceries', 'Top-up', 3388], [-2, 'Dining out', 'Uber Eats', 2275], [-2, 'Kids', 'Birthday gift', 3500], [-1, 'Gas & transport', 'Gas', 4210], [-1, 'Fun', 'Coffee and treats', 1675], [0, 'Groceries', 'Dinner items', 2840]];
     log.forEach(function (l, i) { s.tx.push({ id: 'st' + i, ts: base + i + 1, day: t + l[0], type: 'out', amt: l[3], cat: l[1], note: l[2], by: i % 3 === 1 ? 'Casey' : 'Jordan' }); });
     return s;
   }

@@ -1,7 +1,7 @@
 name: Financial insights tests
 on:
   push:
-    branches: [feature/annual-bills-and-debt]
+    branches: [feature/annual-bills-and-debt, feature/financial-insights-demo-data]
   pull_request:
     paths:
       - 'index.html'
