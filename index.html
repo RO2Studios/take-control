@@ -1141,8 +1141,15 @@ function nextTarget(state) {
     }
     return s;
   }
+  function refreshDemoNetworks(s) {
+    if(!s || s.sample!==true || !Array.isArray(s.recs))return s;
+    var travel=s.recs.find(function(r){return r.id==='demo-credit-travel';}); if(travel && !travel.cardNetwork)travel.cardNetwork='visa';
+    var store=s.recs.find(function(r){return r.id==='demo-credit-store';}); if(store && !store.cardNetwork)store.cardNetwork='mastercard';
+    if(!s.recs.some(function(r){return r.id==='demo-credit-amex';}))s.recs.push({id:'demo-credit-amex',type:'out',name:'American Express card payment',amt:3500,freq:'monthly',start:toISO(todayNum()+42),cat:'Debt',kind:'credit',cardNetwork:'americanexpress',apr:21.49,cardBalance:75000});
+    return s;
+  }
   function load() {
-    try { var raw = localStorage.getItem(KEY); if (raw) { var s = JSON.parse(raw); if (valid(s)) return refreshDemoSubscriptions(norm(s)); } } catch (e) {}
+    try { var raw = localStorage.getItem(KEY); if (raw) { var s = JSON.parse(raw); if (valid(s)) return refreshDemoNetworks(refreshDemoSubscriptions(norm(s))); } } catch (e) {}
     return makeBlank();
   }
   function norm(s) { if (!s.paydays) s.paydays = {}; if (s.startDay === undefined) s.startDay = null; if (s.budget && s.budget.done && s.startDay == null) s.startDay = todayNum(); if (!s.remind) s.remind = { recon: '09:00', review: '10:00', added: {} }; if (!s.remind.added) s.remind.added = {}; if (!s.learned) s.learned = {}; if (!s.givePct) s.givePct = 0; if (!s.partner) s.partner = ''; if (!Array.isArray(s.reviews)) s.reviews = []; if (!s.milestones) s.milestones = {}; if (!Array.isArray(s.cancel)) s.cancel = []; if (!s.cancelled) s.cancelled = 0; if (!s.rules) s.rules = {}; if (!Array.isArray(s.inbox)) s.inbox = []; if (!s.imported) s.imported = {}; if (!s.goals) s.goals = { asked: false, picks: [], ef: null }; if (!Array.isArray(s.goals.picks)) s.goals.picks = []; if (!s.budget.months) s.budget.months = {}; if (!s.saved) s.saved = {}; if (!Array.isArray(s.names)) s.names = []; if (!s.deleted) s.deleted = {}; if (!s.updated) s.updated = 0; return s; }
@@ -1230,7 +1237,7 @@ function nextTarget(state) {
     var rs = state.recs.filter(filter).sort(function (a, b) { return b.amt - a.amt; });
     if (!rs.length) return '<p class="empty">' + emptyMsg + '</p>';
     return '<ul class="list">' + rs.map(function (r) {
-      return '<li class="row"><div><div class="nm">' + esc(r.name) + '</div><div class="d">' + esc(freqText(r)) + esc(recMonthlyNote(r)) + (r.type === 'out' && r.cat ? ' · ' + esc(r.goal === 'ef' ? 'Emergency fund' : r.cat) : '') + '<button class="mini" type="button" data-act="delrec" data-id="' + esc(r.id) + '">Remove</button></div></div>' +
+      return '<li class="row"><div><div class="nm">' + esc(r.name) + '</div><div class="d">' + esc(freqText(r)) + esc(recMonthlyNote(r)) + (r.type === 'out' && r.cat ? ' · ' + esc(r.goal === 'ef' ? 'Emergency fund' : r.cat) : '') + (r.kind === 'credit' ? '<label class="rec-network-edit">Network <select data-network-id="'+esc(r.id)+'" aria-label="Card network for '+esc(r.name)+'"><option value="">Generic / Unknown</option>'+[['visa','Visa'],['mastercard','Mastercard'],['americanexpress','American Express']].map(function(opt){return '<option value="'+opt[0]+'"'+(r.cardNetwork===opt[0]?' selected':'')+'>'+opt[1]+'</option>';}).join('')+'</select></label>' : '') + '<button class="mini" type="button" data-act="delrec" data-id="' + esc(r.id) + '">Remove</button></div></div>' +
         '<div class="am ' + (r.type === 'in' ? 'pos' : '') + '">' + (r.type === 'in' ? '+' : '−') + fmtC(r.amt) + '</div></li>';
     }).join('') + '</ul>';
   }
@@ -2486,6 +2493,7 @@ function nextTarget(state) {
   document.addEventListener('change', function (e) {
     var t = e.target;
     if (t.closest && t.closest('#purchaseForm')) { clearPurchaseResult(); $('#checkDateWrap').hidden = $('#checkWhen').value !== 'custom'; }
+    if (t.matches && t.matches('select[data-network-id]')) {var rec=state.recs.find(function(r){return r.id===t.getAttribute('data-network-id') && r.kind==='credit';});if(rec){if(['visa','mastercard','americanexpress'].indexOf(t.value)>=0)rec.cardNetwork=t.value;else delete rec.cardNetwork;save();render();}return;}
     if (t.name === 'freq' && t.closest('form')) { var d2 = t.closest('form').querySelector('.day2'); if (d2) d2.hidden = t.value !== 'twice'; }
     if (t.id === 'startBal') { var c = money(t.value); if (c != null) { state.anchor = { day: todayNum(), ts: Date.now(), balance: c }; state.lastBalanceMatchDay = todayNum(); save(); } }
     if (t.id === 'rmRecon' || t.id === 'rmReview') { if (/^\d\d:\d\d$/.test(t.value)) { state.remind[t.id === 'rmRecon' ? 'recon' : 'review'] = t.value; save(); renderCal(); } }
