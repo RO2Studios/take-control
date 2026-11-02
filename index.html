@@ -356,7 +356,7 @@ input[type=file] { font-size: 14px; }
 .install .row-a { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 </style>
 <style>html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);-webkit-text-size-adjust:100%}body{margin:0;min-height:100vh;-webkit-tap-highlight-color:transparent}button{-webkit-appearance:none;appearance:none}</style>
-<link rel="stylesheet" href="ui.css?v=53">
+<link rel="stylesheet" href="ui.css?v=54">
 <script src="money-insights.js"></script>
 <script src="money-levels.js"></script>
 </head>
@@ -365,7 +365,7 @@ input[type=file] { font-size: 14px; }
 
 <div class="wrap">
   <header class="top">
-    <h1><span class="brand-mark" aria-hidden="true">$</span><span class="brand-copy"><span class="brand-title">Take Control</span><span class="brand-tagline">Your money. Your plan. Your control.</span></span></h1>
+    <h1><a class="brand-home" href="#today" data-act="goHome" aria-label="Take Control home"><span class="brand-mark" aria-hidden="true">$</span><span class="brand-copy"><span class="brand-title">Take Control</span><span class="brand-tagline">Your money. Your plan. Your control.</span></span></a></h1>
     <button class="profile" type="button" data-act="openSettings" aria-label="Open profile and settings" id="profileBtn"><span aria-hidden="true">🧑🏽</span></button>
   </header>
   <div class="greeting-row" id="greetingRow">
@@ -2677,6 +2677,7 @@ function nextTarget(state) {
     if (!b) return;
     var act = b.getAttribute('data-act'), id = b.getAttribute('data-id');
     switch (act) {
+      case 'goHome': e.preventDefault();cancelProfileDraft();setView('today');if(cur==='today'){setSub('spend');$('#dailyH').focus({preventScroll:true});}window.scrollTo({top:0});break;
       case 'profileEmoji': {var avatar=PROFILE_AVATARS[Number(b.getAttribute('data-avatar'))];if(avatar)saveProfile({type:'emoji',emoji:avatar[0]});break;}
       case 'profileRemove': saveProfile({type:'emoji',emoji:PROFILE_AVATARS[0][0]});break;
       case 'profileUpload': $('#profilePhotoFile').click();break;

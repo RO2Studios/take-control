@@ -632,3 +632,9 @@ body .wrap h1 { min-width:0; gap:14px; font-size:29px; line-height:1.15; }
  .mi-card .mi-total { grid-column:2; text-align:left; font-size:15px; }
  .mi-card .mi-chevron { grid-column:3; grid-row:1 / span 2; }
 }
+
+/* Brand link returns to the Today overview without reloading saved data. */
+.brand-home { display:flex; align-items:center; gap:inherit; min-width:0; max-width:100%; color:inherit; text-decoration:none; border-radius:12px; }
+.brand-home:visited { color:inherit; }
+.brand-home:focus-visible { outline:3px solid var(--accent); outline-offset:5px; }
+.brand-home .brand-copy { min-width:0; }

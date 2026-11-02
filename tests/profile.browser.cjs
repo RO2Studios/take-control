@@ -30,6 +30,9 @@ for(const width of [320,375,390,768,1440])test(`approved header, navigation and 
   const h=await page.locator('header h1').boundingBox(),p=await page.locator('#profileBtn').boundingBox();
   assert.ok(h.x+h.width<=p.x,'no header overlap');
   assert.ok(await page.locator('.brand-copy').evaluate(el=>el.scrollWidth<=el.clientWidth),'tagline fits');
+  await page.locator(view==='plan'||view==='month'?'.brand-mark':'.brand-title').click();
+  assert.equal(await page.locator('#tabs [data-view="today"]').getAttribute('aria-current'),'page');
+  assert.equal(await page.locator('body').getAttribute('data-sub'),'spend');
  }
  await page.locator('#tabs [data-view="review"]').click();
  await page.waitForTimeout(200);

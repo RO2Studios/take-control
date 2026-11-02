@@ -79,9 +79,9 @@ test('UI stylesheet and offline cache stay in sync for this release',()=>{
  const sw=fs.readFileSync(path.join(__dirname,'..','sw.js'),'utf8');
  assert.match(css,/\.mi-card\[open\] \.mi-chevron/);
  assert.match(css,/@media\(max-width:600px\)/);
- assert.ok(html.includes('href="ui.css?v=53"'));
- assert.ok(sw.includes("'ui.css?v=53'"));
- assert.ok(sw.includes('takecontrol-v53'));
+ assert.ok(html.includes('href="ui.css?v=54"'));
+ assert.ok(sw.includes("'ui.css?v=54'"));
+ assert.ok(sw.includes('takecontrol-v54'));
 });
 
 test('recognized merchants render distinct offline brand icons',()=>{
@@ -135,7 +135,7 @@ test('mobile navigation uses green background and white icon labels while deskto
  assert.match(css, /#tabs\.tabs \{\s*background: #15803d/);
  assert.match(css, /#tabs \.tab svg \{[\s\S]*?color: #ffffff/);
  assert.match(css, /#tabs \.tab\[aria-current="page"\] \{/);
- assert.ok(html.includes('href="ui.css?v=53"'));
+ assert.ok(html.includes('href="ui.css?v=54"'));
 });
 
 test('selected mobile tile inverts white background and green text and icon',()=>{
