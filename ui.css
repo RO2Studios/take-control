@@ -474,3 +474,6 @@ form[data-form="rec"]:has(select[name="billKind"] option[value="credit"]:checked
 #moneyLevelRoot .ml-bar-light {color:#fffde8;clip-path:inset(0 calc(100% - var(--ml-progress)) 0 0);}
 #moneyLevelRoot .ml-pct {color:#785611;background:linear-gradient(180deg,#ffedb5,#fff5d9);}
 #moneyLevelRoot .ml-journey::before {background:linear-gradient(90deg,#15803d 0%,#087a29 39%,#d6dde5 39%,#d6dde5 100%);}
+
+/* Prevent the generic .future content spacing from offsetting journey stages. */
+#moneyLevelRoot .ml-stage {margin:0;}

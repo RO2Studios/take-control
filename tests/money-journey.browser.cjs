@@ -48,6 +48,8 @@ for (const width of [320,375,390,768,1440]) {
     await stage.locator('img').evaluate(img=>img.decode());
     assert.ok(await stage.locator('img').evaluate(img=>img.complete && img.naturalWidth===512),'approved image decoded');
     const badge=await stage.locator('img').boundingBox();
+    const firstBadge=await stages.first().locator('img').boundingBox();
+    assert.ok(Math.abs(badge.y-firstBadge.y)<1 && Math.abs(badge.height-firstBadge.height)<1,'all four badges share size and vertical alignment');
     const cell=await stage.boundingBox();
     assert.equal(Math.round(badge.width),width<360?56:width<=420?64:width<900?72:88);
     assert.ok(badge.x>=cell.x-1 && badge.x+badge.width<=cell.x+cell.width+1,'badge fits its stage');
