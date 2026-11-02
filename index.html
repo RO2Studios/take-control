@@ -356,7 +356,7 @@ input[type=file] { font-size: 14px; }
 .install .row-a { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 </style>
 <style>html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);-webkit-text-size-adjust:100%}body{margin:0;min-height:100vh;-webkit-tap-highlight-color:transparent}button{-webkit-appearance:none;appearance:none}</style>
-<link rel="stylesheet" href="ui.css?v=37">
+<link rel="stylesheet" href="ui.css?v=38">
 <script src="money-insights.js"></script>
 </head>
 <body>
@@ -1119,9 +1119,10 @@ function nextTarget(state) {
       { id: 'demo-annual-insurance', type: 'out', name: 'Annual renters insurance', amt: 72000, freq: 'annual', start: toISO(t + 45), cat: 'Insurance', kind: 'bill' },
       { id: 'demo-quarterly-bill', type: 'out', name: 'Quarterly water service', amt: 16500, freq: 'quarterly', start: toISO(t + 38), cat: 'Utilities', kind: 'bill' },
       { id: 'demo-annual-subscription', type: 'out', name: 'Apple iCloud+', amt: 11988, freq: 'annual', start: toISO(t + 52), cat: 'Subscriptions', kind: 'subscription' },
-      { id: 'demo-credit-travel', type: 'out', name: 'Travel credit card payment', amt: 9500, freq: 'monthly', start: toISO(t + 35), cat: 'Debt', kind: 'credit', apr: 24.99, cardBalance: 285000 },
-      { id: 'demo-credit-store', type: 'out', name: 'Store credit card payment', amt: 4500, freq: 'monthly', start: toISO(t + 40), cat: 'Debt', kind: 'credit', apr: 19.49, cardBalance: 112500 }
+      { id: 'demo-credit-travel', type: 'out', name: 'Travel credit card payment', amt: 9500, freq: 'monthly', start: toISO(t + 35), cat: 'Debt', kind: 'credit', cardNetwork: 'visa', apr: 24.99, cardBalance: 285000 },
+      { id: 'demo-credit-store', type: 'out', name: 'Store credit card payment', amt: 4500, freq: 'monthly', start: toISO(t + 40), cat: 'Debt', kind: 'credit', cardNetwork: 'mastercard', apr: 19.49, cardBalance: 112500 }
     ];
+    examples.push({id:'demo-credit-amex',type:'out',name:'American Express card payment',amt:3500,freq:'monthly',start:toISO(t+42),cat:'Debt',kind:'credit',cardNetwork:'americanexpress',apr:21.49,cardBalance:75000});
     examples.forEach(function (r) { s.recs.push(r); });
     s.recs.push({id:'demo-netflix',type:'out',name:'Netflix',amt:1799,freq:'monthly',start:toISO(t+36),cat:'Subscriptions',kind:'subscription'});
     s.givePct = 10;
@@ -1252,7 +1253,7 @@ function nextTarget(state) {
     return '<form class="fields" data-form="rec" autocomplete="off" style="margin-top:6px"><input type="hidden" name="kind" value="' + kind + '">' +
       '<div class="two"><div><label class="f" for="rf-' + kind + '-name">Name</label><input type="text" id="rf-' + kind + '-name" name="name" placeholder="' + nameHint + '" maxlength="40"></div>' +
       '<div><label class="f" for="rf-' + kind + '-amt">' + (kind === 'in' ? 'Take-home per paycheck' : 'Amount each time') + '</label><input type="text" id="rf-' + kind + '-amt" name="amt" inputmode="decimal" placeholder="0.00"></div></div>' +
-      (catSel ? '<div class="two">' + catSel + '<div><label class="f">Bill type</label><select name="billKind"><option value="bill">Regular bill</option><option value="subscription">Subscription</option><option value="credit">Credit card payment</option></select></div></div><div class="two"><div><label class="f">Credit card APR (%) (optional)</label><input type="number" name="apr" min="0" max="100" step="0.01" placeholder="24.99"></div><div><label class="f">Current credit card balance ($) (optional)</label><input type="text" name="balance" inputmode="decimal" placeholder="0.00"></div></div>' : '') + goalSel +
+      (catSel ? '<div class="two">' + catSel + '<div><label class="f">Bill type</label><select name="billKind"><option value="bill">Regular bill</option><option value="subscription">Subscription</option><option value="credit">Credit card payment</option></select></div></div><div class="card-network-field"><label class="f" for="rf-bill-network">Card network (credit cards only)</label><select id="rf-bill-network" name="cardNetwork"><option value="">Generic / Unknown</option><option value="visa">Visa</option><option value="mastercard">Mastercard</option><option value="americanexpress">American Express</option></select></div><div class="two"><div><label class="f">Credit card APR (%) (optional)</label><input type="number" name="apr" min="0" max="100" step="0.01" placeholder="24.99"></div><div><label class="f">Current credit card balance ($) (optional)</label><input type="text" name="balance" inputmode="decimal" placeholder="0.00"></div></div>' : '') + goalSel +
       '<div class="two"><div><label class="f" for="rf-' + kind + '-freq">Repeats</label><select id="rf-' + kind + '-freq" name="freq">' + opts + '</select></div>' +
       '<div><label class="f" for="rf-' + kind + '-start">' + dateLbl + '</label><input type="date" id="rf-' + kind + '-start" name="start" value="' + toISO(todayNum()) + '"></div></div>' +
       '<div class="day2" hidden><label class="f" for="rf-' + kind + '-day2">Second day of the month</label><input type="number" id="rf-' + kind + '-day2" name="day2" min="1" max="31" value="15"></div>' +
@@ -1743,9 +1744,10 @@ function nextTarget(state) {
   function insightMetric(label,amount){
     return '<div class="mi-metric"><b>'+esc(label)+'</b><strong>'+esc(amount)+'</strong></div>';
   }
-  function insightLine(name,detail,amount,kind){
+  function insightLine(name,detail,amount,kind,cardNetwork){
     var brands={DoorDash:'doordash','Uber Eats':'ubereats',Postmates:'postmates'};
     var brand=kind==='food'&&brands[name]?brands[name]:null;
+    if(kind==='credit' && ['visa','mastercard','americanexpress'].indexOf(cardNetwork)>=0)brand=cardNetwork;
     if(kind==='subscriptions'){if(/\bnetflix\b/i.test(name))brand='netflix';else if(/\bicloud\b/i.test(name))brand='icloud';}
     var symbol=brand?'<img src="icons/brand-'+brand+'.svg" alt="" width="23" height="23" loading="lazy">':insightSvg(kind);
     return '<div class="mi-line"><span class="mi-line-icon'+(brand?' mi-brand mi-brand-'+brand:'')+'">'+symbol+'</span><span class="mi-line-text"><b>'+esc(name)+'</b><small>'+esc(detail)+'</small></span>'+
@@ -1791,7 +1793,7 @@ function nextTarget(state) {
       '<p class="mi-description">Based on current balances and APRs. Actual interest depends on daily balances and issuer terms.</p>'+
       (cards.length?cards.map(function(r){
         var cost=TakeControlInsights.debtCost({amt:r.cardBalance,apr:r.apr})||0;
-        return insightLine(r.name,'Balance '+fmtC(r.cardBalance)+' · '+r.apr.toFixed(2)+'% APR','About '+fmtC(cost)+'/mo','credit');
+        return insightLine(r.name,'Balance '+fmtC(r.cardBalance)+' · '+r.apr.toFixed(2)+'% APR','About '+fmtC(cost)+'/mo','credit',r.cardNetwork);
       }).join(''):'<p class="mi-description">Add credit card balances and APRs in Plan → Bills.</p>')+
       (cards.length>1?'<div class="mi-tip">'+insightSvg('bulb')+'<span>Paying extra toward the highest-APR card first can reduce interest, while keeping all minimum payments current.</span></div>':'')+
       insightDisclaimer('These are estimates, not actual interest charges.');
@@ -2393,7 +2395,7 @@ function nextTarget(state) {
     if(kindChoice==='credit'&&f.elements.balance.value.trim()&&cardBal===null){err.textContent='Enter a valid card balance.';return;}
     var record={ id: newId('r'), type: kind === 'in' ? 'in' : 'out', name: name, amt: amt, freq: f.elements.freq.value, start: start, day2: d2 >= 1 && d2 <= 31 ? d2 : 15, cat: kind === 'in' ? 'Paycheck' : kind === 'save' ? 'Savings' : kind === 'give' ? 'Giving' : kindChoice==='subscription'?'Subscriptions':f.elements.cat.value };
     if(kindChoice)record.kind=kindChoice;
-    if(kindChoice==='credit'){if(cardAPR!==null)record.apr=cardAPR;if(cardBal!==null)record.cardBalance=cardBal;}
+    if(kindChoice==='credit'){if(cardAPR!==null)record.apr=cardAPR;if(cardBal!==null)record.cardBalance=cardBal;var network=f.elements.cardNetwork.value;if(['visa','mastercard','americanexpress'].indexOf(network)>=0)record.cardNetwork=network;}
     state.recs.push(record);
     if (kind === 'save' && f.elements.goalfor && f.elements.goalfor.value === 'ef' && state.goals.ef) state.recs[state.recs.length - 1].goal = 'ef';
     save(); renderPlan();
