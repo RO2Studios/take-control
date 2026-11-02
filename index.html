@@ -356,7 +356,7 @@ input[type=file] { font-size: 14px; }
 .install .row-a { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 </style>
 <style>html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);-webkit-text-size-adjust:100%}body{margin:0;min-height:100vh;-webkit-tap-highlight-color:transparent}button{-webkit-appearance:none;appearance:none}</style>
-<link rel="stylesheet" href="ui.css?v=42">
+<link rel="stylesheet" href="ui.css?v=43">
 <script src="money-insights.js"></script>
 <script src="money-levels.js"></script>
 </head>
@@ -1174,7 +1174,7 @@ function nextTarget(state) {
   function levelJourneyHTML(p){
     return '<div class="ml-journey" role="list" aria-label="Four money levels">'+TakeControlLevels.levels.map(function(l,i){
       var status=i<p.index?'done':i===p.index?'current':'future';
-      return '<div role="listitem" class="ml-stage '+status+'" style="--stage:'+l.color+'"><span class="ml-stage-icon">'+moneyLevelIcon(l.icon)+'</span><small>Level '+(i+1)+'</small><b>'+esc(l.name.replace('Money ','')||l.short)+'</b></div>';
+      return '<div role="listitem" class="ml-stage '+status+'" style="--stage:'+l.color+'"><span class="ml-stage-icon">'+moneyLevelIcon(status==='done'?'check':l.icon)+'</span><small>Level '+(i+1)+'</small><b>'+esc(l.name.replace('Money ','')||l.short)+'</b></div>';
     }).join('')+'</div>';
   }
   function renderMoneyLevel() {
