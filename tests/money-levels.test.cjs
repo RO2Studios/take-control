@@ -78,7 +78,7 @@ test('mockup exact milestone icon artwork matches four distinct visual states',(
  assert.ok(html.includes("ml-art-'+name+'"));
  assert.match(css,/\.ml-stage\.future \.ml-art-rocket/);
  assert.match(css,/\.ml-stage\.future \.ml-art-trophy/);
- assert.match(html,/href="ui\.css\?v=43"/);
+ assert.match(html,/href="ui\.css\?v=44"/);
 });
 
 test('approved generated artwork is wired into every money journey context and cached offline',()=>{
