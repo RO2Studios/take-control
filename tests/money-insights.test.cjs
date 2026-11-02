@@ -53,3 +53,33 @@ test('original inline scripts parse and new module is cached offline',()=>{
  assert.ok(!html.includes('src="money-insights.js" defer'));
  assert.ok(html.includes('Create my budget'));
 });
+
+
+test('review uses only the redesigned three expandable insight cards',()=>{
+ assert.match(html,/root\.innerHTML = moneyInsightsHTML\(\)\+h/);
+ for(const id of ['subscriptions','food','credit'])assert.ok(html.includes("insightCard('"+id+"'"));
+ assert.match(html,/name="money-insights"/);
+ assert.match(html,/class="mi-chevron"/);
+ assert.doesNotMatch(html,/<h2>Money insights<\/h2>/);
+});
+test('new credit fundamentals lessons contain correct quiz structure and are grouped',()=>{
+ const src=html.match(/var LESSONS = (\[[^\n]*\]);/)[1];
+ const lessons=JSON.parse(src);
+ assert.equal(lessons.length,15);
+ for(const id of ['credit101','creditcost','creditscore']){
+   const lesson=lessons.find(x=>x.id===id);
+   assert.ok(lesson&&lesson.body.length>=3);
+   assert.equal(lesson.q.options.length,3);
+   assert.ok(lesson.q.answer>=0&&lesson.q.answer<3);
+ }
+ assert.ok(html.includes('Credit cards &amp; credit fundamentals'));
+});
+test('UI stylesheet and offline cache stay in sync for this release',()=>{
+ const css=fs.readFileSync(path.join(__dirname,'..','ui.css'),'utf8');
+ const sw=fs.readFileSync(path.join(__dirname,'..','sw.js'),'utf8');
+ assert.match(css,/\.mi-card\[open\] \.mi-chevron/);
+ assert.match(css,/@media\(max-width:600px\)/);
+ assert.ok(html.includes('href="ui.css?v=35"'));
+ assert.ok(sw.includes("'ui.css?v=35'"));
+ assert.ok(sw.includes('takecontrol-v35'));
+});
