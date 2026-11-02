@@ -356,7 +356,7 @@ input[type=file] { font-size: 14px; }
 .install .row-a { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 </style>
 <style>html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);-webkit-text-size-adjust:100%}body{margin:0;min-height:100vh;-webkit-tap-highlight-color:transparent}button{-webkit-appearance:none;appearance:none}</style>
-<link rel="stylesheet" href="ui.css?v=41">
+<link rel="stylesheet" href="ui.css?v=42">
 <script src="money-insights.js"></script>
 <script src="money-levels.js"></script>
 </head>
@@ -1169,9 +1169,9 @@ function nextTarget(state) {
     return '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(shapes[name]||shapes.target)+'</svg>';
   }
   function levelJourneyHTML(p){
-    return '<div class="ml-journey">'+TakeControlLevels.levels.map(function(l,i){
+    return '<div class="ml-journey" role="list" aria-label="Four money levels">'+TakeControlLevels.levels.map(function(l,i){
       var status=i<p.index?'done':i===p.index?'current':'future';
-      return '<div class="ml-stage '+status+'" style="--stage:'+l.color+'"><span class="ml-stage-icon">'+moneyLevelIcon(l.icon)+'</span><small>Level '+(i+1)+'</small><b>'+esc(l.short)+'</b></div>';
+      return '<div role="listitem" class="ml-stage '+status+'" style="--stage:'+l.color+'"><span class="ml-stage-icon">'+moneyLevelIcon(l.icon)+'</span><small>Level '+(i+1)+'</small><b>'+esc(l.name.replace('Money ','')||l.short)+'</b></div>';
     }).join('')+'</div>';
   }
   function renderMoneyLevel() {
@@ -1180,17 +1180,17 @@ function nextTarget(state) {
     root.hidden=false;
     var p=TakeControlLevels.progress(state);
     var expanded=false;try{expanded=localStorage.getItem('moneyAhead.levelExpanded')==='1';}catch(e){}
-    var mission=p.remaining.slice(0,3);
-    root.innerHTML='<section class="money-level card"><details id="moneyLevelDetails"'+(expanded?' open':'')+'>'+
-      '<summary class="ml-summary" aria-label="Money level '+p.level+', '+p.current.name+', '+p.percent+' percent toward next level. Expand to see journey.">'+
+    var missions=p.remaining;
+    root.innerHTML='<section class="money-level card" aria-label="Money level and milestones"><details id="moneyLevelDetails"'+(expanded?' open':'')+'>'+
+      '<summary class="ml-summary" aria-label="Level '+p.level+', '+p.current.name+'. '+p.percent+' percent toward '+(p.next?'Level '+(p.level+1):'mastery')+'. Show or hide the four levels.">'+
       '<span class="ml-header"><span class="ml-current-icon" style="--stage:'+p.current.color+'">'+moneyLevelIcon(p.current.icon)+'</span>'+
-      '<span class="ml-label"><strong>Level '+p.level+' · '+esc(p.current.name)+'</strong><small>'+(p.next?'On your way to Level '+(p.level+1):'Top level reached · Money Master')+'</small></span>'+
-      '<span class="ml-pct">'+p.percent+'%</span><span class="ml-arrow" aria-hidden="true"></span></span>'+
-      '<span class="ml-track" aria-label="'+p.percent+'% progress toward next level"><span class="ml-fill" style="width:'+p.percent+'%;background:'+p.current.color+'"></span><span class="ml-bar-label">'+esc(p.current.name)+' · '+p.percent+'%</span></span></summary>'+
+      '<span class="ml-label"><strong>Level '+p.level+' · '+esc(p.current.name)+'</strong><small>'+(p.next?'You’re on your way to Level '+(p.level+1):'You reached the top level!')+'</small></span>'+
+      '<span class="ml-pct">'+p.percent+'% complete</span><span class="ml-arrow" aria-hidden="true"></span></span>'+
+      '<span class="ml-track" aria-label="'+p.percent+' percent complete"><span class="ml-fill" style="width:'+p.percent+'%;background:'+p.current.color+'"></span><span class="ml-bar-label">'+esc(p.current.name)+' · '+p.percent+'%</span></span></summary>'+
       '<div class="ml-expanded"><p class="ml-caption">Your journey to Money Master</p>'+levelJourneyHTML(p)+
-      '<div class="ml-missions"><strong>'+(!p.next?'You reached Level 4!':p.remaining.length+' missions available')+'</strong>'+
-      (mission.length?'<ul>'+mission.map(function(m){return '<li><span>'+esc(m.title)+'</span><button type="button" class="ml-go" data-act="moneyMission" data-view="'+m.view+'">Go</button></li>';}).join('')+'</ul>':'<p>All currently available missions completed.</p>')+
-      '<small>Earn progress by budgeting, learning, planning and reviewing—not by spending more or keeping a larger balance.</small></div></div></details></section>';
+      '<details class="ml-missions"><summary class="ml-mission-trigger">'+moneyLevelIcon('target')+'<span>'+(p.next?missions.length+' missions available to move forward':'Level 4 achieved · keep building healthy habits')+'</span><span class="ml-mission-chevron" aria-hidden="true">›</span></summary>'+
+      '<div class="ml-mission-content">'+(missions.length?'<ul>'+missions.slice(0,5).map(function(m){return '<li><span>'+esc(m.title)+'</span><button type="button" class="ml-go" data-act="moneyMission" data-view="'+m.view+'">Go</button></li>';}).join('')+'</ul>':'<p>Every available mission is complete.</p>')+
+      '<small>Progress is earned through planning, learning and reviewing. Spending more never earns points.</small></div></details></div></details></section>';
     if(pendingMoneyLevelUp!==null){var level=pendingMoneyLevelUp;pendingMoneyLevelUp=null;showMoneyLevelUp(level);}
   }
   function showMoneyLevelUp(level){
@@ -1198,11 +1198,13 @@ function nextTarget(state) {
     var l=TakeControlLevels.levels[level-1];if(!l)return;
     target.innerHTML='<div class="ml-overlay" role="presentation"><section class="ml-dialog" role="dialog" aria-modal="true" aria-labelledby="mlLevelUpTitle" style="--stage:'+l.color+'">'+
       '<button class="ml-close" type="button" data-act="closeMoneyLevel" aria-label="Close celebration">'+moneyLevelIcon('close')+'</button>'+
-      '<div class="ml-sparkles" aria-hidden="true"><span>✦</span><span>★</span><span>✧</span><span>✦</span><span>★</span></div>'+
-      '<div class="ml-hero-icon">'+moneyLevelIcon(l.icon)+'</div><p class="ml-tag">LEVEL UP!</p>'+
+      '<div class="ml-rays" aria-hidden="true"></div><div class="ml-sparkles" aria-hidden="true"><span>✦</span><span>★</span><span>✧</span><span>✦</span><span>★</span></div>'+
+      '<div class="ml-hero-icon">'+moneyLevelIcon(l.icon)+'</div><p class="ml-ribbon">LEVEL UP!</p>'+
       '<h2 id="mlLevelUpTitle">Welcome to Level '+level+'!</h2><p class="ml-dialog-name">'+esc(l.name)+'</p>'+
-      '<p>Your money habits are growing. Keep building momentum toward Money Master.</p>'+
-      '<button class="btn" type="button" data-act="closeMoneyLevel">Keep going</button></section></div>';
+      '<p class="ml-celebrate-copy">You’re building real progress, keeping track, and making smarter money moves.</p>'+
+      '<div class="ml-rewards"><div>'+moneyLevelIcon('chart')+'<span>Level '+level+' unlocked</span><b>✓</b></div><div>'+moneyLevelIcon('target')+'<span>New missions available</span><b>✓</b></div><div>'+moneyLevelIcon('trophy')+'<span>Progress saved on this device</span><b>✓</b></div></div>'+
+      '<button class="btn ml-primary" type="button" data-act="viewMoneyMissions">See my missions →</button>'+
+      '<button class="btn alt ml-secondary" type="button" data-act="closeMoneyLevel">Keep going</button></section></div>';
     var close=target.querySelector('.ml-close');if(close)close.focus();
   }
   function closeMoneyLevelUp(){var target=$('#moneyLevelCelebration');if(target)target.innerHTML='';}
@@ -2579,6 +2581,7 @@ function nextTarget(state) {
     var act = b.getAttribute('data-act'), id = b.getAttribute('data-id');
     switch (act) {
       case 'closeMoneyLevel': closeMoneyLevelUp(); break;
+      case 'viewMoneyMissions': closeMoneyLevelUp(); try{localStorage.setItem('moneyAhead.levelExpanded','1');}catch(e){} renderMoneyLevel(); var missionBox=$('#moneyLevelDetails .ml-missions'); if(missionBox)missionBox.open=true; var card=$('#moneyLevelRoot');if(card)card.scrollIntoView({behavior:'smooth',block:'start'}); break;
       case 'moneyMission': setView(b.getAttribute('data-view')); break;
       case 'tab': setView(b.getAttribute('data-view')); if (cur === 'today') setSub('spend'); break;
       case 'openSettings': setView('plan'); { var settings = $('#settingsCard'); if (settings) { settings.scrollIntoView({ block: 'start' }); settings.querySelector('h2').focus({ preventScroll: true }); } } break;
