@@ -73,13 +73,13 @@ test('mockup-faithful compact responsive card, connected stages and overlay rema
 test('milestones use custom vector art with the correct status and celebration images',()=>{
  const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
  const sw=fs.readFileSync(path.join(root,'sw.js'),'utf8');
- assert.match(html,/status==='done'\?'check':l\.icon/);
+ assert.ok(html.includes('moneyLevelBadge(l.icon)'));
  for(const glyph of ['check','chart','rocket','trophy'])assert.ok(html.includes("if(kind==='"+glyph+"')")||html.includes('check:\'check\''));
  for(const asset of ['level-celebration','level-ribbon']){
    assert.ok(sw.includes('icons/'+asset+'.webp'));
    assert.ok(html.includes(asset));
  }
- assert.ok(html.includes('moneyLevelBadge(status'));
+ assert.ok(!html.includes("moneyLevelBadge(status==='done'"));
  assert.ok(html.includes('moneyLevelBadge(p.current.icon)'));
  assert.ok(html.includes('ml-celebration-art'));
 });

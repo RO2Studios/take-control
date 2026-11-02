@@ -1191,7 +1191,8 @@ function nextTarget(state) {
   function levelJourneyHTML(p){
     return '<div class="ml-journey" role="list" aria-label="Four money levels">'+TakeControlLevels.levels.map(function(l,i){
       var status=i<p.index?'done':i===p.index?'current':'future';
-      return '<div role="listitem" class="ml-stage '+status+'" style="--stage:'+l.color+'"><span class="ml-stage-icon">'+moneyLevelBadge(status==='done'?'check':l.icon)+'</span><small>Level '+(i+1)+'</small><b>'+esc(l.name.replace('Money ','')||l.short)+'</b></div>';
+      // Status decorates the stage; level identity always selects the primary artwork.
+      return '<div role="listitem" aria-label="'+esc(l.name)+', '+({done:'completed',current:'current',future:'upcoming'}[status])+'" class="ml-stage '+status+'" style="--stage:'+l.color+'"><span class="ml-stage-icon">'+moneyLevelBadge(l.icon)+'</span><small>Level '+(i+1)+'</small><b>'+esc(l.name.replace('Money ','')||l.short)+'</b></div>';
     }).join('')+'</div>';
   }
   function renderMoneyLevel() {
