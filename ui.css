@@ -400,3 +400,23 @@ form[data-form="rec"]:has(select[name="billKind"] option[value="credit"]:checked
 #moneyLevelRoot .ml-stage.done .ml-art-check { color:#fff; }
 #moneyLevelRoot .ml-stage.current .ml-stage-icon .ml-art-rocket,
 #moneyLevelRoot .ml-stage.current .ml-stage-icon .ml-art-trophy {color:#fff;}
+
+
+/* Approved rendered illustration assets replace all approximated level glyphs. */
+#moneyLevelRoot .ml-stage-icon {overflow:visible; border:0!important; background:transparent!important; box-shadow:none!important;}
+#moneyLevelRoot .ml-stage-icon .ml-badge-image {display:block;width:54px;height:54px;object-fit:contain;max-width:none;filter:none;}
+#moneyLevelRoot .ml-stage.done .ml-stage-icon,
+#moneyLevelRoot .ml-stage.current .ml-stage-icon,
+#moneyLevelRoot .ml-stage.future .ml-stage-icon {background:transparent!important;border:0!important;box-shadow:none!important;opacity:1;}
+#moneyLevelRoot .ml-stage-icon {height:54px;width:54px;}
+#moneyLevelRoot .ml-journey::before {top:26px;}
+#moneyLevelRoot .ml-current-icon {background:transparent!important;display:grid;place-items:center;overflow:visible;}
+#moneyLevelRoot .ml-current-icon .ml-badge-image {width:45px;height:45px;object-fit:contain;max-width:none;}
+.ml-dialog .ml-hero-icon {background:transparent!important;border:0;outline:0;box-shadow:none;overflow:visible;}
+.ml-dialog .ml-hero-icon .ml-badge-image {width:112px;height:112px;object-fit:contain;max-width:none;}
+@media(max-width:420px){
+ #moneyLevelRoot .ml-stage-icon {width:46px;height:46px;}
+ #moneyLevelRoot .ml-stage-icon .ml-badge-image {width:46px;height:46px;}
+ #moneyLevelRoot .ml-journey::before {top:23px;}
+ #moneyLevelRoot .ml-current-icon .ml-badge-image {width:39px;height:39px;}
+}
