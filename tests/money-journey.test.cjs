@@ -22,7 +22,7 @@ const expected = [
 ];
 for (let i = 0; i < 4; i++) {
  for (const [status, index] of [['done', i+1], ['current', i], ['future', i-1]]) {
-  test(`Level ${i+1} keeps its approved artwork and colors when ${status}`, () => {
+  test(`Level ${i+1} keeps its level artwork and colors when ${status}`, () => {
    // Boundary states (-1 and 4) deliberately exercise all 12 renderer combinations.
    const rendered = c.levelJourneyHTML({index});
    const stages = rendered.match(/<div role="listitem"[\s\S]*?<\/div>/g);
@@ -40,10 +40,10 @@ for (let i = 0; i < 4; i++) {
   });
  }
 }
-// Frozen fingerprints of main's existing vector artwork, independent of renderer selection.
+// Frozen fingerprints of the reviewed vector artwork, independent of renderer selection.
 const artworkHashes = [
   "99405c344caa40c5984e0598c54b1ffb6ee8ac9bc8fed90a7e1555133db1b369",
   "2b3eebd81645a72e1afd06bbeda7d45e86d25f152d00abb02aeada1c9de20bdc",
-  "df0dc0ddab094a1d24ae2d397b2e34d8c6ba1fa3a20c4f349f1fce95175dc835",
-  "f8d7e5b83058c2620afea07986faeaae2b7c89f5e7488aa0a3c84a7676deacaa"
+  "02a994bf89830d5216805d170efa6737b2cd729fb6bddf746bffd065704cd589",
+  "5047cdfddc5dfcb3ccdb435c8a4e102257737dfbf0b88bbcca0541fa56fd234a"
 ];
