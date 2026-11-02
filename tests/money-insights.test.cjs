@@ -79,7 +79,19 @@ test('UI stylesheet and offline cache stay in sync for this release',()=>{
  const sw=fs.readFileSync(path.join(__dirname,'..','sw.js'),'utf8');
  assert.match(css,/\.mi-card\[open\] \.mi-chevron/);
  assert.match(css,/@media\(max-width:600px\)/);
- assert.ok(html.includes('href="ui.css?v=35"'));
- assert.ok(sw.includes("'ui.css?v=35'"));
- assert.ok(sw.includes('takecontrol-v35'));
+ assert.ok(html.includes('href="ui.css?v=36"'));
+ assert.ok(sw.includes("'ui.css?v=36'"));
+ assert.ok(sw.includes('takecontrol-v36'));
+});
+
+test('recognized merchants render distinct offline brand icons',()=>{
+ const sw=fs.readFileSync(path.join(__dirname,'..','sw.js'),'utf8');
+ for(const slug of ['doordash','ubereats','postmates']){
+  const pathName='icons/brand-'+slug+'.svg';
+  const logo=fs.readFileSync(path.join(__dirname,'..',pathName),'utf8');
+  assert.match(logo,/<svg/);
+  assert.ok(sw.includes(pathName));
+  assert.ok(html.includes("'"+slug+"'"));
+ }
+ assert.ok(html.includes('mi-brand-'+"'"));
 });
