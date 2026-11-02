@@ -218,3 +218,6 @@ form[data-form="rec"]:has(select[name="billKind"] option[value="credit"]:checked
 .mi-line-icon.mi-brand-visa {background:#f0f3ff;border-color:#dfe5ff;}
 .mi-line-icon.mi-brand-mastercard {background:#fff4ee;border-color:#ffe3d4;}
 .mi-line-icon.mi-brand-americanexpress {background:#eff7ff;border-color:#d9edff;}
+
+.rec-network-edit {display:inline-flex;align-items:center;gap:5px; margin:0 7px 0 0; font-size:12px;color:var(--ink-2);}
+.rec-network-edit select {width:auto;min-width:108px;max-width:160px;padding:6px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font-size:12px;}
