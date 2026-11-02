@@ -3,7 +3,7 @@
   'use strict';
   const enc = new TextEncoder(), dec = new TextDecoder('utf-8',{fatal:true});
   const ITERATIONS = 600000;
-  const b64 = bytes => btoa(String.fromCharCode(...bytes));
+  const b64 = bytes => { let out=''; for(let i=0;i<bytes.length;i+=8192)out+=String.fromCharCode(...bytes.subarray(i,i+8192)); return btoa(out); };
   const un64 = value => {
     if (typeof value !== 'string' || !/^[A-Za-z0-9+/]+={0,2}$/.test(value)) throw Error('Invalid encrypted backup');
     return Uint8Array.from(atob(value), c => c.charCodeAt(0));
