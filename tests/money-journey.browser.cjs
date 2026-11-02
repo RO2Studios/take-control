@@ -37,17 +37,19 @@ for (const width of [375,390,1440]) {
    const before = await page.evaluate(()=>localStorage.getItem('moneyAhead.v2'));
    const stages=card.locator('.ml-stage');
    assert.equal(await stages.count(),4);
-   for(const [i,kind] of ['check','chart','rocket','trophy'].entries()) {
+   for(const [i,kind] of ['starter','builder','momentum','master'].entries()) {
     const stage=stages.nth(i);
-    assert.equal(await stage.locator(`svg.ml-vector-${kind}`).count(),1);
-    assert.equal(await stage.locator('svg').count(),1);
+    assert.equal(await stage.locator(`img.ml-badge-${kind}`).count(),1);
+    assert.equal(await stage.locator('img').count(),1);
     assert.ok((await stage.getAttribute('class')).includes(i<index?'done':i===index?'current':'future'));
-    const badge=await stage.locator('svg').boundingBox();
+    await stage.locator('img').evaluate(img=>img.decode());
+    assert.ok(await stage.locator('img').evaluate(img=>img.complete && img.naturalWidth===512),'approved image decoded');
+    const badge=await stage.locator('img').boundingBox();
     const cell=await stage.boundingBox();
     assert.ok(badge.width >= 50 && badge.width <= 60);
     assert.ok(badge.x>=cell.x-1 && badge.x+badge.width<=cell.x+cell.width+1,'badge fits its stage');
    }
-   assert.equal(await card.locator(`.ml-current-icon .ml-vector-${['check','chart','rocket','trophy'][index]}`).count(),1);
+   assert.equal(await card.locator(`.ml-current-icon .ml-badge-${['starter','builder','momentum','master'][index]}`).count(),1);
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'no page overflow');
    const todayText=await page.locator('#todayGrid').innerText();
    await page.locator('#moneyLevelDetails > summary').click();
@@ -68,3 +70,24 @@ for (const width of [375,390,1440]) {
   await context.close();
  });
 }
+
+test('approved glossy badges are available after an offline reload', async()=>{
+ const context=await browser.newContext({viewport:{width:390,height:1000}});
+ const page=await context.newPage();
+ await page.goto(url);
+ await page.locator('[data-act="startExample"]').click();
+ await page.evaluate(async()=>{await navigator.serviceWorker.ready;localStorage.setItem('moneyAhead.levelExpanded','1');});
+ await page.waitForFunction(()=>!!navigator.serviceWorker.controller);
+ const assets=['starter','builder','momentum','master'].map(k=>'icons/money-'+k+'-glossy.webp');
+ for(const asset of assets)assert.ok(await page.evaluate(async asset=>!!await (await caches.open('takecontrol-v46')).match(asset),asset));
+ await context.setOffline(true);
+ await page.reload();
+ const images=page.locator('#moneyLevelRoot .ml-stage img');
+ assert.equal(await images.count(),4);
+ for(let i=0;i<4;i++){
+  const img=images.nth(i);await img.evaluate(img=>img.decode());
+  assert.equal(await img.getAttribute('src'),assets[i]);
+  assert.equal(await img.evaluate(img=>img.naturalWidth),512);
+ }
+ await context.close();
+});

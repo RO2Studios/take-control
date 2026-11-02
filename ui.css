@@ -446,3 +446,7 @@ form[data-form="rec"]:has(select[name="billKind"] option[value="credit"]:checked
  #moneyLevelRoot .ml-current-icon{height:43px;width:43px;}
  #moneyLevelRoot .ml-current-icon svg.ml-vector-badge{height:43px;width:43px;}
 }
+
+/* Approved glossy artwork fills the existing responsive badge containers. */
+#moneyLevelRoot .ml-stage-icon img.ml-approved-badge,
+#moneyLevelRoot .ml-current-icon img.ml-approved-badge {display:block;width:100%;height:100%;object-fit:contain;max-width:none;filter:none;}

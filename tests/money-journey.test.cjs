@@ -14,12 +14,7 @@ const c = {esc: s => s};
 vm.createContext(c);
 vm.runInContext(fs.readFileSync(path.join(root, 'money-levels.js'), 'utf8'), c);
 vm.runInContext(html.slice(start, end), c);
-const expected = [
- ['check', '#4cdc57', '#07833d'],
- ['chart', '#22c7a4', '#057b67'],
- ['rocket', '#4c9aff', '#2054de'],
- ['trophy', '#ffe46a', '#db9814']
-];
+const expected = ['starter','builder','momentum','master'];
 for (let i = 0; i < 4; i++) {
  for (const [status, index] of [['done', i+1], ['current', i], ['future', i-1]]) {
   test(`Level ${i+1} keeps its level artwork and colors when ${status}`, () => {
@@ -28,22 +23,22 @@ for (let i = 0; i < 4; i++) {
    const stages = rendered.match(/<div role="listitem"[\s\S]*?<\/div>/g);
    assert.equal(stages.length, 4);
    const stage = stages[i];
-   const [kind, light, dark] = expected[i];
+   const kind = expected[i];
    assert.ok(stage.includes(`class="ml-stage ${status}"`));
-   assert.ok(stage.includes(`ml-vector-${kind}"`));
-   assert.ok(stage.includes(`stop-color="${light}"`));
-   assert.ok(stage.includes(`stop-color="${dark}"`));
-   const svg = stage.match(/<svg[\s\S]*?<\/svg>/)[0];
-   assert.equal(svg, c.moneyLevelBadge(c.TakeControlLevels.levels[i].icon));
-   assert.equal(createHash('sha256').update(svg).digest('hex'), artworkHashes[i]);
+   assert.ok(stage.includes(`ml-badge-${kind}"`));
+   const img = stage.match(/<img[^>]+>/)[0];
+   assert.equal(img, c.moneyLevelBadge(c.TakeControlLevels.levels[i].icon));
+   const asset = img.match(/src="([^"]+)"/)[1];
+   assert.equal(asset, `icons/money-${kind}-glossy.webp`);
+   assert.equal(createHash('sha256').update(fs.readFileSync(path.join(root,asset))).digest('hex'), artworkHashes[i]);
    assert.ok(stage.includes(`${c.TakeControlLevels.levels[i].name}, ${{done:'completed',current:'current',future:'upcoming'}[status]}`));
   });
  }
 }
-// Frozen fingerprints of the reviewed vector artwork, independent of renderer selection.
+// Frozen fingerprints of the approved glossy image files, independent of renderer selection.
 const artworkHashes = [
-  "99405c344caa40c5984e0598c54b1ffb6ee8ac9bc8fed90a7e1555133db1b369",
-  "2b3eebd81645a72e1afd06bbeda7d45e86d25f152d00abb02aeada1c9de20bdc",
-  "02a994bf89830d5216805d170efa6737b2cd729fb6bddf746bffd065704cd589",
-  "5047cdfddc5dfcb3ccdb435c8a4e102257737dfbf0b88bbcca0541fa56fd234a"
+  "ce6b8126bd85009cc3b0fec375fc0cda1fca3d4751e2b591f6b24fd79e223b90",
+  "ca2ee0fb7368f9cdf750037b9f9d79641799ef85048785c7ec4be7a05e883947",
+  "48009668ee3d1346628f4feee3ecb7a5f7f941e6f8c5bff9d971d0869a5f37d6",
+  "adce687590423ac05ecce3849ee8b81c68d0e386dfb6fbb8f646e637d9eadfd5"
 ];

@@ -47,8 +47,8 @@ test('integrated UI is compact by default, expandable, and retains existing Toda
  assert.ok(html.includes("if(openLesson.pick===L0.q.answer)state.learned[L0.id] = 1"));
  assert.ok(css.includes('@media(prefers-reduced-motion:reduce)'));
  assert.ok(sw.includes("'money-levels.js'"));
- assert.ok(sw.includes('takecontrol-v45'));
- assert.ok(html.includes('ui.css?v=45'));
+ assert.ok(sw.includes('takecontrol-v46'));
+ assert.ok(html.includes('ui.css?v=46'));
  for(const m of html.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g))new vm.Script(m[1]);
 });
 
@@ -70,11 +70,10 @@ test('mockup-faithful compact responsive card, connected stages and overlay rema
  for(const m of html.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g))new vm.Script(m[1]);
 });
 
-test('milestones use custom vector art with the correct status and celebration images',()=>{
+test('milestones use approved glossy art with the correct status and celebration images',()=>{
  const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
  const sw=fs.readFileSync(path.join(root,'sw.js'),'utf8');
  assert.ok(html.includes('moneyLevelBadge(l.icon)'));
- for(const glyph of ['check','chart','rocket','trophy'])assert.ok(html.includes("if(kind==='"+glyph+"')")||html.includes('check:\'check\''));
  for(const asset of ['level-celebration','level-ribbon']){
    assert.ok(sw.includes('icons/'+asset+'.webp'));
    assert.ok(html.includes(asset));
@@ -84,4 +83,13 @@ test('milestones use custom vector art with the correct status and celebration i
  assert.ok(html.includes('ml-celebration-art'));
 });
 
-test('level badges use scalable colored vector illustrations',()=>{const html=fs.readFileSync(path.join(root,'index.html'),'utf8'),css=fs.readFileSync(path.join(root,'ui.css'),'utf8');for(const icon of ['check','chart','rocket','trophy'])assert.ok(html.includes("if(kind==='"+icon+"')")||html.includes("check:'"));assert.match(html,/viewBox="0 0 64 64"/);assert.match(html,/ml-vector-badge/);assert.match(css,/svg\.ml-vector-badge/);assert.match(css,/@media\(max-width:420px\)/);});
+test('level badges use the approved glossy files and include them offline',()=>{
+ const html=fs.readFileSync(path.join(root,'index.html'),'utf8'),css=fs.readFileSync(path.join(root,'ui.css'),'utf8'),sw=fs.readFileSync(path.join(root,'sw.js'),'utf8');
+ for(const name of ['starter','builder','momentum','master']){
+  const file='icons/money-'+name+'-glossy.webp';
+  assert.ok(fs.existsSync(path.join(root,file)));
+  assert.ok(sw.includes(file));
+ }
+ assert.match(html,/ml-approved-badge/);
+ assert.match(css,/img\.ml-approved-badge/);
+});
