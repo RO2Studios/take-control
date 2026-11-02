@@ -47,8 +47,8 @@ test('integrated UI is compact by default, expandable, and retains existing Toda
  assert.ok(html.includes("if(openLesson.pick===L0.q.answer)state.learned[L0.id] = 1"));
  assert.ok(css.includes('@media(prefers-reduced-motion:reduce)'));
  assert.ok(sw.includes("'money-levels.js'"));
- assert.ok(sw.includes('takecontrol-v44'));
- assert.ok(html.includes('ui.css?v=44'));
+ assert.ok(sw.includes('takecontrol-v45'));
+ assert.ok(html.includes('ui.css?v=45'));
  for(const m of html.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g))new vm.Script(m[1]);
 });
 
@@ -95,3 +95,5 @@ test('approved generated artwork is wired into every money journey context and c
  assert.ok(html.includes('ml-ribbon-art'));
  assert.ok(css.includes('ml-badge-image'));
 });
+
+test('level badges use scalable colored vector illustrations',()=>{const html=fs.readFileSync(path.join(root,'index.html'),'utf8'),css=fs.readFileSync(path.join(root,'ui.css'),'utf8');for(const icon of ['check','chart','rocket','trophy'])assert.ok(html.includes("if(kind==='"+icon+"')")||html.includes("check:'"));assert.match(html,/viewBox="0 0 64 64"/);assert.match(html,/ml-vector-badge/);assert.match(css,/svg\.ml-vector-badge/);assert.match(css,/@media\(max-width:420px\)/);});
