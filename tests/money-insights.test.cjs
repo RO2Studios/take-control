@@ -79,9 +79,9 @@ test('UI stylesheet and offline cache stay in sync for this release',()=>{
  const sw=fs.readFileSync(path.join(__dirname,'..','sw.js'),'utf8');
  assert.match(css,/\.mi-card\[open\] \.mi-chevron/);
  assert.match(css,/@media\(max-width:600px\)/);
- assert.ok(html.includes('href="ui.css?v=38"'));
- assert.ok(sw.includes("'ui.css?v=38'"));
- assert.ok(sw.includes('takecontrol-v38'));
+ assert.ok(html.includes('href="ui.css?v=39"'));
+ assert.ok(sw.includes("'ui.css?v=39'"));
+ assert.ok(sw.includes('takecontrol-v39'));
 });
 
 test('recognized merchants render distinct offline brand icons',()=>{
@@ -127,4 +127,13 @@ test('new and existing cards have a selectable network, only for credit records'
  assert.match(html,/Generic \/ Unknown/);
  const css=fs.readFileSync(path.join(__dirname,'..','ui.css'),'utf8');
  assert.match(css,/card-network-field/);
+});
+
+test('mobile navigation uses green background and white icon labels while desktop is unaffected',()=>{
+ const css=fs.readFileSync(path.join(__dirname,'..','ui.css'),'utf8');
+ assert.match(css, /@media \(max-width: 899px\) \{\s*#tabs\.tabs \{/);
+ assert.match(css, /#tabs\.tabs \{\s*background: #15803d/);
+ assert.match(css, /#tabs \.tab svg \{[\s\S]*?color: #ffffff/);
+ assert.match(css, /#tabs \.tab\[aria-current="page"\] \{/);
+ assert.ok(html.includes('href="ui.css?v=39"'));
 });
