@@ -1206,7 +1206,7 @@ function nextTarget(state) {
     target.innerHTML='<div class="ml-overlay" role="presentation"><section class="ml-dialog" role="dialog" aria-modal="true" aria-labelledby="mlLevelUpTitle" style="--stage:'+l.color+'">'+
       '<button class="ml-close" type="button" data-act="closeMoneyLevel" aria-label="Close celebration">'+moneyLevelIcon('close')+'</button>'+
       '<div class="ml-rays" aria-hidden="true"></div><div class="ml-sparkles" aria-hidden="true"><span>✦</span><span>★</span><span>✧</span><span>✦</span><span>★</span></div>'+
-      '<div class="ml-hero-icon">'+moneyLevelBadge(l.icon)+'</div><p class="ml-ribbon">LEVEL UP!</p>'+
+      '<div class="ml-hero-icon"><img class="ml-celebration-art" src="icons/level-celebration.webp" width="120" height="120" alt="" decoding="async"></div><div class="ml-ribbon-art"><img src="icons/level-ribbon.webp" width="220" height="110" alt="Level Up!" decoding="async"></div>'+
       '<h2 id="mlLevelUpTitle">Welcome to Level '+level+'!</h2><p class="ml-dialog-name">'+esc(l.name)+'</p>'+
       '<p class="ml-celebrate-copy">You’re building real progress, keeping track, and making smarter money moves.</p>'+
       '<div class="ml-rewards"><div>'+moneyLevelIcon('chart')+'<span>Level '+level+' unlocked</span><b>✓</b></div><div>'+moneyLevelIcon('target')+'<span>New missions available</span><b>✓</b></div><div>'+moneyLevelIcon('trophy')+'<span>Progress saved on this device</span><b>✓</b></div></div>'+
