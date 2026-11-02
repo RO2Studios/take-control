@@ -2,9 +2,9 @@
 (function(root){
 'use strict';
 const levels=[
- {name:'Money Starter',short:'Starter',color:'#15803d',icon:'sprout',min:0},
- {name:'Money Builder',short:'Builder',color:'#0d9488',icon:'chart',min:80},
- {name:'Money Momentum',short:'Momentum',color:'#2563eb',icon:'rocket',min:170},
+ {name:'Money Rookie',short:'Rookie',color:'#15803d',icon:'sprout',min:0},
+ {name:'Money Builder',short:'Builder',color:'#087a29',icon:'chart',min:80},
+ {name:'Money Strategist',short:'Strategist',color:'#2563eb',icon:'rocket',min:170},
  {name:'Money Master',short:'Master',color:'#b7791f',icon:'trophy',min:290}
 ];
 function achievements(s){

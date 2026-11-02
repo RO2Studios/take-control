@@ -35,10 +35,13 @@ for (const width of [320,375,390,768,1440]) {
    await card.waitFor({state:'visible'});
    assert.equal(await page.locator('#moneyLevelDetails').getAttribute('open'),'');
    const before = await page.evaluate(()=>localStorage.getItem('moneyAhead.v2'));
+   assert.equal(await card.locator('.ml-pct').evaluate(el=>getComputedStyle(el).color),'rgb(120, 86, 17)');
+   assert.ok((await card.locator('.ml-fill').evaluate(el=>getComputedStyle(el).backgroundImage)).includes('rgb(21, 149, 46)'));
    const stages=card.locator('.ml-stage');
    assert.equal(await stages.count(),4);
-   for(const [i,kind] of ['starter','builder','momentum','master'].entries()) {
+   for(const [i,kind] of ['rookie','builder','strategist','master'].entries()) {
     const stage=stages.nth(i);
+    assert.equal((await stage.locator('b').innerText()).replace(/\s+/g,' '),['Money Rookie','Money Builder','Money Strategist','Money Master'][i]);
     assert.equal(await stage.locator(`img.ml-badge-${kind}`).count(),1);
     assert.equal(await stage.locator('img').count(),1);
     assert.ok((await stage.getAttribute('class')).includes(i<index?'done':i===index?'current':'future'));
@@ -56,7 +59,7 @@ for (const width of [320,375,390,768,1440]) {
    const connector=await card.locator('.ml-journey').evaluate(el=>{const s=getComputedStyle(el,'::before');return parseFloat(s.top)+parseFloat(s.height)/2;});
    const iconBox=await stages.first().locator('img').boundingBox(),journeyBox=await card.locator('.ml-journey').boundingBox();
    assert.ok(Math.abs(connector-(iconBox.y+iconBox.height/2-journeyBox.y))<1,'connector remains centered through enlarged badges');
-   assert.equal(await card.locator(`.ml-current-icon .ml-badge-${['starter','builder','momentum','master'][index]}`).count(),1);
+   assert.equal(await card.locator(`.ml-current-icon .ml-badge-${['rookie','builder','strategist','master'][index]}`).count(),1);
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'no page overflow');
    const todayText=await page.locator('#todayGrid').innerText();
    await page.locator('#moneyLevelDetails > summary').click();
@@ -78,7 +81,7 @@ for (const width of [320,375,390,768,1440]) {
  });
 }
 
-test('approved glossy badges are available after an offline reload', async()=>{
+test('approved cartoon badges are available after an offline reload', async()=>{
  const context=await browser.newContext({viewport:{width:390,height:1000}});
  const page=await context.newPage();
  await page.goto(url);
@@ -86,8 +89,8 @@ test('approved glossy badges are available after an offline reload', async()=>{
  // Production auto-registers on HTTPS; explicitly register on this localhost test server.
  await page.evaluate(async()=>{await navigator.serviceWorker.register('sw.js');await navigator.serviceWorker.ready;localStorage.setItem('moneyAhead.levelExpanded','1');});
  await page.waitForFunction(()=>!!navigator.serviceWorker.controller);
- const assets=['starter','builder','momentum','master'].map(k=>'icons/money-'+k+'-glossy.webp');
- for(const asset of assets)assert.ok(await page.evaluate(async asset=>!!await (await caches.open('takecontrol-v47')).match(asset),asset));
+ const assets=['rookie','builder','strategist','master'].map(k=>'icons/money-'+k+'-cartoon.webp');
+ for(const asset of assets)assert.ok(await page.evaluate(async asset=>!!await (await caches.open('takecontrol-v48')).match(asset),asset));
  await context.setOffline(true);
  await page.reload();
  const images=page.locator('#moneyLevelRoot .ml-stage img');

@@ -14,7 +14,7 @@ const c = {esc: s => s};
 vm.createContext(c);
 vm.runInContext(fs.readFileSync(path.join(root, 'money-levels.js'), 'utf8'), c);
 vm.runInContext(html.slice(start, end), c);
-const expected = ['starter','builder','momentum','master'];
+const expected = ['rookie','builder','strategist','master'];
 for (let i = 0; i < 4; i++) {
  for (const [status, index] of [['done', i+1], ['current', i], ['future', i-1]]) {
   test(`Level ${i+1} keeps its level artwork and colors when ${status}`, () => {
@@ -29,16 +29,16 @@ for (let i = 0; i < 4; i++) {
    const img = stage.match(/<img[^>]+>/)[0];
    assert.equal(img, c.moneyLevelBadge(c.TakeControlLevels.levels[i].icon));
    const asset = img.match(/src="([^"]+)"/)[1];
-   assert.equal(asset, `icons/money-${kind}-glossy.webp`);
+   assert.equal(asset, `icons/money-${kind}-cartoon.webp`);
    assert.equal(createHash('sha256').update(fs.readFileSync(path.join(root,asset))).digest('hex'), artworkHashes[i]);
    assert.ok(stage.includes(`${c.TakeControlLevels.levels[i].name}, ${{done:'completed',current:'current',future:'upcoming'}[status]}`));
   });
  }
 }
-// Frozen fingerprints of the approved glossy image files, independent of renderer selection.
+// Frozen fingerprints of the approved cartoon image files, independent of renderer selection.
 const artworkHashes = [
-  "ce6b8126bd85009cc3b0fec375fc0cda1fca3d4751e2b591f6b24fd79e223b90",
-  "ca2ee0fb7368f9cdf750037b9f9d79641799ef85048785c7ec4be7a05e883947",
-  "48009668ee3d1346628f4feee3ecb7a5f7f941e6f8c5bff9d971d0869a5f37d6",
-  "adce687590423ac05ecce3849ee8b81c68d0e386dfb6fbb8f646e637d9eadfd5"
+  "b3adf18062977fbb7991a2fa4c81584e7e77467364c41556decc7dd2522daa44",
+  "4d8e9164bc622beeefce2adad98c37d6e556f54a4a66c6b907d26d9ecdbb3475",
+  "fc6b47232c61ac6301b0987416675134474976162e81cbfaccfb8e1c3205451c",
+  "03ebdf4f6cfd61eaa783cab5e54a2578fb42636f896d11c6710a718d510e4ed4"
 ];
