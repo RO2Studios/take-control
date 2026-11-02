@@ -357,6 +357,7 @@ input[type=file] { font-size: 14px; }
 </style>
 <style>html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);-webkit-text-size-adjust:100%}body{margin:0;min-height:100vh;-webkit-tap-highlight-color:transparent}button{-webkit-appearance:none;appearance:none}</style>
 <link rel="stylesheet" href="ui.css?v=32">
+<script src="encrypted-backup.js" defer></script>
 </head>
 <body>
 
@@ -1393,7 +1394,7 @@ function nextTarget(state) {
     if (!ib.length) h += '<form class="stack" data-form="csv" autocomplete="off" style="margin-top:0"><div class="drop"><label for="csvFile" style="display:block;font-weight:600;color:var(--ink)">Choose the CSV from your bank</label><input type="file" id="csvFile" accept=".csv,text/csv" style="margin-top:8px"></div><details style="margin-top:4px"><summary>Or paste the text here</summary><textarea id="csvText" aria-label="Pasted CSV" placeholder="Date,Description,Amount" spellcheck="false"></textarea><button class="btn alt" type="submit" style="margin-top:8px">Read pasted text</button></details><p class="err" id="csvErr" role="alert"></p></form>';
     else { var page = ib.slice(0, PAGE), more = ib.length - page.length; h += '<div class="inbox"><p class="headline" style="margin:0 0 8px;font-size:15px">' + (more > 0 ? 'Sort these ' + page.length + ' first. ' + more + ' more come after, in small batches.' : page.length + ' transaction' + (page.length === 1 ? '' : 's') + ' to sort.') + ' Pick a category once and the app remembers it next time.</p><ul class="list">' + page.map(inboxRow).join('') + '</ul><div class="actions" style="margin-top:12px"><button class="btn" type="button" data-act="applyInbox">' + (more > 0 ? 'Add these ' + page.length + ', show the next batch' : 'Add these to my budget') + '</button><button class="btn alt" type="button" data-act="clearInbox">Cancel</button></div><p class="err" id="inboxErr" role="alert"></p></div>'; }
     if (last && !ib.length) h += '<div class="answer" style="margin-top:12px"><div class="say">' + esc(last.head) + '</div>' + last.body + '</div>';
-    if (!ib.length) h += '<div class="actions" style="margin-top:12px"><button class="btn alt" type="button" data-act="backupFile">Save a backup to iCloud</button></div><p class="hint" id="backupFileMsg" role="status" style="margin-top:4px">' + (state.lastBackupDay == null ? 'No backup yet. The app asks for one after every Saturday reconcile. Save it to the same iCloud Drive folder each time.' : state.lastBackupDay === todayNum() ? 'Backed up today.' : 'Last backup was ' + (todayNum() - state.lastBackupDay) + ' days ago. The app asks after every Saturday reconcile.') + '</p>';
+    if (!ib.length) h += '<div class="actions" style="margin-top:12px"><button class="btn alt" type="button" data-act="backupFile">Save encrypted backup</button></div><p class="hint" id="backupFileMsg" role="status" style="margin-top:4px">' + (state.lastBackupDay == null ? 'No backup yet. The app asks for one after every Saturday reconcile. Save it to the same iCloud Drive folder each time.' : state.lastBackupDay === todayNum() ? 'Backed up today.' : 'Last backup was ' + (todayNum() - state.lastBackupDay) + ' days ago. The app asks after every Saturday reconcile.') + '</p>';
     if (state.cancel.length || state.cancelled) {
       var cm = cancelTotals(state);
       h += '<div class="cancel-list" style="margin-top:14px"><h3>Cancel list</h3>' + (state.cancel.length ? '<p class="hint" style="margin:0 0 6px">These are costing you <b>' + fmt(cm) + ' a month</b>, ' + fmt(cm * 12) + ' a year. Cancel them in the app or by calling, then tap Cancelled.</p><ul class="list">' + state.cancel.map(function (c, i) { return '<li class="row"><div><div class="nm">' + esc(c.name) + '</div><div class="d">' + fmtC(c.amt) + ' a month' + '</div></div><div class="actions"><button class="btn alt" type="button" data-act="cancelDone" data-i="' + i + '">Cancelled</button><button class="mini" type="button" data-act="cancelKeep" data-i="' + i + '">Keep</button></div></li>'; }).join('') + '</ul>' : '') +
@@ -1453,26 +1454,103 @@ function nextTarget(state) {
     var bm = $('#backupFileMsg'); if (bm) bm.textContent = 'Reconcile done. Saving a backup next.';
     try { backupFile(); } catch (e) {}
   }
-  function backupFile() {
-    var msg = $('#backupFileMsg'), name = 'Take Control backup ' + toISO(todayNum()) + '.json';
-    var data = JSON.stringify(state), blob = new Blob([data], { type: 'application/json' });
-    var done = function () { state.lastBackupDay = todayNum(); save(); if (msg) msg.textContent = (who() ? who() + ', backup' : 'Backup') + ' saved. Keep it in iCloud Drive or Google Drive.'; };
-    try {
-      var file = new File([blob], name, { type: 'application/json' });
-      if (navigator.canShare && navigator.canShare({ files: [file] })) { navigator.share({ files: [file], title: 'Take Control backup' }).then(done, function () { if (msg) msg.textContent = 'Backup cancelled.'; }); return; }
-    } catch (e) {}
-    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 2000); done();
+
+  // Short-lived dialog. Passwords are never saved to browser storage.
+  function backupDialog(title, fields, description) {
+    return new Promise(function(resolve) {
+      var overlay=document.createElement('div');
+      overlay.style.cssText='position:fixed;inset:0;z-index:9999;background:#000b;display:grid;place-items:center;padding:18px';
+      var card=document.createElement('form');
+      card.style.cssText='width:min(440px,100%);background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:16px;padding:22px;box-shadow:0 15px 50px #0006;display:grid;gap:12px';
+      var heading=document.createElement('h2');heading.textContent=title;heading.style.margin='0';card.appendChild(heading);
+      var info=document.createElement('p');info.className='hint';info.style.margin='0';info.textContent=description;card.appendChild(info);
+      var inputs=[];
+      fields.forEach(function(label) {
+        var wrapper=document.createElement('label');wrapper.textContent=label;wrapper.style.cssText='display:grid;gap:5px;font-size:13px';
+        var input=document.createElement('input');input.type='password';input.autocomplete='off';input.required=true;input.style.cssText='width:100%;min-height:44px;border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--surface-2);color:var(--ink)';
+        wrapper.appendChild(input);card.appendChild(wrapper);inputs.push(input);
+      });
+      var actions=document.createElement('div');actions.className='actions';
+      var cancel=document.createElement('button');cancel.type='button';cancel.className='btn alt';cancel.textContent='Cancel';
+      var ok=document.createElement('button');ok.type='submit';ok.className='btn';ok.textContent='Continue';
+      actions.appendChild(cancel);actions.appendChild(ok);card.appendChild(actions);overlay.appendChild(card);document.body.appendChild(overlay);
+      function finish(result){document.removeEventListener('keydown',keyHandler);overlay.remove();resolve(result);}
+      function keyHandler(e){if(e.key==='Escape')finish(null);}
+      document.addEventListener('keydown',keyHandler);
+      cancel.addEventListener('click',function(){finish(null);});
+      card.addEventListener('submit',function(e){e.preventDefault();finish(inputs.map(function(x){return x.value;}));});
+      inputs[0].focus();
+    });
   }
-  function restoreFile(f) {
-    var msg = $('#backupFileMsg'), rd = new FileReader();
-    rd.onload = function () {
-      try {
-        var inc = JSON.parse(String(rd.result)); if (!valid(inc)) throw new Error('bad');
-        if (state.budget.done) { var n0 = state.tx.length; state = mergeStates(state, norm(inc)); save(); loadMe(); render(); var m = $('#backupFileMsg'); if (m) m.textContent = 'Restored and merged. ' + Math.max(0, state.tx.length - n0) + ' entries added.'; }
-        else { inc.sample = false; state = norm(inc); resetDraft(); loadMe(); save(); setView(state.budget.done ? 'today' : 'plan'); }
-      } catch (e) { if (msg) msg.textContent = 'That file is not a Take Control backup.'; }
-    };
-    rd.readAsText(f);
+  function backupMessage(message) { var el=$('#backupFileMsg'); if(el) el.textContent=message; }
+  async function backupFile() {
+    if(!window.crypto || !crypto.subtle || !window.TakeControlBackup){backupMessage('Secure backup is unavailable in this browser. Use an updated browser over HTTPS.');return;}
+    var pw=await backupDialog('Protect your backup',['Backup password','Confirm password'],'Use at least 12 characters. The password cannot be recovered if lost. It is needed to restore this file.');
+    if(!pw)return;
+    if(pw[0].length<12 || pw[0]!==pw[1]){backupMessage('Passwords must match and contain at least 12 characters. No backup was created.');return;}
+    try {
+      backupMessage('Encrypting your backup…');
+      var envelope=await TakeControlBackup.encrypt(state,pw[0]);
+      var name='Take Control backup '+toISO(todayNum())+'.json';
+      var blob=new Blob([JSON.stringify(envelope)],{type:'application/json'});
+      var file=new File([blob],name,{type:'application/json'});
+      if(navigator.canShare && navigator.canShare({files:[file]})){
+        try {await navigator.share({files:[file],title:'Encrypted Take Control backup'});}
+        catch(e){backupMessage('Backup sharing cancelled or failed. No backup was confirmed.');return;}
+        // Share success does not guarantee durable storage on the destination.
+        backupMessage('Encrypted backup shared. Verify it was saved in your selected folder.');
+      } else {
+        var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();
+        setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},2000);
+        backupMessage('Encrypted backup download started. Verify the file was saved before relying on it.');
+      }
+      // Do not claim storage was verified or mutate budget state.
+    } catch(e){backupMessage('Could not create encrypted backup. Your budget was not changed.');}
+  }
+  function validBackupDeep(s) {
+    if(!valid(s) || !s.anchor || !Number.isSafeInteger(s.anchor.balance) || !Number.isFinite(s.anchor.day))return false;
+    if(s.recs.length>100000 || s.tx.length>100000 || s.budget.cats.length>10000)return false;
+    if(!s.tx.every(function(x){return x && typeof x.id==='string' && typeof x.type==='string' && Number.isSafeInteger(x.amt) && Number.isFinite(x.day);}))return false;
+    if(!s.recs.every(function(x){return x && typeof x.id==='string' && typeof x.type==='string' && Number.isSafeInteger(x.amt);}))return false;
+    if(!s.budget.cats.every(function(x){return x && typeof x.id==='string' && typeof x.name==='string';}))return false;
+    return true;
+  }
+  async function restoreFile(f) {
+    if(!f)return;
+    try {
+      if(f.size>20*1024*1024)throw Error('Backup is too large.');
+      var raw=JSON.parse(await f.text()), encrypted=TakeControlBackup.isEncrypted(raw), inc;
+      if(encrypted){
+        if(!window.crypto || !crypto.subtle)throw Error('Secure restore requires an updated browser over HTTPS.');
+        var pw=await backupDialog('Unlock encrypted backup',['Backup password'],'Enter the password used when this backup was created. Incorrect passwords and damaged files will not change your budget.');
+        if(!pw)return;
+        try{inc=await TakeControlBackup.decrypt(raw,pw[0]);}
+        catch(e){throw Error('Incorrect password, damaged backup, or unsupported format. Your budget is unchanged.');}
+      } else {
+        if(!confirm('This is an older UNENCRYPTED backup. Import it only if you trust the file. Continue?'))return;
+        inc=raw;
+      }
+      if(!validBackupDeep(inc))throw Error('Backup contains invalid records. Your budget is unchanged.');
+      var merging=!!state.budget.done,n0=state.tx.length;
+      var preview='Backup contains '+inc.tx.length+' transactions, '+inc.recs.length+' recurring entries, and '+inc.budget.cats.length+' categories.\n'+
+        (merging?'Merge with this phone’s current budget?':'Load this budget onto this phone?')+'\nYour current budget will not be changed until you confirm.';
+      if(!confirm(preview))return;
+      // Compute first, preserve old state, and roll back if storage fails.
+      var previous=state, snapshot=localStorage.getItem(KEY);
+      var next=merging?mergeStates(clone(state),norm(clone(inc))):norm(clone(inc));next.sample=false;next.updated=Date.now();
+      var serialized=JSON.stringify(next);
+      try{localStorage.setItem(KEY,serialized);}catch(e){throw Error('Not enough browser storage. Current budget unchanged.');}
+      try{
+        state=next;loadMe();
+        if(merging)render();
+        else{resetDraft();setView(state.budget.done?'today':'plan');}
+        backupMessage(merging?'Restored and merged. '+Math.max(0,state.tx.length-n0)+' entries added.':'Backup restored successfully.');
+      }catch(e){
+        state=previous;
+        try{if(snapshot===null)localStorage.removeItem(KEY);else localStorage.setItem(KEY,snapshot);}catch(ignore){}
+        throw Error('Restore failed; previous budget was retained.');
+      }
+    }catch(e){backupMessage(e.message||'Could not restore backup. Current budget unchanged.');}
   }
   /* ask */
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition, rec = null;
@@ -1713,8 +1791,8 @@ function nextTarget(state) {
       '<div><label class="f" for="pOverride">My own daily spending number for the forecast</label><input type="text" id="pOverride" inputmode="decimal" placeholder="" value="' + inputVal(state.dailyOverride) + '"><p class="hint">Leave blank to use your recent pace, or your budget until you have a few days of entries.</p></div>' +
       '<button class="btn alt" type="submit">Save</button><p class="err" id="prefErr" role="alert"></p></form></details>' +
       calHTML() +
-      '<details' + (state.lastBackupDay == null || todayNum() - state.lastBackupDay >= 14 ? ' open' : '') + '><summary>Back up to iCloud or Google Drive</summary><div class="stack"><p class="hint" style="margin:0">Your numbers live only on this phone. Save a backup file every week or two. On iPhone, tap Save backup, then choose Save to Files and pick iCloud Drive. On Android, choose Google Drive.' + (state.lastBackupDay != null ? ' Last backup: ' + dLong(state.lastBackupDay) + '.' : ' No backup yet.') + '</p><div class="actions"><button class="btn" type="button" data-act="backupFile">Save backup</button><label class="btn alt" style="display:inline-flex;align-items:center;cursor:pointer">Restore from a backup file<input type="file" id="restoreFile" accept=".json,application/json" style="display:none"></label></div><p class="hint" id="backupFileMsg" role="status"></p></div></details>' +
-      '<details><summary>Sync two phones and back up</summary><div class="stack"><p class="hint" style="margin:0">Entries live on this phone. To bring two phones in line, or move to a new phone, tap Copy my data, send it in a text, and paste it below on the other phone and tap Merge. Do it in both directions whenever you want the phones to match. It is also a good backup.</p><textarea id="backup" aria-label="Sync text" spellcheck="false"></textarea><div class="actions"><button class="btn alt" type="button" data-act="copyBackup">Copy my data</button><button class="btn" type="button" data-act="mergeSync">Merge pasted data</button></div><div class="actions"><button class="link" type="button" data-act="restoreBackup">Replace this phone with the pasted data instead</button></div><p class="hint" id="backupMsg" role="status"></p></div></details>' +
+      '<details' + (state.lastBackupDay == null || todayNum() - state.lastBackupDay >= 14 ? ' open' : '') + '><summary>Back up to iCloud or Google Drive</summary><div class="stack"><p class="hint" style="margin:0">Your numbers live only on this phone. Save a backup file every week or two. On iPhone, tap Save backup, then choose Save to Files and pick iCloud Drive. On Android, choose Google Drive.' + (state.lastBackupDay != null ? ' Last backup: ' + dLong(state.lastBackupDay) + '.' : ' No backup yet.') + '</p><div class="actions"><button class="btn" type="button" data-act="backupFile">Save encrypted backup</button><label class="btn alt" style="display:inline-flex;align-items:center;cursor:pointer">Restore from a backup file<input type="file" id="restoreFile" accept=".json,application/json" style="display:none"></label></div><p class="hint" id="backupFileMsg" role="status"></p></div></details>' +
+      '<details><summary>Sync two phones and back up</summary><div class="stack"><p class="hint" style="margin:0">Entries live on this phone. To bring two phones in line, or move to a new phone, tap Copy my data, send it in a text, and paste it below on the other phone and tap Merge. Do it in both directions whenever you want the phones to match. This manual text synchronization is not encrypted; avoid sending it through insecure channels.</p><textarea id="backup" aria-label="Sync text" spellcheck="false"></textarea><div class="actions"><button class="btn alt" type="button" data-act="copyBackup">Copy my data</button><button class="btn" type="button" data-act="mergeSync">Merge pasted data</button></div><div class="actions"><button class="link" type="button" data-act="restoreBackup">Replace this phone with the pasted data instead</button></div><p class="hint" id="backupMsg" role="status"></p></div></details>' +
       '<details><summary>Start over</summary><div class="stack"><p class="hint" style="margin:0">Erases every entry, bill, budget and balance on this phone.</p><div class="actions" id="resetRow"><button class="btn alt" type="button" data-act="resetAsk">Erase everything</button></div></div></details></section>';
   }
   function welcomeHTML() {
