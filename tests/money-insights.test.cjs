@@ -49,5 +49,7 @@ test('original inline scripts parse and new module is cached offline',()=>{
  const sw=fs.readFileSync(path.join(__dirname,'..','sw.js'),'utf8');
  assert.ok(sw.includes("'money-insights.js'"));
  assert.ok(html.includes('src="money-insights.js"'));
+ assert.ok(html.indexOf('src="money-insights.js"')<html.indexOf('<script id="logic">'));
+ assert.ok(!html.includes('src="money-insights.js" defer'));
  assert.ok(html.includes('Create my budget'));
 });
