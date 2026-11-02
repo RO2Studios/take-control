@@ -356,8 +356,9 @@ input[type=file] { font-size: 14px; }
 .install .row-a { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 </style>
 <style>html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);-webkit-text-size-adjust:100%}body{margin:0;min-height:100vh;-webkit-tap-highlight-color:transparent}button{-webkit-appearance:none;appearance:none}</style>
-<link rel="stylesheet" href="ui.css?v=40">
+<link rel="stylesheet" href="ui.css?v=41">
 <script src="money-insights.js"></script>
+<script src="money-levels.js"></script>
 </head>
 <body>
 
@@ -392,6 +393,9 @@ input[type=file] { font-size: 14px; }
     <span id="installTxt"></span>
     <button class="btn alt" type="button" data-act="installDismiss">Got it</button>
   </div>
+
+  <div id="moneyLevelRoot" aria-label="Your money level"></div>
+  <div id="moneyLevelCelebration" aria-live="polite"></div>
 
   <nav class="tabs" id="tabs" aria-label="Sections">
     <button class="tab" type="button" data-act="tab" data-view="today"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg><b>Today</b><small>Spend and track</small></button>
@@ -1153,7 +1157,64 @@ function nextTarget(state) {
     return makeBlank();
   }
   function norm(s) { if (!s.paydays) s.paydays = {}; if (s.startDay === undefined) s.startDay = null; if (s.budget && s.budget.done && s.startDay == null) s.startDay = todayNum(); if (!s.remind) s.remind = { recon: '09:00', review: '10:00', added: {} }; if (!s.remind.added) s.remind.added = {}; if (!s.learned) s.learned = {}; if (!s.givePct) s.givePct = 0; if (!s.partner) s.partner = ''; if (!Array.isArray(s.reviews)) s.reviews = []; if (!s.milestones) s.milestones = {}; if (!Array.isArray(s.cancel)) s.cancel = []; if (!s.cancelled) s.cancelled = 0; if (!s.rules) s.rules = {}; if (!Array.isArray(s.inbox)) s.inbox = []; if (!s.imported) s.imported = {}; if (!s.goals) s.goals = { asked: false, picks: [], ef: null }; if (!Array.isArray(s.goals.picks)) s.goals.picks = []; if (!s.budget.months) s.budget.months = {}; if (!s.saved) s.saved = {}; if (!Array.isArray(s.names)) s.names = []; if (!s.deleted) s.deleted = {}; if (!s.updated) s.updated = 0; return s; }
-  function save() { state.updated = Date.now(); try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { storeOk = false; $('#storeBanner').hidden = false; } }
+
+  var pendingMoneyLevelUp = null;
+  function moneyLevelIcon(name) {
+    var shapes={sprout:'<path d="M12 21V11m0 5c-7 0-9-5-9-9 6 0 9 4 9 9zm0-5c0-6 4-9 9-9 0 6-3 9-9 9z"/>',
+      chart:'<path d="M4 20v-7m6 7V8m6 12V4m5 16v-9"/>',
+      rocket:'<path d="M5 16c2-7 6-11 14-13 1 8-3 12-10 14l-4-1zM5 16l-2 5 5-2m2-9 4 4M16 8h.01"/>',
+      trophy:'<path d="M7 3h10v8c0 5-3 7-5 7s-5-2-5-7V3zm0 2H4v3c0 3 2 5 5 5m8-8h3v3c0 3-2 5-5 5M12 18v3m-4 0h8"/>',
+      target:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
+      close:'<path d="M5 5l14 14M19 5 5 19"/>'};
+    return '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(shapes[name]||shapes.target)+'</svg>';
+  }
+  function levelJourneyHTML(p){
+    return '<div class="ml-journey">'+TakeControlLevels.levels.map(function(l,i){
+      var status=i<p.index?'done':i===p.index?'current':'future';
+      return '<div class="ml-stage '+status+'" style="--stage:'+l.color+'"><span class="ml-stage-icon">'+moneyLevelIcon(l.icon)+'</span><small>Level '+(i+1)+'</small><b>'+esc(l.short)+'</b></div>';
+    }).join('')+'</div>';
+  }
+  function renderMoneyLevel() {
+    var root=$('#moneyLevelRoot');if(!root)return;
+    if(!state.budget.done){root.innerHTML='';root.hidden=true;return;}
+    root.hidden=false;
+    var p=TakeControlLevels.progress(state);
+    var expanded=false;try{expanded=localStorage.getItem('moneyAhead.levelExpanded')==='1';}catch(e){}
+    var mission=p.remaining.slice(0,3);
+    root.innerHTML='<section class="money-level card"><details id="moneyLevelDetails"'+(expanded?' open':'')+'>'+
+      '<summary class="ml-summary" aria-label="Money level '+p.level+', '+p.current.name+', '+p.percent+' percent toward next level. Expand to see journey.">'+
+      '<span class="ml-header"><span class="ml-current-icon" style="--stage:'+p.current.color+'">'+moneyLevelIcon(p.current.icon)+'</span>'+
+      '<span class="ml-label"><strong>Level '+p.level+' · '+esc(p.current.name)+'</strong><small>'+(p.next?'On your way to Level '+(p.level+1):'Top level reached · Money Master')+'</small></span>'+
+      '<span class="ml-pct">'+p.percent+'%</span><span class="ml-arrow" aria-hidden="true"></span></span>'+
+      '<span class="ml-track" aria-label="'+p.percent+'% progress"><span class="ml-fill" style="width:'+p.percent+'%;background:'+p.current.color+'"><span class="ml-inside">'+(p.next?p.percent+'% complete':'Mastered')+'</span></span></span></summary>'+
+      '<div class="ml-expanded"><p class="ml-caption">Your journey to Money Master</p>'+levelJourneyHTML(p)+
+      '<div class="ml-missions"><strong>'+(!p.next?'You reached Level 4!':p.remaining.length+' missions available')+'</strong>'+
+      (mission.length?'<ul>'+mission.map(function(m){return '<li><span>'+esc(m.title)+'</span><button type="button" class="ml-go" data-act="moneyMission" data-view="'+m.view+'">Go</button></li>';}).join('')+'</ul>':'<p>All currently available missions completed.</p>')+
+      '<small>Earn progress by budgeting, learning, planning and reviewing—not by spending more or keeping a larger balance.</small></div></div></details></section>';
+    if(pendingMoneyLevelUp!==null){var level=pendingMoneyLevelUp;pendingMoneyLevelUp=null;showMoneyLevelUp(level);}
+  }
+  function showMoneyLevelUp(level){
+    var target=$('#moneyLevelCelebration');if(!target)return;
+    var l=TakeControlLevels.levels[level-1];if(!l)return;
+    target.innerHTML='<div class="ml-overlay" role="presentation"><section class="ml-dialog" role="dialog" aria-modal="true" aria-labelledby="mlLevelUpTitle" style="--stage:'+l.color+'">'+
+      '<button class="ml-close" type="button" data-act="closeMoneyLevel" aria-label="Close celebration">'+moneyLevelIcon('close')+'</button>'+
+      '<div class="ml-sparkles" aria-hidden="true"><span>✦</span><span>★</span><span>✧</span><span>✦</span><span>★</span></div>'+
+      '<div class="ml-hero-icon">'+moneyLevelIcon(l.icon)+'</div><p class="ml-tag">LEVEL UP!</p>'+
+      '<h2 id="mlLevelUpTitle">Welcome to Level '+level+'!</h2><p class="ml-dialog-name">'+esc(l.name)+'</p>'+
+      '<p>Your money habits are growing. Keep building momentum toward Money Master.</p>'+
+      '<button class="btn" type="button" data-act="closeMoneyLevel">Keep going</button></section></div>';
+    var close=target.querySelector('.ml-close');if(close)close.focus();
+  }
+  function closeMoneyLevelUp(){var target=$('#moneyLevelCelebration');if(target)target.innerHTML='';}
+  function updateMoneyLevelOnSave(){
+    if(!window.TakeControlLevels || !state)return;
+    var p=TakeControlLevels.progress(state);
+    state.moneyXPHigh=Math.max(state.moneyXPHigh||0,p.xp);
+    if(!Number.isInteger(state.moneyLevelSeen))state.moneyLevelSeen=p.level;
+    else if(p.level>state.moneyLevelSeen){state.moneyLevelSeen=p.level;if(!state.sample)pendingMoneyLevelUp=p.level;}
+    // The level and earned XP are monotonic; editing an old expense cannot take a level away.
+  }
+  function save() { updateMoneyLevelOnSave(); state.updated = Date.now(); try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { storeOk = false; $('#storeBanner').hidden = false; } if(state&&state.budget.done)renderMoneyLevel(); }
   function probeStorage() { try { localStorage.setItem(KEY + '.t', '1'); localStorage.removeItem(KEY + '.t'); } catch (e) { storeOk = false; } }
   var meIdx = null, lastDone = false, sub = 'spend';
   try { var sv = localStorage.getItem('moneyAhead.sub'); if (['spend', 'goals', 'outlook', 'bank'].indexOf(sv) >= 0) sub = sv; } catch (e) {}
@@ -1212,6 +1273,7 @@ function nextTarget(state) {
     $('#whoBanner').hidden = !needWho;
     if (needWho) $('#whoBtns').innerHTML = state.names.map(function (n, i) { return '<button class="btn" type="button" data-act="iam" data-i="' + i + '">' + esc(n) + '</button>'; }).join('');
     $('#sampleBanner').hidden = !state.sample;
+    renderMoneyLevel();
     dayNudge();
     $('#tabs').hidden = false;
     if (cur !== 'plan') $('#planRoot').innerHTML = '';
@@ -2509,11 +2571,15 @@ function nextTarget(state) {
     if (t.id === 'eDate') updatePreview();
   });
 
+  document.addEventListener('toggle', function(e) {if(e.target.id==='moneyLevelDetails'){try{localStorage.setItem('moneyAhead.levelExpanded',e.target.open?'1':'0');}catch(err){}}}, true);
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')closeMoneyLevelUp();});
   document.addEventListener('click', function (e) {
     var b = e.target.closest('[data-act]');
     if (!b) return;
     var act = b.getAttribute('data-act'), id = b.getAttribute('data-id');
     switch (act) {
+      case 'closeMoneyLevel': closeMoneyLevelUp(); break;
+      case 'moneyMission': setView(b.getAttribute('data-view')); break;
       case 'tab': setView(b.getAttribute('data-view')); if (cur === 'today') setSub('spend'); break;
       case 'openSettings': setView('plan'); { var settings = $('#settingsCard'); if (settings) { settings.scrollIntoView({ block: 'start' }); settings.querySelector('h2').focus({ preventScroll: true }); } } break;
       case 'openCheck': setView('today'); setSub('check'); clearPurchaseResult(); window.scrollTo({ top: 0 }); $('#askH').focus({ preventScroll: true }); break;
@@ -2670,6 +2736,7 @@ function nextTarget(state) {
   /* ---------- boot ---------- */
   probeStorage();
   state = load();
+  if(!Number.isInteger(state.moneyLevelSeen)){state.moneyLevelSeen=TakeControlLevels.progress(state).level;state.moneyXPHigh=TakeControlLevels.progress(state).xp;save();}
   loadMe();
   if (!storeOk) $('#storeBanner').hidden = false;
   $('#eDate').value = toISO(todayNum());
