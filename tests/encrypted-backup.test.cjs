@@ -50,6 +50,6 @@ test('UI retains legacy import and non-destructive preview, plus script loads',(
  assert.match(html,/localStorage\.setItem\(KEY,serialized\)/);
  assert.match(html,/Create my budget/);
  const sw=fs.readFileSync(path.join(__dirname,'..','sw.js'),'utf8');
- assert.match(sw,/'encrypted-backup\\.js'/);
+ assert.ok(sw.includes("'encrypted-backup.js'"));
  assert.match(sw,/takecontrol-v33/);
 });
