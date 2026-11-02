@@ -52,7 +52,7 @@ for (const width of [375,390,1440]) {
    const todayText=await page.locator('#todayGrid').innerText();
    await page.locator('#moneyLevelDetails > summary').click();
    assert.equal(await page.locator('#moneyLevelDetails').getAttribute('open'),null);
-   assert.equal(await page.evaluate(()=>localStorage.getItem('moneyAhead.levelExpanded')),'0');
+   await page.waitForFunction(()=>localStorage.getItem('moneyAhead.levelExpanded')==='0');
    assert.equal(await page.locator('#todayGrid').innerText(),todayText);
    await page.reload();
    assert.equal(await page.locator('#moneyLevelDetails').getAttribute('open'),null);
