@@ -76,7 +76,8 @@ test('approved glossy badges are available after an offline reload', async()=>{
  const page=await context.newPage();
  await page.goto(url);
  await page.locator('[data-act="startExample"]').click();
- await page.evaluate(async()=>{await navigator.serviceWorker.ready;localStorage.setItem('moneyAhead.levelExpanded','1');});
+ // Production auto-registers on HTTPS; explicitly register on this localhost test server.
+ await page.evaluate(async()=>{await navigator.serviceWorker.register('sw.js');await navigator.serviceWorker.ready;localStorage.setItem('moneyAhead.levelExpanded','1');});
  await page.waitForFunction(()=>!!navigator.serviceWorker.controller);
  const assets=['starter','builder','momentum','master'].map(k=>'icons/money-'+k+'-glossy.webp');
  for(const asset of assets)assert.ok(await page.evaluate(async asset=>!!await (await caches.open('takecontrol-v46')).match(asset),asset));
