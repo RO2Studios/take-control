@@ -477,3 +477,16 @@ form[data-form="rec"]:has(select[name="billKind"] option[value="credit"]:checked
 
 /* Prevent the generic .future content spacing from offsetting journey stages. */
 #moneyLevelRoot .ml-stage {margin:0;}
+
+/* Readable level labels beneath the approved cartoon badges. */
+#moneyLevelRoot .ml-stage small {font-size:12px;line-height:1.35;margin-top:7px;}
+#moneyLevelRoot .ml-stage b {font-size:14px;line-height:1.35;font-weight:750;}
+#moneyLevelRoot .ml-stage b span {white-space:nowrap;}
+@media (min-width:900px) {
+ #moneyLevelRoot .ml-stage small {font-size:13px;}
+ #moneyLevelRoot .ml-stage b {font-size:16px;}
+}
+@media (max-width:359px) {
+ #moneyLevelRoot .ml-stage small {font-size:11px;}
+ #moneyLevelRoot .ml-stage b {font-size:12px;}
+}
