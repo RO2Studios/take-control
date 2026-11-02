@@ -31,8 +31,9 @@ function progress(s){
  let index=levels.length-1;
  for(let i=0;i<levels.length-1;i++)if(xp<levels[i+1].min){index=i;break;}
  const cur=levels[index],next=levels[index+1];
- const pct=next?Math.max(0,Math.min(100,Math.floor((xp-cur.min)/(next.min-cur.min)*100))):100;
- return {index,level:index+1,current:cur,next,percent:pct,xp,missions,remaining:missions.filter(m=>!m.done),total:missions.length,completed:missions.length-missions.filter(m=>!m.done).length};
+ const levelPercent=next?Math.max(0,Math.min(100,Math.floor((xp-cur.min)/(next.min-cur.min)*100))):100;
+ const percent=Math.max(0,Math.min(100,Math.floor(xp/levels[levels.length-1].min*100)));
+ return {index,level:index+1,current:cur,next,percent,levelPercent,xp,missions,remaining:missions.filter(m=>!m.done),total:missions.length,completed:missions.length-missions.filter(m=>!m.done).length};
 }
 root.TakeControlLevels={levels,achievements,progress};
 })(typeof window!=='undefined'?window:globalThis);

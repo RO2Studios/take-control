@@ -27,6 +27,14 @@ for (const width of [320,375,390,768,1440]) {
   await page.goto(url);
   await page.locator('[data-act="startExample"]').click();
   const sample = await page.evaluate(()=>JSON.parse(localStorage.getItem('moneyAhead.v2')));
+  assert.equal(await page.locator('#moneyLevelRoot .ml-label strong').innerText(),'Level 3 · Money Strategist');
+  assert.equal(await page.locator('#moneyLevelRoot .ml-pct').innerText(),'62% complete');
+  assert.equal(await page.locator('#moneyLevelRoot .ml-bar-label').first().innerText(),'Journey to Money Master · 62%');
+  if(process.env.MONEY_JOURNEY_SCREENSHOTS){
+   await page.locator('#moneyLevelDetails').evaluate(el=>el.open=true);
+   fs.mkdirSync(process.env.MONEY_JOURNEY_SCREENSHOTS,{recursive:true});
+   await page.locator('#moneyLevelRoot').screenshot({path:path.join(process.env.MONEY_JOURNEY_SCREENSHOTS,`journey-demo-${width}.png`)});
+  }
   for (const [index,xp] of [50,136,170,290].entries()) {
    const fixture = {...sample,sample:false,tx:[],recs:[],learned:{},reviews:[],goals:{asked:true,picks:[],ef:null},moneyXPHigh:xp,moneyLevelSeen:index+1};
    await page.evaluate(s=>{localStorage.setItem('moneyAhead.v2',JSON.stringify(s));localStorage.setItem('moneyAhead.levelExpanded','1');},fixture);
@@ -34,7 +42,12 @@ for (const width of [320,375,390,768,1440]) {
    const card=page.locator('#moneyLevelRoot');
    await card.waitFor({state:'visible'});
    assert.equal(await page.locator('#moneyLevelDetails').getAttribute('open'),'');
+   assert.ok(Math.abs((await card.locator('.ml-journey').evaluate(el=>parseFloat(el.style.getPropertyValue('--ml-journey-progress'))))-index/3*100)<0.01,'connector matches the current earned level');
    const before = await page.evaluate(()=>localStorage.getItem('moneyAhead.v2'));
+   const overall=Math.min(100,Math.floor(xp/290*100));
+   assert.equal(await card.locator('.ml-pct').innerText(),overall+'% complete');
+   assert.equal(await card.locator('.ml-bar-label').first().innerText(),'Journey to Money Master · '+overall+'%');
+   assert.equal(await card.locator('.ml-fill').evaluate(el=>parseFloat(el.style.width)),overall);
    assert.equal(await card.locator('.ml-pct').evaluate(el=>getComputedStyle(el).color),'rgb(120, 86, 17)');
    assert.ok((await card.locator('.ml-fill').evaluate(el=>getComputedStyle(el).backgroundImage)).includes('rgb(21, 149, 46)'));
    const stages=card.locator('.ml-stage');
@@ -94,7 +107,7 @@ test('approved cartoon badges are available after an offline reload', async()=>{
  await page.evaluate(async()=>{await navigator.serviceWorker.register('sw.js');await navigator.serviceWorker.ready;localStorage.setItem('moneyAhead.levelExpanded','1');});
  await page.waitForFunction(()=>!!navigator.serviceWorker.controller);
  const assets=['rookie','builder','strategist','master'].map(k=>'icons/money-'+k+'-cartoon.webp');
- for(const asset of assets)assert.ok(await page.evaluate(async asset=>!!await (await caches.open('takecontrol-v49')).match(asset),asset));
+ for(const asset of assets)assert.ok(await page.evaluate(async asset=>!!await (await caches.open('takecontrol-v50')).match(asset),asset));
  await context.setOffline(true);
  await page.reload();
  const images=page.locator('#moneyLevelRoot .ml-stage img');

@@ -490,3 +490,6 @@ form[data-form="rec"]:has(select[name="billKind"] option[value="credit"]:checked
  #moneyLevelRoot .ml-stage small {font-size:11px;}
  #moneyLevelRoot .ml-stage b {font-size:12px;}
 }
+
+/* Milestone connections reflect the actual earned level, for demo and real budgets. */
+#moneyLevelRoot .ml-journey::before {background:linear-gradient(90deg,#15803d 0%,#15803d var(--ml-journey-progress,0%),#d6dde5 var(--ml-journey-progress,0%),#d6dde5 100%);}
