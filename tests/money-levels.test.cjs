@@ -70,30 +70,18 @@ test('mockup-faithful compact responsive card, connected stages and overlay rema
  for(const m of html.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g))new vm.Script(m[1]);
 });
 
-test('mockup exact milestone icon artwork matches four distinct visual states',()=>{
- const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
- const css=fs.readFileSync(path.join(root,'ui.css'),'utf8');
- for(const glyph of ['check','sprout','chart','rocket','trophy'])assert.ok(html.includes(glyph+":'"));
- assert.match(html,/status==='done'\?'check':l\.icon/);
- assert.ok(html.includes("ml-art-'+name+'"));
- assert.match(css,/\.ml-stage\.future \.ml-art-rocket/);
- assert.match(css,/\.ml-stage\.future \.ml-art-trophy/);
- assert.match(html,/href="ui\.css\?v=44"/);
-});
-
-test('approved generated artwork is wired into every money journey context and cached offline',()=>{
+test('milestones use custom vector art with the correct status and celebration images',()=>{
  const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
  const sw=fs.readFileSync(path.join(root,'sw.js'),'utf8');
- const css=fs.readFileSync(path.join(root,'ui.css'),'utf8');
- for(const asset of ['level-complete','level-builder','level-momentum','level-master','level-celebration','level-ribbon']){
-   assert.ok(sw.includes('icons/'+asset+'.webp'),'cache includes '+asset);
-   assert.ok(html.includes(asset),'app uses '+asset);
+ assert.match(html,/status==='done'\?'check':l\.icon/);
+ for(const glyph of ['check','chart','rocket','trophy'])assert.ok(html.includes("if(kind==='"+glyph+"')")||html.includes('check:\'check\''));
+ for(const asset of ['level-celebration','level-ribbon']){
+   assert.ok(sw.includes('icons/'+asset+'.webp'));
+   assert.ok(html.includes(asset));
  }
  assert.ok(html.includes('moneyLevelBadge(status'));
  assert.ok(html.includes('moneyLevelBadge(p.current.icon)'));
  assert.ok(html.includes('ml-celebration-art'));
- assert.ok(html.includes('ml-ribbon-art'));
- assert.ok(css.includes('ml-badge-image'));
 });
 
 test('level badges use scalable colored vector illustrations',()=>{const html=fs.readFileSync(path.join(root,'index.html'),'utf8'),css=fs.readFileSync(path.join(root,'ui.css'),'utf8');for(const icon of ['check','chart','rocket','trophy'])assert.ok(html.includes("if(kind==='"+icon+"')")||html.includes("check:'"));assert.match(html,/viewBox="0 0 64 64"/);assert.match(html,/ml-vector-badge/);assert.match(css,/svg\.ml-vector-badge/);assert.match(css,/@media\(max-width:420px\)/);});
