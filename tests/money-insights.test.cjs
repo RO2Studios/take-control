@@ -1,0 +1,53 @@
+'use strict';
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
+const src=fs.readFileSync(path.join(__dirname,'..','money-insights.js'),'utf8');
+const html=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
+const ctx={Date,Math};ctx.globalThis=ctx;vm.runInNewContext(src,ctx);
+const A=ctx.TakeControlInsights;
+const d=s=>A.parseDate(s);
+test('annual bill hits same anniversary and clamps leap-day renewal',()=>{
+ const r={freq:'annual',start:'2024-02-29'};
+ assert.equal(A.hits(r,d('2025-02-28')),true);
+ assert.equal(A.hits(r,d('2025-03-01')),false);
+ assert.equal(A.hits(r,d('2026-02-28')),true);
+ assert.equal(A.nextDue(r,d('2025-03-01')),d('2026-02-28'));
+});
+test('quarterly renewal uses due dates only and never charges early',()=>{
+ const r={freq:'quarterly',start:'2026-01-31'};
+ assert.equal(A.hits(r,d('2026-04-30')),true);
+ assert.equal(A.hits(r,d('2026-05-01')),false);
+ assert.equal(A.hits(r,d('2026-07-31')),true);
+ assert.equal(A.nextDue(r,d('2026-02-01')),d('2026-04-30'));
+});
+test('subscription cost summaries do not double-count billing cycles',()=>{
+ const r=[{type:'out',name:'Yearly',amt:12000,freq:'annual',kind:'subscription'}, {type:'out',name:'Monthly',amt:1000,freq:'monthly',cat:'Subscriptions'}, {type:'out',name:'Other',amt:4500,freq:'monthly',cat:'Utilities'}];
+ const x=A.subscriptionTotals(r);assert.equal(x.annual,24000);assert.equal(x.monthly,2000);assert.equal(x.items.length,2);
+});
+test('recommends per-paycheck deposits based on scheduled checks before due date',()=>{
+ const r={freq:'annual',start:'2026-12-31',amt:60000};
+ const p=[{type:'in',start:'2026-11-06',freq:'biweekly'}];
+ const a=A.paycheckAdvice(r,p,d('2026-11-02'),0);
+ assert.equal(a.payments,4);assert.equal(a.perPaycheck,15000);
+ const saved=A.paycheckAdvice(r,p,d('2026-11-02'),20000);assert.equal(saved.perPaycheck,10000);
+});
+test('no payday before due date produces explicit missing schedule result',()=>{
+ const r={freq:'annual',start:'2026-11-03',amt:30000};
+ const p=[{type:'in',start:'2026-11-10',freq:'biweekly'}];
+ const x=A.paycheckAdvice(r,p,d('2026-11-02'),0);assert.equal(x.perPaycheck,null);
+});
+test('food delivery insights include delivery merchants but not ride shares',()=>{
+ const tx=[{type:'out',note:'DOORDASH',amt:3000,day:d('2026-11-01')},{type:'out',note:'Uber Eats',amt:2200,day:d('2026-11-02')},{type:'out',note:'Uber ride',amt:2900,day:d('2026-11-02')}];
+ const x=A.foodDelivery(tx,d('2026-11-02'));assert.equal(x.amount,5200);assert.equal(x.count,2);
+});
+test('credit card estimate is an approximation not a transaction',()=>{
+ assert.equal(A.debtCost({amt:300000,apr:24}),6000);
+ assert.equal(A.debtCost({amt:300000,apr:-1}),null);
+});
+test('original inline scripts parse and new module is cached offline',()=>{
+ for(const m of html.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g))new vm.Script(m[1]);
+ new vm.Script(src);
+ const sw=fs.readFileSync(path.join(__dirname,'..','sw.js'),'utf8');
+ assert.ok(sw.includes("'money-insights.js'"));
+ assert.ok(html.includes('src="money-insights.js"'));
+ assert.ok(html.includes('Create my budget'));
+});
