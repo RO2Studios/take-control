@@ -356,7 +356,7 @@ input[type=file] { font-size: 14px; }
 .install .row-a { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 </style>
 <style>html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);-webkit-text-size-adjust:100%}body{margin:0;min-height:100vh;-webkit-tap-highlight-color:transparent}button{-webkit-appearance:none;appearance:none}</style>
-<link rel="stylesheet" href="ui.css?v=47">
+<link rel="stylesheet" href="ui.css?v=48">
 <script src="money-insights.js"></script>
 <script src="money-levels.js"></script>
 </head>
@@ -1172,16 +1172,16 @@ function nextTarget(state) {
     return '<svg class="ml-art ml-art-'+name+'" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(shapes[name]||shapes.target)+'</svg>';
   }
   function moneyLevelBadge(name){
-    // Ralph's approved glossy artwork: level identity never depends on status.
-    var types={check:'starter',sprout:'starter',chart:'builder',rocket:'momentum',trophy:'master'};
-    var kind=types[name]||'starter';
-    return '<img class="ml-badge-image ml-approved-badge ml-badge-'+kind+'" src="icons/money-'+kind+'-glossy.webp" width="512" height="512" alt="" decoding="async">';
+    // Ralph's approved cartoon artwork: level identity never depends on status.
+    var types={check:'rookie',sprout:'rookie',chart:'builder',rocket:'strategist',trophy:'master'};
+    var kind=types[name]||'rookie';
+    return '<img class="ml-badge-image ml-approved-badge ml-badge-'+kind+'" src="icons/money-'+kind+'-cartoon.webp" width="512" height="512" alt="" decoding="async">';
   }
   function levelJourneyHTML(p){
     return '<div class="ml-journey" role="list" aria-label="Four money levels">'+TakeControlLevels.levels.map(function(l,i){
       var status=i<p.index?'done':i===p.index?'current':'future';
       // Status decorates the stage; level identity always selects the primary artwork.
-      return '<div role="listitem" aria-label="'+esc(l.name)+', '+({done:'completed',current:'current',future:'upcoming'}[status])+'" class="ml-stage '+status+'" style="--stage:'+l.color+'"><span class="ml-stage-icon">'+moneyLevelBadge(l.icon)+'</span><small>Level '+(i+1)+'</small><b>'+esc(l.name.replace('Money ','')||l.short)+'</b></div>';
+      return '<div role="listitem" aria-label="'+esc(l.name)+', '+({done:'completed',current:'current',future:'upcoming'}[status])+'" class="ml-stage '+status+'" style="--stage:'+l.color+'"><span class="ml-stage-icon">'+moneyLevelBadge(l.icon)+'</span><small>Level '+(i+1)+'</small><b><span>Money</span><span>'+esc(l.short)+'</span></b></div>';
     }).join('')+'</div>';
   }
   function renderMoneyLevel() {
@@ -1196,7 +1196,7 @@ function nextTarget(state) {
       '<span class="ml-header"><span class="ml-current-icon" style="--stage:'+p.current.color+'">'+moneyLevelBadge(p.current.icon)+'</span>'+
       '<span class="ml-label"><strong>Level '+p.level+' · '+esc(p.current.name)+'</strong><small>'+(p.next?'You’re on your way to Level '+(p.level+1):'You reached the top level!')+'</small></span>'+
       '<span class="ml-pct">'+p.percent+'% complete</span><span class="ml-arrow" aria-hidden="true"></span></span>'+
-      '<span class="ml-track" aria-label="'+p.percent+' percent complete"><span class="ml-fill" style="width:'+p.percent+'%;background:'+p.current.color+'"></span><span class="ml-bar-label">'+esc(p.current.name)+' · '+p.percent+'%</span></span></summary>'+
+      '<span class="ml-track" style="--ml-progress:'+p.percent+'%" aria-label="'+p.percent+' percent complete"><span class="ml-fill" style="width:'+p.percent+'%"></span><span class="ml-bar-label">'+esc(p.current.name)+' · '+p.percent+'%</span><span class="ml-bar-label ml-bar-light" aria-hidden="true">'+esc(p.current.name)+' · '+p.percent+'%</span></span></summary>'+
       '<div class="ml-expanded"><p class="ml-caption">Your journey to Money Master</p>'+levelJourneyHTML(p)+
       '<details class="ml-missions"><summary class="ml-mission-trigger">'+moneyLevelIcon('target')+'<span>'+(p.next?missions.length+' missions available to move forward':'Level 4 achieved · keep building healthy habits')+'</span><span class="ml-mission-chevron" aria-hidden="true">›</span></summary>'+
       '<div class="ml-mission-content">'+(missions.length?'<ul>'+missions.slice(0,5).map(function(m){return '<li><span>'+esc(m.title)+'</span><button type="button" class="ml-go" data-act="moneyMission" data-view="'+m.view+'">Go</button></li>';}).join('')+'</ul>':'<p>Every available mission is complete.</p>')+

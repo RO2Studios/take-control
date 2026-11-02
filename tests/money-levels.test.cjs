@@ -6,6 +6,7 @@ const c={};c.globalThis=c;vm.runInNewContext(src,c);const L=c.TakeControlLevels;
 const base=()=>({sample:false,budget:{done:false},tx:[],recs:[],learned:{},reviews:[],goals:{ef:null}});
 test('four distinct levels have unique names icons and colors',()=>{
  assert.equal(L.levels.length,4);
+ assert.equal(JSON.stringify(L.levels.map(l=>l.name)),JSON.stringify(['Money Rookie','Money Builder','Money Strategist','Money Master']));
  for(const key of ['name','icon','color'])assert.equal(new Set(L.levels.map(l=>l[key])).size,4);
  assert.equal(L.levels[3].icon,'trophy');
 });
@@ -47,8 +48,8 @@ test('integrated UI is compact by default, expandable, and retains existing Toda
  assert.ok(html.includes("if(openLesson.pick===L0.q.answer)state.learned[L0.id] = 1"));
  assert.ok(css.includes('@media(prefers-reduced-motion:reduce)'));
  assert.ok(sw.includes("'money-levels.js'"));
- assert.ok(sw.includes('takecontrol-v47'));
- assert.ok(html.includes('ui.css?v=47'));
+ assert.ok(sw.includes('takecontrol-v48'));
+ assert.ok(html.includes('ui.css?v=48'));
  for(const m of html.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g))new vm.Script(m[1]);
 });
 
@@ -70,7 +71,7 @@ test('mockup-faithful compact responsive card, connected stages and overlay rema
  for(const m of html.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g))new vm.Script(m[1]);
 });
 
-test('milestones use approved glossy art with the correct status and celebration images',()=>{
+test('milestones use approved cartoon art with the correct status and celebration images',()=>{
  const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
  const sw=fs.readFileSync(path.join(root,'sw.js'),'utf8');
  assert.ok(html.includes('moneyLevelBadge(l.icon)'));
@@ -83,10 +84,10 @@ test('milestones use approved glossy art with the correct status and celebration
  assert.ok(html.includes('ml-celebration-art'));
 });
 
-test('level badges use the approved glossy files and include them offline',()=>{
+test('level badges use the approved cartoon files and include them offline',()=>{
  const html=fs.readFileSync(path.join(root,'index.html'),'utf8'),css=fs.readFileSync(path.join(root,'ui.css'),'utf8'),sw=fs.readFileSync(path.join(root,'sw.js'),'utf8');
- for(const name of ['starter','builder','momentum','master']){
-  const file='icons/money-'+name+'-glossy.webp';
+ for(const name of ['rookie','builder','strategist','master']){
+  const file='icons/money-'+name+'-cartoon.webp';
   assert.ok(fs.existsSync(path.join(root,file)));
   assert.ok(sw.includes(file));
  }

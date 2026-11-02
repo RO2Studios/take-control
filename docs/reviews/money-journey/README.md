@@ -1,16 +1,18 @@
-# Approved glossy Money Journey artwork
+# Approved cartoon Money Journey
 
-Ralph approved all four newly generated glossy badge images and authorized publishing them to the app. The app now uses those approved images, resized with transparency preserved to 512px lossless WebP assets. The old vector approximations are removed from the primary badge renderer.
+Ralph approved the cartoon mockup with these names and symbols:
 
-| Level | Artwork | Asset |
+| Level | Name | Artwork |
 | --- | --- | --- |
-| Money Starter | Glossy green check | `icons/money-starter-glossy.webp` |
-| Money Builder | Glossy teal bars | `icons/money-builder-glossy.webp` |
-| Money Momentum | Glossy blue rocket | `icons/money-momentum-glossy.webp` |
-| Money Master | Glossy gold trophy and three stars | `icons/money-master-glossy.webp` |
+| 1 | Money Rookie | Green seedling growing from a gold coin, white badge |
+| 2 | Money Builder | Three ascending gold coin stacks, emerald badge |
+| 3 | Money Strategist | Blue rocket |
+| 4 | Money Master | Gold trophy and three stars |
 
-Level identity always selects the image; completion never substitutes a checkmark. Existing progression, collapse behavior, celebration logic, Today financial information and navigation are preserved. PWA cache v46 includes all four assets and updated styles.
+The four badge images are extracted directly from the approved mockup (`exec-c2b17bec-b060-45bc-ac73-5342ec3353a2.png`). Each circular badge is normalized to the same visible size, with transparent corners and a 512px lossless WebP canvas. No new artwork was generated during implementation. The current-level header reuses the same asset as its journey stage.
 
-Tests execute the actual production renderer across all 12 level/status combinations and fingerprint the actual approved asset bytes. Browser checks cover every reachable current level at 375px, 390px and 1440px, image decoding and layout fit, collapse persistence, saved-budget preservation and offline reload of all four images. CI publishes current mobile and desktop screenshots as the `money-journey-browser-review` artifact.
+Progress remains brand green at every level. A champagne/gold percentage badge retains the approved accent. Full level names appear under the four badges. Existing desktop width and responsive icon sizing are preserved. Progress thresholds, achievements, collapse persistence, celebration logic and saved-budget schema are unchanged.
 
-The previous vector previews have been removed to avoid confusing them with the approved images. Native Safari/iOS rendering and an end-to-end level-up animation remain outside this Chromium verification.
+Unit coverage executes the actual renderer for all 12 level/status combinations and fingerprints all four approved asset files. Browser coverage checks 320px, 375px, 390px, 768px and 1440px, correct names/assets/colors, equal badge sizes, desktop alignment, connector position, saved data, collapse persistence and offline reload. CI publishes screenshots for visual review. Native Safari/iOS rendering is not covered by the Chromium checks.
+
+PWA cache v48 includes the cartoon badges and updated styles.
