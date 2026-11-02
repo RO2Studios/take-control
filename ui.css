@@ -211,3 +211,10 @@ body { font-family: var(--font-body); }
 /* Distinct subscription brand tiles, consistent with delivery service cards. */
 .mi-line-icon.mi-brand-netflix {background:#fff2f2;border-color:#ffe0e0;}
 .mi-line-icon.mi-brand-icloud {background:#eff6ff;border-color:#dbeafe;}
+
+/* Show network only while configuring a credit-card bill. */
+form[data-form="rec"] .card-network-field {display:none;}
+form[data-form="rec"]:has(select[name="billKind"] option[value="credit"]:checked) .card-network-field {display:grid;gap:6px;}
+.mi-line-icon.mi-brand-visa {background:#f0f3ff;border-color:#dfe5ff;}
+.mi-line-icon.mi-brand-mastercard {background:#fff4ee;border-color:#ffe3d4;}
+.mi-line-icon.mi-brand-americanexpress {background:#eff7ff;border-color:#d9edff;}
