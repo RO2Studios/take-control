@@ -312,3 +312,5 @@ form[data-form="rec"]:has(select[name="billKind"] option[value="credit"]:checked
 @keyframes moneyFloat{to{transform:translateY(-15px) rotate(16deg)}}
 @media(max-width:600px){.money-level{padding:11px 12px}.ml-stage-icon{width:39px;height:39px}.ml-stage-icon svg{width:20px}.ml-stage b{font-size:10px}.ml-label strong{font-size:13px}.ml-pct{font-size:11px;}}
 @media(prefers-reduced-motion:reduce){.ml-dialog,.ml-sparkles span{animation:none!important}.ml-fill{transition:none}}
+
+.ml-bar-label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:850;color:#123c2a;text-shadow:0 1px 1px #ffffff55;pointer-events:none;white-space:nowrap;}
