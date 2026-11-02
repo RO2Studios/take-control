@@ -1,11 +1,15 @@
 name: Financial insights tests
 on:
   push:
-    branches: [feature/annual-bills-and-debt, feature/financial-insights-demo-data]
+    branches: [feature/annual-bills-and-debt, feature/financial-insights-demo-data, fix/money-journey-level-icons]
   pull_request:
     paths:
       - 'index.html'
       - 'money-insights.js'
+      - 'money-levels.js'
+      - 'ui.css'
+      - 'package.json'
+      - 'package-lock.json'
       - 'sw.js'
       - 'tests/**'
       - '.github/workflows/financial-insights-tests.yml'
@@ -19,4 +23,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node --test tests/*.test.cjs
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm test
+      - run: npm run test:browser
+        env:
+          MONEY_JOURNEY_SCREENSHOTS: test-artifacts/money-journey
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: money-journey-browser-review
+          path: test-artifacts/money-journey
+          if-no-files-found: ignore
