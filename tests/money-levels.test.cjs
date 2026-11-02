@@ -47,8 +47,8 @@ test('integrated UI is compact by default, expandable, and retains existing Toda
  assert.ok(html.includes("if(openLesson.pick===L0.q.answer)state.learned[L0.id] = 1"));
  assert.ok(css.includes('@media(prefers-reduced-motion:reduce)'));
  assert.ok(sw.includes("'money-levels.js'"));
- assert.ok(sw.includes('takecontrol-v43'));
- assert.ok(html.includes('ui.css?v=43'));
+ assert.ok(sw.includes('takecontrol-v44'));
+ assert.ok(html.includes('ui.css?v=44'));
  for(const m of html.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g))new vm.Script(m[1]);
 });
 
@@ -78,5 +78,20 @@ test('mockup exact milestone icon artwork matches four distinct visual states',(
  assert.ok(html.includes("ml-art-'+name+'"));
  assert.match(css,/\.ml-stage\.future \.ml-art-rocket/);
  assert.match(css,/\.ml-stage\.future \.ml-art-trophy/);
- assert.match(html,/href="ui\.css\?v=43"/);
+ assert.match(html,/href="ui\.css\?v=44"/);
+});
+
+test('approved generated artwork is wired into every money journey context and cached offline',()=>{
+ const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+ const sw=fs.readFileSync(path.join(root,'sw.js'),'utf8');
+ const css=fs.readFileSync(path.join(root,'ui.css'),'utf8');
+ for(const asset of ['level-complete','level-builder','level-momentum','level-master','level-celebration','level-ribbon']){
+   assert.ok(sw.includes('icons/'+asset+'.webp'),'cache includes '+asset);
+   assert.ok(html.includes(asset),'app uses '+asset);
+ }
+ assert.ok(html.includes('moneyLevelBadge(status'));
+ assert.ok(html.includes('moneyLevelBadge(p.current.icon)'));
+ assert.ok(html.includes('ml-celebration-art'));
+ assert.ok(html.includes('ml-ribbon-art'));
+ assert.ok(css.includes('ml-badge-image'));
 });
