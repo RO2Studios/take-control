@@ -314,3 +314,75 @@ form[data-form="rec"]:has(select[name="billKind"] option[value="credit"]:checked
 @media(prefers-reduced-motion:reduce){.ml-dialog,.ml-sparkles span{animation:none!important}.ml-fill{transition:none}}
 
 .ml-bar-label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:850;color:#123c2a;text-shadow:0 1px 1px #ffffff55;pointer-events:none;white-space:nowrap;}
+
+
+/* Approved Money Journey mockup fidelity — compact card on every screen. */
+#moneyLevelRoot { width:100%; max-width:620px; margin:0 auto 20px; }
+#moneyLevelRoot .money-level {padding:15px 18px 17px;border:1px solid var(--line);border-left:3px solid #15803d;border-radius:18px;box-shadow:0 6px 20px rgba(16,35,28,.07);}
+#moneyLevelRoot .ml-summary {gap:12px;}
+#moneyLevelRoot .ml-header {gap:10px;}
+#moneyLevelRoot .ml-current-icon {height:45px;width:45px;border-radius:13px;}
+#moneyLevelRoot .ml-current-icon svg {height:25px;width:25px;}
+#moneyLevelRoot .ml-label strong {font-size:15px;letter-spacing:-.018em;font-weight:800;}
+#moneyLevelRoot .ml-label small {font-size:12px;}
+#moneyLevelRoot .ml-pct {padding:5px 9px;color:#12642e;background:#e6f6e9;font-weight:750;}
+#moneyLevelRoot .ml-track {height:21px;background:#d9eddf;isolation:isolate;}
+#moneyLevelRoot .ml-fill {position:absolute;left:0;top:0;bottom:0;display:block;min-width:0;transition:width .45s ease;}
+#moneyLevelRoot .ml-bar-label {font-weight:800;font-size:11px;letter-spacing:.01em;color:#143d2b;text-shadow:0 1px 2px #ffffffa8;z-index:1;}
+#moneyLevelRoot .ml-expanded {padding:14px 0 0;margin-top:14px;border-top:1px solid var(--line);}
+#moneyLevelRoot .ml-caption {margin:0 0 14px;text-align:left;font-size:13px;}
+#moneyLevelRoot .ml-journey {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;position:relative;margin:0 3px 14px;}
+#moneyLevelRoot .ml-journey::before {content:"";position:absolute;height:3px;top:21px;left:12%;right:12%;background:linear-gradient(90deg,#15803d 0%,#0d9488 39%,#d6dde5 39%,#d6dde5 100%);z-index:0;border-radius:9px;}
+#moneyLevelRoot .ml-stage {position:relative;z-index:1;gap:3px;padding:0 2px;}
+#moneyLevelRoot .ml-stage-icon {height:43px;width:43px;border:2px solid var(--stage);background:var(--surface);box-shadow:0 2px 6px rgba(20,34,38,.055);}
+#moneyLevelRoot .ml-stage.current .ml-stage-icon {background:var(--stage);color:#fff;box-shadow:0 0 0 4px color-mix(in srgb,var(--stage) 16%,transparent);}
+#moneyLevelRoot .ml-stage.done .ml-stage-icon {background:var(--stage);color:#fff;}
+#moneyLevelRoot .ml-stage.future .ml-stage-icon {opacity:1;background:color-mix(in srgb,var(--stage) 7%,var(--surface));}
+#moneyLevelRoot .ml-stage small {font-size:10px;margin-top:5px;}
+#moneyLevelRoot .ml-stage b {font-size:11px;font-weight:750;color:var(--ink);}
+#moneyLevelRoot .ml-missions {margin:0;background:transparent;padding:0;border:0;border-radius:0;}
+#moneyLevelRoot .ml-mission-trigger {display:flex;align-items:center;gap:10px;padding:11px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface-2);font-size:12px;font-weight:750;color:var(--ink);cursor:pointer;list-style:none;}
+#moneyLevelRoot .ml-mission-trigger::-webkit-details-marker {display:none;}
+#moneyLevelRoot .ml-mission-trigger::marker{content:"";}
+#moneyLevelRoot .ml-mission-trigger>svg {flex:none;color:#15803d;width:20px;height:20px;}
+#moneyLevelRoot .ml-mission-trigger>span:nth-child(2) {flex:1;min-width:0;}
+#moneyLevelRoot .ml-mission-chevron {font-size:20px;line-height:1;transition:transform .2s;}
+#moneyLevelRoot .ml-missions[open] .ml-mission-chevron{transform:rotate(90deg);}
+#moneyLevelRoot .ml-mission-content {padding:8px 12px 11px;border:1px solid var(--line);border-top:0;border-radius:0 0 12px 12px;background:var(--surface-2);}
+#moneyLevelRoot .ml-missions[open] .ml-mission-trigger{border-radius:12px 12px 0 0;}
+#moneyLevelRoot .ml-mission-content li {min-height:42px;}
+#moneyLevelRoot .ml-go {min-width:40px;}
+#moneyLevelRoot .ml-mission-content>small {display:block;margin-top:7px;font-size:11px;line-height:1.45;color:var(--ink-2);}
+#moneyLevelRoot .ml-missions[open] .ml-mission-content {animation:moneyReveal .2s ease-out both;}
+.ml-dialog {width:min(420px,100%);padding:22px 24px 24px;border:1px solid color-mix(in srgb,var(--stage) 22%,var(--line));box-shadow:0 24px 70px #0005;}
+.ml-rays {position:absolute;pointer-events:none;width:270px;height:270px;left:50%;top:-60px;transform:translateX(-50%);opacity:.5;background:repeating-conic-gradient(from 0deg,color-mix(in srgb,var(--stage) 20%,transparent) 0deg 13deg,transparent 13deg 28deg);mask-image:radial-gradient(circle,transparent 0%,#000 38%,transparent 80%);}
+.ml-dialog .ml-hero-icon {height:112px;width:112px;margin:28px auto 0;border:4px solid #fff;outline:4px solid color-mix(in srgb,var(--stage) 18%,transparent);box-shadow:0 10px 35px color-mix(in srgb,var(--stage) 22%,transparent);position:relative;z-index:1;}
+.ml-dialog .ml-hero-icon svg {height:56px;width:56px;}
+.ml-ribbon {position:relative!important;z-index:1;width:max-content;max-width:100%;margin:-8px auto 16px!important;padding:7px 22px;background:var(--stage);color:#fff!important;font-size:19px!important;font-weight:850;letter-spacing:.06em;line-height:1.2;box-shadow:0 5px 12px #0002;border-radius:5px;transform:rotate(-2deg);}
+.ml-dialog .ml-dialog-name {margin:6px 0 8px!important;}
+.ml-dialog .ml-celebrate-copy {margin:10px auto 18px;max-width:310px;}
+.ml-rewards {display:grid;gap:0;padding:3px 12px;border-radius:14px;background:var(--surface-2);border:1px solid var(--line);text-align:left;margin:10px 0 18px;}
+.ml-rewards>div{display:flex;align-items:center;gap:10px;min-height:48px;font-size:12px;color:var(--ink);font-weight:650;border-bottom:1px solid var(--line);}
+.ml-rewards>div:last-child{border-bottom:0;}
+.ml-rewards svg{width:22px;height:22px;color:var(--stage);flex:none;}
+.ml-rewards span{flex:1;}
+.ml-rewards b{color:#15803d;}
+.ml-dialog .ml-primary {display:block;margin:10px 0;width:100%;background:#15803d;color:white;}
+.ml-dialog .ml-secondary {display:block;margin:8px 0 0;width:100%;background:transparent;color:var(--ink);border:1px solid var(--line);}
+@media(max-width:899px){
+  #moneyLevelRoot {max-width:620px;margin:0 auto 16px;}
+  #moneyLevelRoot .money-level {padding:12px 13px 13px;}
+}
+@media(max-width:420px){
+  #moneyLevelRoot .ml-label strong {font-size:13px;}
+  #moneyLevelRoot .ml-label small {font-size:11px;}
+  #moneyLevelRoot .ml-current-icon {height:39px;width:39px;}
+  #moneyLevelRoot .ml-pct {font-size:10px;padding:5px 6px;}
+  #moneyLevelRoot .ml-stage-icon {height:39px;width:39px;}
+  #moneyLevelRoot .ml-journey::before{top:19px;}
+  #moneyLevelRoot .ml-stage b{font-size:10px;}
+}
+@media(prefers-reduced-motion:reduce) {
+  #moneyLevelRoot .ml-mission-content {animation:none;}
+  #moneyLevelRoot .ml-mission-chevron {transition:none;}
+}
