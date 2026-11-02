@@ -27,7 +27,7 @@ function achievements(s){
  return out;
 }
 function progress(s){
- const missions=achievements(s),xp=missions.reduce((sum,m)=>sum+(m.done?m.xp:0),0);
+ const missions=achievements(s),earned=missions.reduce((sum,m)=>sum+(m.done?m.xp:0),0),xp=Math.max(earned,Number.isFinite(s.moneyXPHigh)?s.moneyXPHigh:0);
  let index=levels.length-1;
  for(let i=0;i<levels.length-1;i++)if(xp<levels[i+1].min){index=i;break;}
  const cur=levels[index],next=levels[index+1];
