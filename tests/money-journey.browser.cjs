@@ -51,6 +51,8 @@ for (const width of [320,375,390,768,1440]) {
     const firstBadge=await stages.first().locator('img').boundingBox();
     assert.ok(Math.abs(badge.y-firstBadge.y)<1 && Math.abs(badge.height-firstBadge.height)<1,'all four badges share size and vertical alignment');
     const cell=await stage.boundingBox();
+    const label=await stage.locator('b').boundingBox();
+    assert.ok(label.x>=cell.x-1 && label.x+label.width<=cell.x+cell.width+1,'larger level names fit their stage');
     assert.equal(Math.round(badge.width),width<360?56:width<=420?64:width<900?72:88);
     assert.ok(badge.x>=cell.x-1 && badge.x+badge.width<=cell.x+cell.width+1,'badge fits its stage');
    }
@@ -92,7 +94,7 @@ test('approved cartoon badges are available after an offline reload', async()=>{
  await page.evaluate(async()=>{await navigator.serviceWorker.register('sw.js');await navigator.serviceWorker.ready;localStorage.setItem('moneyAhead.levelExpanded','1');});
  await page.waitForFunction(()=>!!navigator.serviceWorker.controller);
  const assets=['rookie','builder','strategist','master'].map(k=>'icons/money-'+k+'-cartoon.webp');
- for(const asset of assets)assert.ok(await page.evaluate(async asset=>!!await (await caches.open('takecontrol-v48')).match(asset),asset));
+ for(const asset of assets)assert.ok(await page.evaluate(async asset=>!!await (await caches.open('takecontrol-v49')).match(asset),asset));
  await context.setOffline(true);
  await page.reload();
  const images=page.locator('#moneyLevelRoot .ml-stage img');
