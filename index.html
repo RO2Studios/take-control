@@ -356,7 +356,7 @@ input[type=file] { font-size: 14px; }
 .install .row-a { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 </style>
 <style>html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);-webkit-text-size-adjust:100%}body{margin:0;min-height:100vh;-webkit-tap-highlight-color:transparent}button{-webkit-appearance:none;appearance:none}</style>
-<link rel="stylesheet" href="ui.css?v=52">
+<link rel="stylesheet" href="ui.css?v=53">
 <script src="money-insights.js"></script>
 <script src="money-levels.js"></script>
 </head>
@@ -365,8 +365,8 @@ input[type=file] { font-size: 14px; }
 
 <div class="wrap">
   <header class="top">
-    <h1><span class="brand-mark" aria-hidden="true">$</span><span>Take Control</span></h1>
-    <button class="profile" type="button" data-act="openSettings" aria-label="Open settings" id="profileBtn">TC</button>
+    <h1><span class="brand-mark" aria-hidden="true">$</span><span class="brand-copy"><span class="brand-title">Take Control</span><span class="brand-tagline">Your money. Your plan. Your control.</span></span></h1>
+    <button class="profile" type="button" data-act="openSettings" aria-label="Open profile and settings" id="profileBtn"><span aria-hidden="true">🧑🏽</span></button>
   </header>
   <div class="greeting-row" id="greetingRow">
     <div><p class="greeting" id="greeting"></p><div class="today-label" id="todayLabel"></div></div>
@@ -402,7 +402,7 @@ input[type=file] { font-size: 14px; }
     <button class="tab" type="button" data-act="tab" data-view="plan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg><b>Plan</b><small>Build the budget</small></button>
     <button class="tab" type="button" data-act="tab" data-view="review"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 20V10M12 20V4M6 20v-6"/></svg><b>Review</b><small>Weekly</small></button>
     <button class="tab" type="button" data-act="tab" data-view="month"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><b>Month</b><small>Reset</small></button>
-    <button class="tab" type="button" data-act="tab" data-view="learn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><b>Learn</b><small>Lessons</small></button>
+    <button class="tab" type="button" data-act="tab" data-view="learn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5c-3-2-6-2-10-1v15c4-1 7-1 10 1 3-2 6-2 10-1V4c-4-1-7-1-10 1Zm0 0v15"/></svg><b>Learn</b><small>Lessons</small></button>
   </nav>
 
 
@@ -1156,7 +1156,7 @@ function nextTarget(state) {
     try { var raw = localStorage.getItem(KEY); if (raw) { var s = JSON.parse(raw); if (valid(s)) return refreshDemoNetworks(refreshDemoSubscriptions(norm(s))); } } catch (e) {}
     return makeBlank();
   }
-  function norm(s) { if (!s.paydays) s.paydays = {}; if (s.startDay === undefined) s.startDay = null; if (s.budget && s.budget.done && s.startDay == null) s.startDay = todayNum(); if (!s.remind) s.remind = { recon: '09:00', review: '10:00', added: {} }; if (!s.remind.added) s.remind.added = {}; if (!s.learned) s.learned = {}; if (!s.givePct) s.givePct = 0; if (!s.partner) s.partner = ''; if (!Array.isArray(s.reviews)) s.reviews = []; if (!s.milestones) s.milestones = {}; if (!Array.isArray(s.cancel)) s.cancel = []; if (!s.cancelled) s.cancelled = 0; if (!s.rules) s.rules = {}; if (!Array.isArray(s.inbox)) s.inbox = []; if (!s.imported) s.imported = {}; if (!s.goals) s.goals = { asked: false, picks: [], ef: null }; if (!Array.isArray(s.goals.picks)) s.goals.picks = []; if (!s.budget.months) s.budget.months = {}; if (!s.saved) s.saved = {}; if (!Array.isArray(s.names)) s.names = []; if (!s.deleted) s.deleted = {}; if (!s.updated) s.updated = 0; return s; }
+  function norm(s) { s.profiles=cleanProfiles(s.profiles); if (!s.paydays) s.paydays = {}; if (s.startDay === undefined) s.startDay = null; if (s.budget && s.budget.done && s.startDay == null) s.startDay = todayNum(); if (!s.remind) s.remind = { recon: '09:00', review: '10:00', added: {} }; if (!s.remind.added) s.remind.added = {}; if (!s.learned) s.learned = {}; if (!s.givePct) s.givePct = 0; if (!s.partner) s.partner = ''; if (!Array.isArray(s.reviews)) s.reviews = []; if (!s.milestones) s.milestones = {}; if (!Array.isArray(s.cancel)) s.cancel = []; if (!s.cancelled) s.cancelled = 0; if (!s.rules) s.rules = {}; if (!Array.isArray(s.inbox)) s.inbox = []; if (!s.imported) s.imported = {}; if (!s.goals) s.goals = { asked: false, picks: [], ef: null }; if (!Array.isArray(s.goals.picks)) s.goals.picks = []; if (!s.budget.months) s.budget.months = {}; if (!s.saved) s.saved = {}; if (!Array.isArray(s.names)) s.names = []; if (!s.deleted) s.deleted = {}; if (!s.updated) s.updated = 0; return s; }
 
   var pendingMoneyLevelUp = null;
   function moneyLevelIcon(name) {
@@ -1278,8 +1278,7 @@ function nextTarget(state) {
     V = compute();
     $('#greeting').textContent = cur === 'today' ? greet() + (who() ? ', ' + who() : '') : '';
     $('#todayLabel').textContent = new Date(V.today * DAY).toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'long', month: 'long', day: 'numeric' });
-    var profileName = meName() || house();
-    $('#profileBtn').textContent = profileName ? profileName.split(/\s+/).map(function (n) { return n[0]; }).slice(0, 2).join('').toUpperCase() : 'TC';
+    renderProfile();
     try { var pdq = paydayInfo(state, V.today); if (pdq && pdq.next === V.today && !state.sample && localStorage.getItem('moneyAhead.pdOpen') !== String(V.today)) { localStorage.setItem('moneyAhead.pdOpen', String(V.today)); if (cur === 'today') setSub('spend'); } } catch (e) {}
     var needWho = state.names.length > 1 && meIdx == null;
     $('#whoBanner').hidden = !needWho;
@@ -1954,9 +1953,58 @@ function nextTarget(state) {
       '<h3>How it compares with the 50/30/20 guide</h3><div class="split">' + split('Needs', t.need, 50) + split('Wants', t.want, 30) + split('Savings', t.save, 20) + '</div>' +
       '<p class="hint">A guide, not a rule. High rent or childcare often pushes needs above 50%.' + (t.give ? ' Giving (' + Math.round(t.give / inc * 100) + '%) sits outside the guide, off the top.' : '') + ' What matters most is that spending stays at or below take-home.</p>' + (wiz ? lessonLink('zero') : '') + '</section>' + coach;
   }
+  /* Local profile pictures. Uploaded images are cropped and re-encoded before storage. */
+  var PROFILE_AVATARS=[['🧑🏽','Person, medium skin tone'],['👩🏻','Woman, light skin tone'],['👨🏼','Man, medium-light skin tone'],['👩🏾','Woman, medium-dark skin tone'],['👨🏿','Man, dark skin tone'],['🧑🏻','Person, light skin tone'],['🧑🏾','Person, medium-dark skin tone'],['👩🏽','Woman, medium skin tone']];
+  var profileDraft=null,profileLoad=0;
+  function profileKey(){return state.names.length===1?'person-0':meIdx===null?'household':'person-'+meIdx;}
+  function safeProfile(p){
+    if(!p||typeof p!=='object')return null;
+    var updated=Number.isFinite(p.updated)&&p.updated>=0?p.updated:0;
+    if(p.type==='emoji'&&PROFILE_AVATARS.some(function(a){return a[0]===p.emoji;}))return {type:'emoji',emoji:p.emoji,updated:updated};
+    if(p.type==='photo'&&typeof p.src==='string'&&p.src.length<=180000&&/^data:image\/jpeg;base64,[A-Za-z0-9+/]+=*$/.test(p.src))return {type:'photo',src:p.src,updated:updated};
+    return null;
+  }
+  function cleanProfiles(map){var out={};if(map&&typeof map==='object')['household','person-0','person-1'].forEach(function(k){var p=safeProfile(map[k]);if(p)out[k]=p;});return out;}
+  function currentProfile(){return safeProfile((state.profiles||{})[profileKey()])||{type:'emoji',emoji:PROFILE_AVATARS[0][0]};}
+  function profileMarkup(p){return p.type==='photo'?'<img src="'+esc(p.src)+'" alt="" width="64" height="64">':'<span aria-hidden="true">'+esc(p.emoji)+'</span>';}
+  function renderProfile(){var button=$('#profileBtn');button.innerHTML=profileMarkup(currentProfile());button.setAttribute('aria-label','Open profile and settings'+(meName()?' for '+meName():''));}
+  function profileMessage(text,error){var el=$('#profileMessage');if(el){el.textContent=text;el.className=error?'err':'hint';}}
+  function profileSettingsHTML(){
+    var p=currentProfile(),name=meName()||'this household';
+    return '<details id="profileSettings" open><summary>Profile picture</summary><div class="profile-editor"><div class="profile-current"><div class="profile-preview" aria-label="Current profile picture">'+profileMarkup(p)+'</div><div><b>'+esc(name)+'</b><p class="hint">Choose an emoji or a photo. Your picture stays with your budget data on this device.</p></div></div>'+
+      '<div class="avatar-options" role="group" aria-label="Choose an emoji avatar">'+PROFILE_AVATARS.map(function(a,i){return '<button type="button" data-act="profileEmoji" data-avatar="'+i+'" aria-label="'+esc(a[1])+'" aria-pressed="'+(p.type==='emoji'&&p.emoji===a[0])+'"><span aria-hidden="true">'+a[0]+'</span></button>';}).join('')+'</div>'+
+      '<div class="actions"><button class="btn alt" type="button" data-act="profileUpload">Upload a photo</button><input id="profilePhotoFile" type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/heic,image/heif" hidden><button class="link" type="button" data-act="profileRemove">Reset picture</button></div>'+
+      '<p class="hint">Photos are cropped to a circle. JPG, PNG, WebP, and other formats your browser can open; up to 10 MB. Your device backup includes the selected picture.</p>'+
+      '<div id="profileCrop" class="profile-crop" hidden><h3>Crop your photo</h3><canvas id="profileCanvas" width="256" height="256" role="img" aria-label="Preview of your cropped profile photo"></canvas><label class="f" for="profileZoom">Zoom</label><input class="slider" id="profileZoom" type="range" min="1" max="3" step="0.05" value="1"><label class="f" for="profileX">Move left or right</label><input class="slider" id="profileX" type="range" min="0" max="100" value="50"><label class="f" for="profileY">Move up or down</label><input class="slider" id="profileY" type="range" min="0" max="100" value="50"><div class="actions"><button class="btn" type="button" data-act="profileSavePhoto">Use this photo</button><button class="btn alt" type="button" data-act="profileCancelPhoto">Cancel</button></div></div><p id="profileMessage" class="hint" role="status" aria-live="polite"></p></div></details>';
+  }
+  function cancelProfileDraft(){profileLoad++;profileDraft=null;var el=$('#profileCrop');if(el)el.hidden=true;var input=$('#profilePhotoFile');if(input)input.value='';}
+  function saveProfile(p){
+    var previous=state.profiles,updated=state.updated;
+    state.profiles=cleanProfiles(state.profiles);state.profiles[profileKey()]=Object.assign({},p,{updated:Date.now()});state.updated=Date.now();
+    try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){state.profiles=previous;state.updated=updated;profileMessage('Could not save the picture. Device storage may be full. Try an emoji instead.',true);return false;}
+    cancelProfileDraft();renderProfile();var editor=$('#profileSettings');if(editor)editor.outerHTML=profileSettingsHTML();profileMessage('Profile picture saved.');var focus=document.querySelector('#profileSettings [aria-pressed="true"]')||document.querySelector('[data-act="profileUpload"]');if(focus)focus.focus({preventScroll:true});return true;
+  }
+  function drawProfileCrop(){
+    if(!profileDraft||profileDraft.key!==profileKey())return;
+    var canvas=$('#profileCanvas');if(!canvas)return;
+    var image=profileDraft.image,size=Math.min(image.naturalWidth,image.naturalHeight)/Number($('#profileZoom').value);
+    var x=(image.naturalWidth-size)*Number($('#profileX').value)/100,y=(image.naturalHeight-size)*Number($('#profileY').value)/100;
+    var ctx=canvas.getContext('2d');ctx.fillStyle='#e8f3ed';ctx.fillRect(0,0,256,256);ctx.drawImage(image,x,y,size,size,0,0,256,256);
+  }
+  function loadProfilePhoto(file){
+    cancelProfileDraft();if(!file)return;
+    if(!/^image\/(jpeg|png|webp|avif|heic|heif)$/.test(file.type)||file.size>10*1024*1024){profileMessage('Choose an image up to 10 MB. JPG, PNG, or WebP works best.',true);return;}
+    var token=profileLoad,key=profileKey(),url=URL.createObjectURL(file),image=new Image();profileMessage('Opening your photo…');
+    image.onload=function(){URL.revokeObjectURL(url);if(token!==profileLoad||key!==profileKey()||!$('#profileCrop'))return;
+      if(!image.naturalWidth||!image.naturalHeight||image.naturalWidth*image.naturalHeight>80000000){profileMessage('This image is too large to edit. Try a smaller version.',true);return;}
+      profileDraft={image:image,key:key};$('#profileZoom').value='1';$('#profileX').value='50';$('#profileY').value='50';$('#profileCrop').hidden=false;drawProfileCrop();profileMessage('Adjust the crop, then choose Use this photo.');$('#profileZoom').focus();
+    };
+    image.onerror=function(){URL.revokeObjectURL(url);if(token===profileLoad)profileMessage('This browser could not open the image. Try a JPG, PNG, or WebP photo.',true);};image.src=url;
+  }
+
   function settingsHTML() {
     var n = state.names;
-    return '<section class="card" id="settingsCard"><h2 tabindex="-1">Settings</h2>' +
+    return '<section class="card" id="settingsCard"><h2 tabindex="-1">Settings</h2>' + profileSettingsHTML() +
       '<details open style="border-top:0;margin-top:0;padding-top:0"><summary>Names and this phone</summary><form class="stack" data-form="namesEdit" autocomplete="off"><div class="two"><div><label class="f" for="en1">First name</label><input type="text" id="en1" name="n1" maxlength="20" value="' + esc(n[0] || '') + '"></div><div><label class="f" for="en2">Partner\'s first name (optional)</label><input type="text" id="en2" name="n2" maxlength="20" value="' + esc(n[1] || '') + '"></div></div>' +
       '<div><label class="f" for="enP">Accountability partner</label><input type="text" id="enP" name="partner" maxlength="24" value="' + esc(state.partner || '') + '" placeholder="A parent, sibling or friend"></div>' +
       (n.length > 1 ? '<div><label class="f" for="enMe">This phone belongs to</label><select id="enMe" name="me">' + n.map(function (x, i) { return '<option value="' + i + '"' + (i === meIdx ? ' selected' : '') + '>' + esc(x) + '</option>'; }).join('') + '</select></div>' : '') +
@@ -2586,6 +2634,7 @@ function nextTarget(state) {
 
   document.addEventListener('input', function (e) {
     var i = e.target;
+    if(['profileZoom','profileX','profileY'].indexOf(i.id)>=0){drawProfileCrop();return;}
     if(i.id==='creditExtraCustom'){
       var cv=money(i.value),valid=/^(?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d{0,2})?$/.test(i.value.trim())&&cv!==null&&Number.isSafeInteger(cv)&&cv>=0&&cv<=100000000;
       $('#creditExtraError').textContent=valid?'':'Enter an amount from $0 to $1,000,000.';
@@ -2606,6 +2655,7 @@ function nextTarget(state) {
   });
   document.addEventListener('change', function (e) {
     var t = e.target;
+    if(t.id==='profilePhotoFile'&&t.files&&t.files[0]){loadProfilePhoto(t.files[0]);return;}
     if (t.closest && t.closest('#purchaseForm')) { clearPurchaseResult(); $('#checkDateWrap').hidden = $('#checkWhen').value !== 'custom'; }
     if (t.matches && t.matches('select[data-network-id]')) {var rec=state.recs.find(function(r){return r.id===t.getAttribute('data-network-id') && r.kind==='credit';});if(rec){if(['visa','mastercard','americanexpress'].indexOf(t.value)>=0)rec.cardNetwork=t.value;else delete rec.cardNetwork;save();render();}return;}
     if (t.name === 'freq' && t.closest('form')) { var d2 = t.closest('form').querySelector('.day2'); if (d2) d2.hidden = t.value !== 'twice'; }
@@ -2627,6 +2677,11 @@ function nextTarget(state) {
     if (!b) return;
     var act = b.getAttribute('data-act'), id = b.getAttribute('data-id');
     switch (act) {
+      case 'profileEmoji': {var avatar=PROFILE_AVATARS[Number(b.getAttribute('data-avatar'))];if(avatar)saveProfile({type:'emoji',emoji:avatar[0]});break;}
+      case 'profileRemove': saveProfile({type:'emoji',emoji:PROFILE_AVATARS[0][0]});break;
+      case 'profileUpload': $('#profilePhotoFile').click();break;
+      case 'profileCancelPhoto': cancelProfileDraft();profileMessage('Photo selection cancelled.');break;
+      case 'profileSavePhoto': if(profileDraft&&profileDraft.key===profileKey()){drawProfileCrop();var data=$('#profileCanvas').toDataURL('image/jpeg',0.85);if(data.length>180000)profileMessage('Could not save this image. Try a simpler photo.',true);else saveProfile({type:'photo',src:data});}break;
       case 'creditExtra':
         creditExtra=Number(b.getAttribute('data-cents'));
         document.querySelectorAll('.mi-extra-options button').forEach(function(x){x.setAttribute('aria-pressed',String(x===b));});
@@ -2637,7 +2692,7 @@ function nextTarget(state) {
       case 'closeMoneyLevel': closeMoneyLevelUp(); break;
       case 'viewMoneyMissions': closeMoneyLevelUp(); try{localStorage.setItem('moneyAhead.levelExpanded','1');}catch(e){} renderMoneyLevel(); var missionBox=$('#moneyLevelDetails .ml-missions'); if(missionBox)missionBox.open=true; var card=$('#moneyLevelRoot');if(card)card.scrollIntoView({behavior:'smooth',block:'start'}); break;
       case 'moneyMission': setView(b.getAttribute('data-view')); break;
-      case 'tab': setView(b.getAttribute('data-view')); if (cur === 'today') setSub('spend'); break;
+      case 'tab': cancelProfileDraft();setView(b.getAttribute('data-view')); if (cur === 'today') setSub('spend'); break;
       case 'openSettings': setView('plan'); { var settings = $('#settingsCard'); if (settings) { settings.scrollIntoView({ block: 'start' }); settings.querySelector('h2').focus({ preventScroll: true }); } } break;
       case 'openCheck': setView('today'); setSub('check'); clearPurchaseResult(); window.scrollTo({ top: 0 }); $('#askH').focus({ preventScroll: true }); break;
       case 'backToday': setSub('spend'); window.scrollTo({ top: 0 }); $('#dailyH').focus({ preventScroll: true }); break;
@@ -2673,7 +2728,7 @@ function nextTarget(state) {
       case 'efapply': applyFund(parseInt(b.getAttribute('data-m'), 10), b.getAttribute('data-cat') || ''); break;
       case 'efadd': logFund('out', Math.max(100, Math.floor(parseInt(b.getAttribute('data-amt'), 10) / 500) * 500)); break;
       case 'efraise': state.goals.ef.target = parseInt(b.getAttribute('data-t'), 10); save(); render(); break;
-      case 'iam': setMe(parseInt(b.getAttribute('data-i'), 10)); render(); break;
+      case 'iam': cancelProfileDraft(); setMe(parseInt(b.getAttribute('data-i'), 10)); render(); break;
       case 'startExample': state = makeSample(); resetDraft(); setMe(0); save(); setView('today'); break;
       case 'clearSample': state = makeBlank(); resetDraft(); meIdx = null; save(); wizNote = ''; monthOffset = 0; lastDone = false; setView('plan'); break;
       case 'next': wizNext(); break;
@@ -2736,6 +2791,7 @@ function nextTarget(state) {
   function mergeStates(a, b) {
     var newer = (b.updated || 0) > (a.updated || 0) ? b : a, older = newer === a ? b : a;
     var out = clone(newer), del = Object.assign({}, older.deleted || {}, newer.deleted || {});
+    out.profiles=cleanProfiles(older.profiles);var profilesNew=cleanProfiles(newer.profiles);Object.keys(profilesNew).forEach(function(k){if(!out.profiles[k]||profilesNew[k].updated>=out.profiles[k].updated)out.profiles[k]=profilesNew[k];});
     out.deleted = del; out.sample = false;
     function uni(getList, setList) {
       var seen = {}, res = [];

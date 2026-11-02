@@ -1,0 +1,105 @@
+'use strict';
+const {test,before,after}=require('node:test');
+const assert=require('node:assert/strict');
+const fs=require('node:fs'),path=require('node:path'),http=require('node:http');
+const {chromium}=require('playwright');
+let server,browser,url;
+before(async()=>{
+ const root=path.join(__dirname,'..');
+ server=http.createServer((req,res)=>{
+  const name=new URL(req.url,'http://localhost').pathname;
+  const file=path.join(root,name==='/'?'index.html':name);
+  const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css','.svg':'image/svg+xml','.webp':'image/webp'};
+  fs.readFile(file,(err,data)=>{res.writeHead(err?404:200,{'Content-Type':mime[path.extname(file)]||'application/octet-stream'});res.end(err?'Not found':data);});
+ });
+ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+ url=`http://127.0.0.1:${server.address().port}/`;
+ browser=await chromium.launch({headless:true,...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?{executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH}:{channel:'chromium'})});
+});
+after(async()=>{if(browser)await browser.close();if(server)await new Promise(resolve=>server.close(resolve));});
+const budgetOnly=s=>{const c=JSON.parse(s);delete c.profiles;delete c.updated;return c;};
+for(const width of [320,375,390,768,1440])test(`approved header, navigation and emoji profile at ${width}px`,async()=>{
+ const context=await browser.newContext({viewport:{width,height:1000},serviceWorkers:'block'}),page=await context.newPage();
+ const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto(url);await page.locator('[data-act="startExample"]').click();
+ const before=await page.evaluate(()=>localStorage.getItem('moneyAhead.v2'));
+ assert.equal(await page.locator('.brand-tagline').innerText(),'Your money. Your plan. Your control.');
+ for(const view of ['today','plan','review','month','learn']){
+  await page.locator(`#tabs [data-view="${view}"]`).click();
+  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'page fits');
+  const h=await page.locator('header h1').boundingBox(),p=await page.locator('#profileBtn').boundingBox();
+  assert.ok(h.x+h.width<=p.x,'no header overlap');
+  assert.ok(await page.locator('.brand-copy').evaluate(el=>el.scrollWidth<=el.clientWidth),'tagline fits');
+ }
+ await page.locator('#tabs [data-view="review"]').click();
+ await page.waitForTimeout(200);
+ if(process.env.PROFILE_SCREENSHOTS){fs.mkdirSync(process.env.PROFILE_SCREENSHOTS,{recursive:true});await page.screenshot({path:path.join(process.env.PROFILE_SCREENSHOTS,`review-${width}.png`),fullPage:false});}
+ await page.locator('#profileBtn').click();
+ assert.ok(await page.locator('#profileSettings').isVisible());
+ await page.locator('[data-act="profileEmoji"][data-avatar="3"]').click();
+ assert.equal(await page.locator('#profileBtn').innerText(),'👩🏾');
+ assert.equal(await page.locator('[data-avatar="3"]').getAttribute('aria-pressed'),'true');
+ await page.reload();assert.equal(await page.locator('#profileBtn').innerText(),'👩🏾');
+ assert.deepEqual(budgetOnly(await page.evaluate(()=>localStorage.getItem('moneyAhead.v2'))),budgetOnly(before));
+ await page.locator('#profileBtn').click();await page.locator('[data-act="profileRemove"]').click();
+ assert.equal(await page.locator('#profileBtn').innerText(),'🧑🏽');
+ assert.deepEqual(errors,[]);await context.close();
+});
+test('photo upload crops locally, cancels safely, validates files, persists and resets',async()=>{
+ const context=await browser.newContext({viewport:{width:390,height:1000},serviceWorkers:'block'}),page=await context.newPage();
+ await page.goto(url);await page.locator('[data-act="startExample"]').click();await page.locator('#profileBtn').click();
+ const before=await page.evaluate(()=>localStorage.getItem('moneyAhead.v2'));
+ const source=await page.evaluate(()=>{const c=document.createElement('canvas');c.width=400;c.height=200;const x=c.getContext('2d');x.fillStyle='red';x.fillRect(0,0,200,200);x.fillStyle='blue';x.fillRect(200,0,200,200);return c.toDataURL('image/png').split(',')[1];});
+ const file={name:'portrait.png',mimeType:'image/png',buffer:Buffer.from(source,'base64')};
+ await page.locator('#profilePhotoFile').setInputFiles(file);await page.locator('#profileCrop').waitFor({state:'visible'});
+ await page.locator('#profileX').fill('0');
+ assert.ok(await page.locator('#profileCanvas').evaluate(c=>c.getContext('2d').getImageData(128,128,1,1).data[0]>200),'left crop is red');
+ await page.locator('#profileX').fill('100');
+ assert.ok(await page.locator('#profileCanvas').evaluate(c=>c.getContext('2d').getImageData(128,128,1,1).data[2]>200),'right crop is blue');
+ await page.locator('[data-act="profileCancelPhoto"]').click();assert.equal(await page.evaluate(()=>localStorage.getItem('moneyAhead.v2')),before);
+ await page.locator('#profilePhotoFile').setInputFiles(file);await page.locator('#profileCrop').waitFor({state:'visible'});
+ await page.locator('#profileZoom').fill('2');await page.locator('[data-act="profileSavePhoto"]').click();
+ const img=page.locator('#profileBtn img');await img.evaluate(el=>el.decode());
+ assert.deepEqual(await img.evaluate(el=>[el.naturalWidth,el.naturalHeight]),[256,256]);
+ assert.ok((await img.getAttribute('src')).length<180000);
+ await page.reload();await page.locator('#profileBtn img').evaluate(el=>el.decode());
+ assert.deepEqual(budgetOnly(await page.evaluate(()=>localStorage.getItem('moneyAhead.v2'))),budgetOnly(before));
+ await page.locator('#profileBtn').click();
+ await page.locator('#profilePhotoFile').setInputFiles({name:'bad.svg',mimeType:'image/svg+xml',buffer:Buffer.from('<svg/>')});
+ assert.ok((await page.locator('#profileMessage').innerText()).includes('Choose an image'));
+ await page.locator('#profilePhotoFile').setInputFiles({name:'bad.png',mimeType:'image/png',buffer:Buffer.from('not an image')});
+ await page.waitForFunction(()=>document.querySelector('#profileMessage').textContent.includes('could not open'));
+ assert.equal(await page.locator('#profileBtn img').count(),1);
+ await page.locator('[data-act="profileRemove"]').click();await page.reload();assert.equal(await page.locator('#profileBtn img').count(),0);
+ await context.close();
+});
+test('household members keep separate avatars and failed storage preserves prior data',async()=>{
+ const context=await browser.newContext({serviceWorkers:'block'}),page=await context.newPage();
+ await page.goto(url);await page.locator('[data-act="startExample"]').click();await page.reload();
+ await page.locator('#profileBtn').click();await page.locator('[data-avatar="2"]').click();
+ const before=await page.evaluate(()=>localStorage.getItem('moneyAhead.v2'));
+ await page.evaluate(()=>{localStorage.setItem('moneyAhead.me','1');});await page.reload();
+ assert.equal(await page.locator('#profileBtn').innerText(),'🧑🏽');await page.locator('#profileBtn').click();await page.locator('[data-avatar="3"]').click();
+ await page.evaluate(()=>{localStorage.setItem('moneyAhead.me','0');});await page.reload();assert.equal(await page.locator('#profileBtn').innerText(),'👨🏼');
+ await page.locator('#profileBtn').click();
+ const saved=await page.evaluate(()=>localStorage.getItem('moneyAhead.v2'));
+ await page.evaluate(()=>{Storage.prototype.setItem=function(){throw new DOMException('Full','QuotaExceededError');};});
+ await page.locator('[data-avatar="4"]').click();assert.equal(await page.locator('#profileBtn').innerText(),'👨🏼');
+ assert.ok((await page.locator('#profileMessage').innerText()).includes('Could not save'));
+ assert.equal(await page.evaluate(()=>localStorage.getItem('moneyAhead.v2')),saved);
+ assert.deepEqual(budgetOnly(saved),budgetOnly(before));await context.close();
+});
+test('backup merge retains the newest avatar for each person and rejects external image sources',async()=>{
+ const context=await browser.newContext({serviceWorkers:'block'}),page=await context.newPage();
+ await page.goto(url);await page.locator('[data-act="startExample"]').click();await page.reload();await page.locator('#profileBtn').click();
+ await page.locator('[data-avatar="3"]').click();const old=await page.evaluate(()=>JSON.parse(localStorage.getItem('moneyAhead.v2')));
+ await page.waitForTimeout(5);await page.locator('[data-avatar="2"]').click();
+ old.updated=Date.now()+1000;old.profiles['person-1']={type:'emoji',emoji:'👩🏾',updated:Date.now()};
+ await page.locator('#backup').evaluate(el=>el.closest('details').open=true);await page.locator('#backup').fill(JSON.stringify(old));await page.locator('[data-act="mergeSync"]').click();
+ assert.equal(await page.locator('#profileBtn').innerText(),'👨🏼');
+ const state=await page.evaluate(()=>JSON.parse(localStorage.getItem('moneyAhead.v2')));assert.equal(state.profiles['person-1'].emoji,'👩🏾');
+ state.profiles['person-0']={type:'photo',src:'https://example.com/tracking.jpg',updated:Date.now()};
+ await page.evaluate(s=>localStorage.setItem('moneyAhead.v2',JSON.stringify(s)),state);await page.reload();
+ assert.equal(await page.locator('#profileBtn img').count(),0);assert.equal(await page.locator('#profileBtn').innerText(),'🧑🏽');
+ await context.close();
+});
