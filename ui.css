@@ -386,3 +386,17 @@ form[data-form="rec"]:has(select[name="billKind"] option[value="credit"]:checked
   #moneyLevelRoot .ml-mission-content {animation:none;}
   #moneyLevelRoot .ml-mission-chevron {transition:none;}
 }
+
+
+/* Exact milestone artwork treatments from the approved 4-level design. */
+#moneyLevelRoot .ml-stage-icon .ml-art { width:25px;height:25px; }
+#moneyLevelRoot .ml-stage.current .ml-art-chart,
+#moneyLevelRoot .ml-stage.done .ml-art-check { color:#fff; }
+#moneyLevelRoot .ml-stage.future .ml-art-rocket {color:#2563eb;width:27px;height:27px;}
+#moneyLevelRoot .ml-stage.future .ml-art-trophy {color:#c58a18;width:28px;height:28px;}
+#moneyLevelRoot .ml-stage.future:last-child .ml-stage-icon {border-color:#d6a236;background:#fffaf0;box-shadow:0 2px 9px rgba(186,128,21,.11);}
+#moneyLevelRoot .ml-stage.done .ml-stage-icon { background:#15803d; }
+#moneyLevelRoot .ml-stage.current .ml-stage-icon { background:var(--stage); }
+#moneyLevelRoot .ml-stage.done .ml-art-check { color:#fff; }
+#moneyLevelRoot .ml-stage.current .ml-stage-icon .ml-art-rocket,
+#moneyLevelRoot .ml-stage.current .ml-stage-icon .ml-art-trophy {color:#fff;}
