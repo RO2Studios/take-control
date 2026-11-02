@@ -75,7 +75,7 @@ test('mockup exact milestone icon artwork matches four distinct visual states',(
  const css=fs.readFileSync(path.join(root,'ui.css'),'utf8');
  for(const glyph of ['check','sprout','chart','rocket','trophy'])assert.ok(html.includes(glyph+":'"));
  assert.match(html,/status==='done'\?'check':l\.icon/);
- assert.match(html,/ml-art-rocket/);
+ assert.ok(html.includes("ml-art-'+name+'"));
  assert.match(css,/\.ml-stage\.future \.ml-art-rocket/);
  assert.match(css,/\.ml-stage\.future \.ml-art-trophy/);
  assert.match(html,/href="ui\.css\?v=43"/);
