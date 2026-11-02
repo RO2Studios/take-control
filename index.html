@@ -356,7 +356,7 @@ input[type=file] { font-size: 14px; }
 .install .row-a { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 </style>
 <style>html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);-webkit-text-size-adjust:100%}body{margin:0;min-height:100vh;-webkit-tap-highlight-color:transparent}button{-webkit-appearance:none;appearance:none}</style>
-<link rel="stylesheet" href="ui.css?v=36">
+<link rel="stylesheet" href="ui.css?v=37">
 <script src="money-insights.js"></script>
 </head>
 <body>
@@ -1118,19 +1118,30 @@ function nextTarget(state) {
     var examples = [
       { id: 'demo-annual-insurance', type: 'out', name: 'Annual renters insurance', amt: 72000, freq: 'annual', start: toISO(t + 45), cat: 'Insurance', kind: 'bill' },
       { id: 'demo-quarterly-bill', type: 'out', name: 'Quarterly water service', amt: 16500, freq: 'quarterly', start: toISO(t + 38), cat: 'Utilities', kind: 'bill' },
-      { id: 'demo-annual-subscription', type: 'out', name: 'Annual cloud storage', amt: 11988, freq: 'annual', start: toISO(t + 52), cat: 'Subscriptions', kind: 'subscription' },
+      { id: 'demo-annual-subscription', type: 'out', name: 'Apple iCloud+', amt: 11988, freq: 'annual', start: toISO(t + 52), cat: 'Subscriptions', kind: 'subscription' },
       { id: 'demo-credit-travel', type: 'out', name: 'Travel credit card payment', amt: 9500, freq: 'monthly', start: toISO(t + 35), cat: 'Debt', kind: 'credit', apr: 24.99, cardBalance: 285000 },
       { id: 'demo-credit-store', type: 'out', name: 'Store credit card payment', amt: 4500, freq: 'monthly', start: toISO(t + 40), cat: 'Debt', kind: 'credit', apr: 19.49, cardBalance: 112500 }
     ];
     examples.forEach(function (r) { s.recs.push(r); });
+    s.recs.push({id:'demo-netflix',type:'out',name:'Netflix',amt:1799,freq:'monthly',start:toISO(t+36),cat:'Subscriptions',kind:'subscription'});
     s.givePct = 10;
     var log = [[-12, 'Groceries', 'Weekly shop', 14236], [-12, 'Gas & transport', 'Gas', 4120], [-11, 'Dining out', 'DoorDash', 3865], [-10, 'Kids', 'School supplies', 2799], [-9, 'Groceries', 'Corner market', 2214], [-9, 'Fun', 'Movie tickets', 3150], [-8, 'Dining out', 'DoorDash', 1844], [-7, 'Groceries', 'Weekly shop', 15890], [-6, 'Gas & transport', 'Gas', 3975], [-6, 'Shopping', 'Household items', 4620], [-5, 'Dining out', 'DoorDash', 5240], [-4, 'Health', 'Pharmacy', 2260], [-3, 'Groceries', 'Top-up', 3388], [-2, 'Dining out', 'Uber Eats', 2275], [-2, 'Kids', 'Birthday gift', 3500], [-1, 'Gas & transport', 'Gas', 4210], [-1, 'Fun', 'Coffee and treats', 1675], [0, 'Groceries', 'Dinner items', 2840]];
     log.forEach(function (l, i) { s.tx.push({ id: 'st' + i, ts: base + i + 1, day: t + l[0], type: 'out', amt: l[3], cat: l[1], note: l[2], by: i % 3 === 1 ? 'Casey' : 'Jordan' }); });
     return s;
   }
   function valid(s) { return s && s.v === 2 && s.anchor && typeof s.anchor.balance === 'number' && Array.isArray(s.recs) && Array.isArray(s.tx) && s.budget && Array.isArray(s.budget.cats); }
+  function refreshDemoSubscriptions(s) {
+    // Only update the built-in example budget. Never modify a real user budget.
+    if(!s || s.sample!==true || !Array.isArray(s.recs))return s;
+    var ic=s.recs.find(function(r){return r.id==='demo-annual-subscription'&&r.name==='Annual cloud storage';});
+    if(ic)ic.name='Apple iCloud+';
+    if(!s.recs.some(function(r){return r.id==='demo-netflix'||r.name==='Netflix';})){
+      s.recs.push({id:'demo-netflix',type:'out',name:'Netflix',amt:1799,freq:'monthly',start:toISO(todayNum()+36),cat:'Subscriptions',kind:'subscription'});
+    }
+    return s;
+  }
   function load() {
-    try { var raw = localStorage.getItem(KEY); if (raw) { var s = JSON.parse(raw); if (valid(s)) return norm(s); } } catch (e) {}
+    try { var raw = localStorage.getItem(KEY); if (raw) { var s = JSON.parse(raw); if (valid(s)) return refreshDemoSubscriptions(norm(s)); } } catch (e) {}
     return makeBlank();
   }
   function norm(s) { if (!s.paydays) s.paydays = {}; if (s.startDay === undefined) s.startDay = null; if (s.budget && s.budget.done && s.startDay == null) s.startDay = todayNum(); if (!s.remind) s.remind = { recon: '09:00', review: '10:00', added: {} }; if (!s.remind.added) s.remind.added = {}; if (!s.learned) s.learned = {}; if (!s.givePct) s.givePct = 0; if (!s.partner) s.partner = ''; if (!Array.isArray(s.reviews)) s.reviews = []; if (!s.milestones) s.milestones = {}; if (!Array.isArray(s.cancel)) s.cancel = []; if (!s.cancelled) s.cancelled = 0; if (!s.rules) s.rules = {}; if (!Array.isArray(s.inbox)) s.inbox = []; if (!s.imported) s.imported = {}; if (!s.goals) s.goals = { asked: false, picks: [], ef: null }; if (!Array.isArray(s.goals.picks)) s.goals.picks = []; if (!s.budget.months) s.budget.months = {}; if (!s.saved) s.saved = {}; if (!Array.isArray(s.names)) s.names = []; if (!s.deleted) s.deleted = {}; if (!s.updated) s.updated = 0; return s; }
@@ -1735,6 +1746,7 @@ function nextTarget(state) {
   function insightLine(name,detail,amount,kind){
     var brands={DoorDash:'doordash','Uber Eats':'ubereats',Postmates:'postmates'};
     var brand=kind==='food'&&brands[name]?brands[name]:null;
+    if(kind==='subscriptions'){if(/\bnetflix\b/i.test(name))brand='netflix';else if(/\bicloud\b/i.test(name))brand='icloud';}
     var symbol=brand?'<img src="icons/brand-'+brand+'.svg" alt="" width="23" height="23" loading="lazy">':insightSvg(kind);
     return '<div class="mi-line"><span class="mi-line-icon'+(brand?' mi-brand mi-brand-'+brand:'')+'">'+symbol+'</span><span class="mi-line-text"><b>'+esc(name)+'</b><small>'+esc(detail)+'</small></span>'+
       '<strong class="mi-line-amount">'+esc(amount)+'</strong></div>';

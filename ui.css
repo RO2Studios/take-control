@@ -207,3 +207,7 @@ body { font-family: var(--font-body); }
 .mi-line-icon.mi-brand-doordash { background:#fff4f1; border-color:#ffe2db; }
 .mi-line-icon.mi-brand-ubereats { background:#edfbf2; border-color:#dcf6e6; }
 .mi-line-icon.mi-brand-postmates { background:#f4f4f4; border-color:#e6e6e6; }
+
+/* Distinct subscription brand tiles, consistent with delivery service cards. */
+.mi-line-icon.mi-brand-netflix {background:#fff2f2;border-color:#ffe0e0;}
+.mi-line-icon.mi-brand-icloud {background:#eff6ff;border-color:#dbeafe;}
