@@ -493,3 +493,63 @@ form[data-form="rec"]:has(select[name="billKind"] option[value="credit"]:checked
 
 /* Milestone connections reflect the actual earned level, for demo and real budgets. */
 #moneyLevelRoot .ml-journey::before {background:linear-gradient(90deg,#15803d 0%,#15803d var(--ml-journey-progress,0%),#d6dde5 var(--ml-journey-progress,0%),#d6dde5 100%);}
+
+/* Credit-card cost and payoff comparison. */
+.mi-line-cost { display:grid; gap:4px; text-align:right; max-width:46%; }
+.mi-line-cost small { color:var(--ink-2); font-size:12px; line-height:1.45; }
+.mi-interest-grid,.mi-comparison { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+.mi-interest-grid .mi-metric { display:grid; align-content:start; gap:10px; padding:20px; }
+.mi-interest-grid .mi-metric strong { font-size:clamp(24px,3vw,38px); }
+.mi-payoff-warning { display:flex; gap:14px; justify-content:space-between; align-items:center; padding:17px; margin:18px 0 6px; background:#fff7e8; border:1px solid #edc47c; border-radius:14px; color:var(--ink); }
+.mi-payoff-warning b { display:block; font-size:16px; line-height:1.4; }
+.mi-payoff-warning small { display:block; margin-top:5px; font-size:14px; color:var(--ink-2); }
+.mi-estimate { flex:none; padding:6px 10px; border-radius:20px; background:#ffe6b1; font-size:12px; font-weight:700; }
+.mi-extra { background:rgba(20,143,92,.065); padding:18px; margin-top:18px; border-radius:16px; }
+.mi-extra h3 { display:flex; align-items:center; gap:12px; font-size:19px; line-height:1.35; margin:0 0 16px; }
+.mi-extra h3 svg { flex:none; color:var(--accent); width:26px; height:26px; }
+.mi-extra-controls { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:14px; }
+.mi-extra-options { display:flex; flex-wrap:wrap; gap:8px; }
+.mi-extra-options button { min-height:44px; border:1px solid var(--line); border-radius:12px; background:var(--surface); color:var(--ink); padding:9px 18px; font:inherit; font-weight:700; cursor:pointer; }
+.mi-extra-options button[aria-pressed="true"] { background:#07853e; border-color:#07853e; color:white; }
+.mi-extra-options button:focus-visible { outline:3px solid var(--accent); outline-offset:3px; }
+#creditCustomWrap { margin-bottom:15px; }
+#creditExtraCustom { max-width:280px; }
+.mi-comparison > div { display:grid; align-content:start; gap:8px; padding:17px; border:1px solid rgba(20,143,92,.2); border-radius:14px; background:var(--surface); }
+.mi-comparison b { font-size:14px; line-height:1.4; }
+.mi-comparison strong { font-size:clamp(21px,2.4vw,30px); line-height:1.25; }
+.mi-comparison span { font-size:14px; color:var(--ink-2); }
+.mi-save { background:#d7f2de; color:#075e28; font-size:16px; line-height:1.45; font-weight:750; padding:13px; border-radius:12px; margin:14px 0 0; }
+.mi-extra > .mi-description:last-child { margin-bottom:0; }
+@media(max-width:600px) {
+ .mi-interest-grid { gap:8px; }
+ .mi-interest-grid .mi-metric { padding:13px 10px; font-size:12px; gap:9px; }
+ .mi-interest-grid .mi-metric strong { font-size:23px; white-space:normal; overflow-wrap:anywhere; }
+ .mi-payoff-warning { flex-direction:column; align-items:flex-start; padding:13px; }
+ .mi-payoff-warning b { font-size:15px; }
+ .mi-line-cost { max-width:44%; }
+ .mi-line-cost .mi-line-amount { max-width:none; font-size:13px; }
+ .mi-line-cost small { font-size:12px; }
+ .mi-extra { padding:13px; }
+ .mi-extra h3 { font-size:17px; }
+ .mi-extra-controls { display:grid; }
+ .mi-extra-options { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px; }
+ .mi-extra-options button { padding:8px 5px; font-size:13px; }
+ .mi-comparison { grid-template-columns:1fr; gap:10px; }
+ .mi-comparison > div { padding:14px; }
+ .mi-save { font-size:14px; }
+}
+
+@media(max-width:600px) {
+ .mi-interest-grid { grid-template-columns:1fr; }
+ .mi-interest-grid .mi-metric strong { white-space:nowrap; font-size:29px; }
+ .mi-card[data-kind="credit"] .mi-toggle { display:grid; grid-template-columns:39px minmax(0,1fr) 10px; column-gap:10px; row-gap:5px; }
+ .mi-card[data-kind="credit"] .mi-icon { grid-row:1 / span 2; }
+ .mi-card[data-kind="credit"] .mi-name { grid-column:2; }
+ .mi-card[data-kind="credit"] .mi-total { grid-column:2; text-align:left; font-size:15px; }
+ .mi-card[data-kind="credit"] .mi-chevron { grid-column:3; grid-row:1 / span 2; }
+ .mi-card[data-kind="credit"] .mi-line { display:grid; grid-template-columns:34px minmax(0,1fr); column-gap:10px; row-gap:7px; }
+ .mi-card[data-kind="credit"] .mi-line-icon { grid-row:1 / span 2; align-self:start; }
+ .mi-card[data-kind="credit"] .mi-line-text { grid-column:2; }
+ .mi-card[data-kind="credit"] .mi-line-cost { grid-column:2; text-align:left; max-width:none; }
+ .mi-card[data-kind="credit"] .mi-line-cost .mi-line-amount { text-align:left; }
+}

@@ -16,7 +16,7 @@ before(async () => {
  });
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
  url = `http://127.0.0.1:${server.address().port}/`;
- browser = await chromium.launch({headless:true,channel:'chromium'});
+ browser = await chromium.launch({headless:true,...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?{executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH}:{channel:'chromium'})});
 });
 after(async()=>{if(browser)await browser.close();if(server)await new Promise(resolve=>server.close(resolve));});
 for (const width of [320,375,390,768,1440]) {
@@ -107,7 +107,7 @@ test('approved cartoon badges are available after an offline reload', async()=>{
  await page.evaluate(async()=>{await navigator.serviceWorker.register('sw.js');await navigator.serviceWorker.ready;localStorage.setItem('moneyAhead.levelExpanded','1');});
  await page.waitForFunction(()=>!!navigator.serviceWorker.controller);
  const assets=['rookie','builder','strategist','master'].map(k=>'icons/money-'+k+'-cartoon.webp');
- for(const asset of assets)assert.ok(await page.evaluate(async asset=>!!await (await caches.open('takecontrol-v50')).match(asset),asset));
+ for(const asset of assets)assert.ok(await page.evaluate(async asset=>!!await (await caches.open('takecontrol-v51')).match(asset),asset));
  await context.setOffline(true);
  await page.reload();
  const images=page.locator('#moneyLevelRoot .ml-stage img');
