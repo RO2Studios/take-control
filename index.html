@@ -356,7 +356,7 @@ input[type=file] { font-size: 14px; }
 .install .row-a { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 </style>
 <style>html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);-webkit-text-size-adjust:100%}body{margin:0;min-height:100vh;-webkit-tap-highlight-color:transparent}button{-webkit-appearance:none;appearance:none}</style>
-<link rel="stylesheet" href="ui.css?v=35">
+<link rel="stylesheet" href="ui.css?v=36">
 <script src="money-insights.js"></script>
 </head>
 <body>
@@ -1733,7 +1733,10 @@ function nextTarget(state) {
     return '<div class="mi-metric"><b>'+esc(label)+'</b><strong>'+esc(amount)+'</strong></div>';
   }
   function insightLine(name,detail,amount,kind){
-    return '<div class="mi-line"><span class="mi-line-icon">'+insightSvg(kind)+'</span><span class="mi-line-text"><b>'+esc(name)+'</b><small>'+esc(detail)+'</small></span>'+
+    var brands={DoorDash:'doordash','Uber Eats':'ubereats',Postmates:'postmates'};
+    var brand=kind==='food'&&brands[name]?brands[name]:null;
+    var symbol=brand?'<img src="icons/brand-'+brand+'.svg" alt="" width="23" height="23" loading="lazy">':insightSvg(kind);
+    return '<div class="mi-line"><span class="mi-line-icon'+(brand?' mi-brand mi-brand-'+brand:'')+'">'+symbol+'</span><span class="mi-line-text"><b>'+esc(name)+'</b><small>'+esc(detail)+'</small></span>'+
       '<strong class="mi-line-amount">'+esc(amount)+'</strong></div>';
   }
   function insightDisclaimer(text){

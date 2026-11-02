@@ -200,3 +200,10 @@ body { font-family: var(--font-body); }
  .mi-metric{font-size:13px;padding:11px;}
  .mi-metric strong{font-size:15px;}
 }
+
+/* Locally hosted merchant brand marks; legible in light and dark mode. */
+.mi-line-icon.mi-brand { background:var(--surface); border:1px solid var(--line); }
+.mi-line-icon.mi-brand img { display:block; width:23px; height:23px; object-fit:contain; }
+.mi-line-icon.mi-brand-doordash { background:#fff4f1; border-color:#ffe2db; }
+.mi-line-icon.mi-brand-ubereats { background:#edfbf2; border-color:#dcf6e6; }
+.mi-line-icon.mi-brand-postmates { background:#f4f4f4; border-color:#e6e6e6; }
