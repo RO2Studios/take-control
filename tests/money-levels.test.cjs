@@ -47,7 +47,25 @@ test('integrated UI is compact by default, expandable, and retains existing Toda
  assert.ok(html.includes("if(openLesson.pick===L0.q.answer)state.learned[L0.id] = 1"));
  assert.ok(css.includes('@media(prefers-reduced-motion:reduce)'));
  assert.ok(sw.includes("'money-levels.js'"));
- assert.ok(sw.includes('takecontrol-v41'));
- assert.ok(html.includes('ui.css?v=41'));
+ assert.ok(sw.includes('takecontrol-v42'));
+ assert.ok(html.includes('ui.css?v=42'));
  for(const m of html.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g))new vm.Script(m[1]);
+});
+
+test('mockup-faithful compact responsive card, connected stages and overlay remain accessible',()=>{
+ const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+ const css=fs.readFileSync(path.join(root,'ui.css'),'utf8');
+ assert.match(css, /#moneyLevelRoot \{ width:100%; max-width:620px/);
+ assert.match(css, /#moneyLevelRoot \.ml-journey::before/);
+ assert.match(css, /#moneyLevelRoot \.ml-mission-trigger/);
+ assert.match(css, /@media\(max-width:420px\)/);
+ assert.match(css, /\.ml-ribbon/);
+ assert.match(css, /\.ml-rewards/);
+ assert.ok(html.includes('class="ml-bar-label"'));
+ assert.ok(html.includes('role="dialog" aria-modal="true"'));
+ assert.ok(html.includes("data-act=\"viewMoneyMissions\""));
+ assert.ok(html.includes("data-act=\"closeMoneyLevel\""));
+ assert.ok(html.includes('moneyLevelDetails'));
+ assert.ok(html.includes('renderDaily(); renderDayUpcoming();'));
+ for(const m of html.matchAll(/<script[^>]*>([\\s\\S]*?)<\\/script>/g))new vm.Script(m[1]);
 });
