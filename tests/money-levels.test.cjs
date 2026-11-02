@@ -67,5 +67,5 @@ test('mockup-faithful compact responsive card, connected stages and overlay rema
  assert.ok(html.includes("data-act=\"closeMoneyLevel\""));
  assert.ok(html.includes('moneyLevelDetails'));
  assert.ok(html.includes('renderDaily(); renderDayUpcoming();'));
- for(const m of html.matchAll(/<script[^>]*>([\\s\\S]*?)<\\/script>/g))new vm.Script(m[1]);
+ for(const m of html.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g))new vm.Script(m[1]);
 });
