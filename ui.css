@@ -426,3 +426,23 @@ form[data-form="rec"]:has(select[name="billKind"] option[value="credit"]:checked
 .ml-dialog .ml-hero-icon {width:120px;height:120px;padding:0;display:grid;place-items:center;background:transparent!important;box-shadow:none!important;outline:0!important;border:0!important;}
 .ml-dialog .ml-ribbon-art {position:relative;z-index:2;width:220px;height:110px;margin:-21px auto -13px;display:grid;place-items:center;pointer-events:none;}
 .ml-dialog .ml-ribbon-art img{display:block;width:220px;height:auto;max-width:none;object-fit:contain;}
+
+
+/* Sharp vector level artwork, legible at iPhone Retina density. */
+#moneyLevelRoot .ml-stage-icon svg.ml-vector-badge,
+#moneyLevelRoot .ml-current-icon svg.ml-vector-badge {display:block;max-width:none;filter:none;flex:none;}
+#moneyLevelRoot .ml-stage-icon {height:60px;width:60px;display:grid;place-items:center;}
+#moneyLevelRoot .ml-stage-icon svg.ml-vector-badge {height:60px;width:60px;}
+#moneyLevelRoot .ml-current-icon {height:50px;width:50px;display:grid;place-items:center;}
+#moneyLevelRoot .ml-current-icon svg.ml-vector-badge {height:50px;width:50px;}
+#moneyLevelRoot .ml-journey::before {top:29px;}
+#moneyLevelRoot .ml-stage.current .ml-stage-icon,
+#moneyLevelRoot .ml-stage.done .ml-stage-icon,
+#moneyLevelRoot .ml-stage.future .ml-stage-icon {opacity:1;}
+@media(max-width:420px){
+ #moneyLevelRoot .ml-stage-icon{width:51px;height:51px;}
+ #moneyLevelRoot .ml-stage-icon svg.ml-vector-badge{width:51px;height:51px;}
+ #moneyLevelRoot .ml-journey::before{top:25px;}
+ #moneyLevelRoot .ml-current-icon{height:43px;width:43px;}
+ #moneyLevelRoot .ml-current-icon svg.ml-vector-badge{height:43px;width:43px;}
+}
