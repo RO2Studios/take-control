@@ -145,3 +145,11 @@ test('selected mobile tile inverts white background and green text and icon',()=
  assert.match(block,/#tabs \.tab\[aria-current="page"\] b,[\s\S]*?#tabs \.tab\[aria-current="page"\] svg \{\s*color: #15803d;/);
  assert.match(block,/#tabs \.tab \{\s*background: transparent/);
 });
+
+test('credit lessons have distinctive illustrated artwork instead of default generic icons',()=>{
+ const art=html.slice(html.indexOf('var ART = {'),html.indexOf('var PHOTOS ='));
+ for(const id of ['credit101','creditcost','creditscore']){
+  assert.ok(art.includes(id+": ['"),id+' illustration present');
+ }
+ assert.match(html,/var a = ART\[id\] \|\| ART\.zero/);
+});
