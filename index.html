@@ -356,7 +356,7 @@ input[type=file] { font-size: 14px; }
 .install .row-a { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 </style>
 <style>html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);-webkit-text-size-adjust:100%}body{margin:0;min-height:100vh;-webkit-tap-highlight-color:transparent}button{-webkit-appearance:none;appearance:none}</style>
-<link rel="stylesheet" href="ui.css?v=51">
+<link rel="stylesheet" href="ui.css?v=52">
 <script src="money-insights.js"></script>
 <script src="money-levels.js"></script>
 </head>
@@ -434,7 +434,7 @@ input[type=file] { font-size: 14px; }
         <section class="card focused-panel" id="ask" data-sub="check" aria-labelledby="askH">
           <button class="back-link" type="button" data-act="backToday">← Back to Today</button>
           <h2 id="askH" tabindex="-1">Check a purchase</h2>
-          <p class="sub">See the impact before you decide.</p>
+          <p class="sub">See the impact before you decide. Give impulse buying a second opinion.</p>
           <form data-form="purchase" id="purchaseForm" class="fields" autocomplete="off">
             <div class="purchase-amount"><label class="f" for="checkAmt">Amount</label><div class="currency-input"><span aria-hidden="true">$</span><input type="text" id="checkAmt" inputmode="decimal" placeholder="0.00" required aria-describedby="checkErr"></div></div>
             <div class="two"><div><label class="f" for="checkCat">Category</label><select id="checkCat"></select></div><div><label class="f" for="checkWhen">When</label><select id="checkWhen"><option value="today">Today</option><option value="tomorrow">Tomorrow</option><option value="custom">Choose a date</option></select></div></div>
@@ -1710,7 +1710,7 @@ function nextTarget(state) {
     creditscore: ['#147D64', '#064E3B', '<path d="M50 13 78 24v24c0 21-13 34-28 40-15-6-28-19-28-40V24z" fill="none" stroke="#fff" stroke-width="6" stroke-linejoin="round"/><path d="m35 50 11 11 21-24" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><path d="M35 75h30" stroke="#a7f3d0" stroke-width="3" stroke-linecap="round"/>'],
     grow: ['#059669', '#064e3b', '<path d="M50 84V46" stroke="#fff" stroke-width="6" stroke-linecap="round"/><path d="M50 56c-16 0-26-10-26-24 14 0 26 10 26 24zM50 46c0-14 12-24 26-24 0 14-10 24-26 24z" fill="#fff" opacity=".92"/>']
   };
-  var PHOTOS = { zero: 1, pay: 1, ef: 1, needs: 1, subs: 1, time: 1, paycheck: 1, debt: 1, give: 1, balance: 1, grow: 1, assets: 1 };
+  var PHOTOS = { zero: 1, pay: 1, ef: 1, needs: 1, subs: 1, time: 1, paycheck: 1, debt: 1, give: 1, balance: 1, grow: 1, assets: 1, credit101: 1, creditcost: 1, creditscore: 1 };
   function lessonArt(id, big) {
     var a = ART[id] || ART.zero;
     var icon = '<div class="art" style="background:linear-gradient(135deg,' + a[0] + ',' + a[1] + ')"><svg viewBox="0 0 100 100" aria-hidden="true">' + a[2] + '</svg></div>';
@@ -1911,7 +1911,7 @@ function nextTarget(state) {
     var cards=creditCards();
     var interest=cards.reduce(function(sum,r){return sum+(TakeControlInsights.debtCost({amt:r.cardBalance,apr:r.apr})||0);},0);
     var creditContent=creditContentHTML(cards,interest);
-    return '<section class="card money-insights" id="moneyInsights"><h2>Your Money Insights</h2><p class="sub">Understand your spending. Find opportunities.</p><div class="mi-stack">'+
+    return '<section class="card money-insights" id="moneyInsights"><h2>Your Money Insights</h2><p class="sub">Understand your spending. Your dollars have some explaining to do.</p><div class="mi-stack">'+
       insightCard('subscriptions','Subscriptions','Review recurring services',fmtC(subs.annual)+'/year',subContent)+
       insightCard('food','Food delivery','Explore ways to save',fmtC(spent)+'/30 days',foodContent)+
       insightCard('credit','Credit card costs','Understand the cost. See a way forward.',fmtC(interest)+'/month',creditContent)+
@@ -1936,7 +1936,7 @@ function nextTarget(state) {
     var t = planTotals(state), ten = Math.round(t.inc * 0.1);
     var ip = investPct(state, todayNum()), gate = ip.stage === 'locked' ? '<p class="hint" style="margin:0 0 8px">Invest in yourself (the 3% rule) unlocks once your emergency fund reaches $1,000. ' + fmt(ip.next) + ' to go.</p>' : ip.stage === 'light' ? '<p class="hint" style="margin:0 0 8px">Invest in yourself is open at 1% for low-cost learning (books, short certifications). The full 3% opens at one month of essentials, ' + fmt(ip.next) + ' to go.</p>' : ip.stage === 'full' ? '<p class="hint" style="margin:0 0 8px">Invest in yourself is open at the full 3%. At $5,000 saved, consider stepping up to 5%.</p>' : '<p class="hint" style="margin:0 0 8px">Invest in yourself is open at 5%.</p>';
     return '<section class="card"><h2>' + (wiz ? 'Pay yourself first' : 'Savings and debt') + '</h2><p class="sub">Money you set aside before everyday spending, such as an emergency fund or extra payments on debt.' + (t.inc ? ' A common starting target is about 10% of take-home, which is ' + fmt(ten) + ' a month for you.' : '') + '</p>' +
-      recList(function (r) { return r.type === 'out' && r.cat === 'Savings'; }, 'Nothing set aside yet. Even a small amount builds the habit.') + (wiz ? efSaveHint() : '') + chipsHTML('save') + gate + recForm('save') + '</section>';
+      recList(function (r) { return r.type === 'out' && r.cat === 'Savings'; }, 'Nothing set aside yet. Small deposits count. Piggy banks are not picky.') + (wiz ? efSaveHint() : '') + chipsHTML('save') + gate + recForm('save') + '</section>';
   }
   function secReview(wiz) {
     var t = planTotals(state), inc = Math.max(t.inc, 1);
@@ -2039,7 +2039,7 @@ function nextTarget(state) {
   function renderDayUpcoming() {
     var next = V.f.days.find(function (d) { return d.ev.some(function (e) { return e.amt < 0; }); });
     var el = $('#dayUpcomingDyn');
-    if (!next) { el.innerHTML = '<h2>No bills coming up</h2><p class="hint">Nothing is scheduled in the next 30 days.</p><button class="link" type="button" data-act="tab" data-view="plan">Review scheduled bills</button>'; return; }
+    if (!next) { el.innerHTML = '<h2>No bills coming up</h2><p class="hint">Nothing is scheduled in the next 30 days. Your calendar is enjoying the quiet.</p><button class="link" type="button" data-act="tab" data-view="plan">Review scheduled bills</button>'; return; }
     var bills = next.ev.filter(function (e) { return e.amt < 0; }), total = bills.reduce(function (a, e) { return a - e.amt; }, 0);
     el.innerHTML = '<button class="coming-button" type="button" data-act="sub" data-sub="outlook"><span class="coming-title">' + esc(bills.map(function (e) { return e.name; }).join(' + ')) + '</span><span aria-hidden="true">›</span><strong>' + fmtC(total) + '</strong></button><div class="coming-detail"><span>' + icon('calendar') + esc(dLong(next.n)) + '</span><span>Projected balance after bills:<b class="' + (next.bal < V.buf ? 'neg' : '') + '">' + fmtC(next.bal) + '</b></span></div>';
   }
