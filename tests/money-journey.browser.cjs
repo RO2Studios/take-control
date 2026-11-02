@@ -27,7 +27,7 @@ for (const width of [375,390,1440]) {
   await page.goto(url);
   await page.locator('[data-act="startExample"]').click();
   const sample = await page.evaluate(()=>JSON.parse(localStorage.getItem('moneyAhead.v2')));
-  for (const [index,xp] of [50,80,170,290].entries()) {
+  for (const [index,xp] of [50,136,170,290].entries()) {
    const fixture = {...sample,sample:false,tx:[],recs:[],learned:{},reviews:[],goals:{asked:true,picks:[],ef:null},moneyXPHigh:xp,moneyLevelSeen:index+1};
    await page.evaluate(s=>{localStorage.setItem('moneyAhead.v2',JSON.stringify(s));localStorage.setItem('moneyAhead.levelExpanded','1');},fixture);
    await page.reload();
@@ -58,10 +58,10 @@ for (const width of [375,390,1440]) {
    assert.equal(await page.locator('#moneyLevelDetails').getAttribute('open'),null);
    assert.equal(await page.evaluate(()=>localStorage.getItem('moneyAhead.v2')),before,'view toggles/reloads preserve budget data');
    await page.locator('#moneyLevelDetails > summary').click();
-   if(index===2 && process.env.MONEY_JOURNEY_SCREENSHOTS) {
+   if((index===1 || index===2) && process.env.MONEY_JOURNEY_SCREENSHOTS) {
     const out=process.env.MONEY_JOURNEY_SCREENSHOTS;fs.mkdirSync(out,{recursive:true});
-    await card.screenshot({path:path.join(out,`journey-${width}.png`)});
-    await page.screenshot({path:path.join(out,`today-${width}.png`),fullPage:true});
+    await card.screenshot({path:path.join(out,`journey-level${index+1}-${width}.png`)});
+    await page.screenshot({path:path.join(out,`today-level${index+1}-${width}.png`),fullPage:true});
    }
   }
   assert.deepEqual(errors,[]);
