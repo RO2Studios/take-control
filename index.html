@@ -356,7 +356,7 @@ input[type=file] { font-size: 14px; }
 .install .row-a { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 </style>
 <style>html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);-webkit-text-size-adjust:100%}body{margin:0;min-height:100vh;-webkit-tap-highlight-color:transparent}button{-webkit-appearance:none;appearance:none}</style>
-<link rel="stylesheet" href="ui.css?v=43">
+<link rel="stylesheet" href="ui.css?v=44">
 <script src="money-insights.js"></script>
 <script src="money-levels.js"></script>
 </head>
@@ -1171,10 +1171,14 @@ function nextTarget(state) {
       close:'<path d="M5 5l14 14M19 5 5 19"/>'};
     return '<svg class="ml-art ml-art-'+name+'" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(shapes[name]||shapes.target)+'</svg>';
   }
+  function moneyLevelBadge(name){
+    var icons={check:'level-complete',sprout:'level-complete',chart:'level-builder',rocket:'level-momentum',trophy:'level-master'};
+    return '<img class="ml-badge-image" src="icons/'+(icons[name]||'level-complete')+'.webp" alt="" width="54" height="54" decoding="async">';
+  }
   function levelJourneyHTML(p){
     return '<div class="ml-journey" role="list" aria-label="Four money levels">'+TakeControlLevels.levels.map(function(l,i){
       var status=i<p.index?'done':i===p.index?'current':'future';
-      return '<div role="listitem" class="ml-stage '+status+'" style="--stage:'+l.color+'"><span class="ml-stage-icon">'+moneyLevelIcon(status==='done'?'check':l.icon)+'</span><small>Level '+(i+1)+'</small><b>'+esc(l.name.replace('Money ','')||l.short)+'</b></div>';
+      return '<div role="listitem" class="ml-stage '+status+'" style="--stage:'+l.color+'"><span class="ml-stage-icon">'+moneyLevelBadge(status==='done'?'check':l.icon)+'</span><small>Level '+(i+1)+'</small><b>'+esc(l.name.replace('Money ','')||l.short)+'</b></div>';
     }).join('')+'</div>';
   }
   function renderMoneyLevel() {
@@ -1186,7 +1190,7 @@ function nextTarget(state) {
     var missions=p.remaining;
     root.innerHTML='<section class="money-level card" aria-label="Money level and milestones"><details id="moneyLevelDetails"'+(expanded?' open':'')+'>'+
       '<summary class="ml-summary" aria-label="Level '+p.level+', '+p.current.name+'. '+p.percent+' percent toward '+(p.next?'Level '+(p.level+1):'mastery')+'. Show or hide the four levels.">'+
-      '<span class="ml-header"><span class="ml-current-icon" style="--stage:'+p.current.color+'">'+moneyLevelIcon(p.current.icon)+'</span>'+
+      '<span class="ml-header"><span class="ml-current-icon" style="--stage:'+p.current.color+'">'+moneyLevelBadge(p.current.icon)+'</span>'+
       '<span class="ml-label"><strong>Level '+p.level+' · '+esc(p.current.name)+'</strong><small>'+(p.next?'You’re on your way to Level '+(p.level+1):'You reached the top level!')+'</small></span>'+
       '<span class="ml-pct">'+p.percent+'% complete</span><span class="ml-arrow" aria-hidden="true"></span></span>'+
       '<span class="ml-track" aria-label="'+p.percent+' percent complete"><span class="ml-fill" style="width:'+p.percent+'%;background:'+p.current.color+'"></span><span class="ml-bar-label">'+esc(p.current.name)+' · '+p.percent+'%</span></span></summary>'+
@@ -1202,7 +1206,7 @@ function nextTarget(state) {
     target.innerHTML='<div class="ml-overlay" role="presentation"><section class="ml-dialog" role="dialog" aria-modal="true" aria-labelledby="mlLevelUpTitle" style="--stage:'+l.color+'">'+
       '<button class="ml-close" type="button" data-act="closeMoneyLevel" aria-label="Close celebration">'+moneyLevelIcon('close')+'</button>'+
       '<div class="ml-rays" aria-hidden="true"></div><div class="ml-sparkles" aria-hidden="true"><span>✦</span><span>★</span><span>✧</span><span>✦</span><span>★</span></div>'+
-      '<div class="ml-hero-icon">'+moneyLevelIcon(l.icon)+'</div><p class="ml-ribbon">LEVEL UP!</p>'+
+      '<div class="ml-hero-icon">'+moneyLevelBadge(l.icon)+'</div><p class="ml-ribbon">LEVEL UP!</p>'+
       '<h2 id="mlLevelUpTitle">Welcome to Level '+level+'!</h2><p class="ml-dialog-name">'+esc(l.name)+'</p>'+
       '<p class="ml-celebrate-copy">You’re building real progress, keeping track, and making smarter money moves.</p>'+
       '<div class="ml-rewards"><div>'+moneyLevelIcon('chart')+'<span>Level '+level+' unlocked</span><b>✓</b></div><div>'+moneyLevelIcon('target')+'<span>New missions available</span><b>✓</b></div><div>'+moneyLevelIcon('trophy')+'<span>Progress saved on this device</span><b>✓</b></div></div>'+
