@@ -42,3 +42,12 @@ test('credential guard rejects synthetic credentials',()=>{
  assert.equal(matches('-----BEGIN '+'PRIVATE KEY-----'),true);
  assert.equal(matches('Ordinary budget description'),false);
 });
+
+test('merged budgets omit missing optional fields before validation and commit',()=>{
+ const ok=vm.createContext({Date,Set,localStorage:{setItem(k,v){this.value=v;}},KEY:'budget'});
+ for(const n of ['validateState','commitImport'])vm.runInContext(fn(n),ok);
+ ok.next={...base(),lastBalanceMatchDay:undefined};
+ vm.runInContext('commitImport(next)',ok);
+ assert.equal(JSON.parse(ok.localStorage.value).anchor.balance,123);
+ assert.equal(Object.hasOwn(ok.state,'lastBalanceMatchDay'),false);
+});
