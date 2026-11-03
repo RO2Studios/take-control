@@ -1,7 +1,7 @@
 # Your data in Take Control
 Budget calculations run on this device. Budgets, names and your optional profile photo are stored in this browser. There is no cloud account, bank connection, or automatic cross-device synchronization in this version. The hosting provider receives normal web-request metadata when serving the app.
 
-Browser budget storage is currently **unencrypted**. Anyone able to use this browser profile, or scripts running on the same website origin, may be able to read it. Selecting a person or avatar is not authentication. Use your device lock and a private browser profile.
+Browser budget storage is **unencrypted by default**. In Settings → Device encryption, you can enable an AES-256-GCM vault with a password. Enabling verifies encrypted data before removing the plaintext budget. Reloading, locking, or 15 minutes of inactivity requires the password again. Unlock keys remain only in memory; there is no password reset. A browser-data copy of a locked vault contains ciphertext. Scripts executing while the vault is unlocked can still access budget data. Anyone able to use this browser profile, or scripts running on the same website origin, may be able to read it. Selecting a person or avatar is not authentication. Use your device lock and a private browser profile.
 
 New backup files use password-based authenticated encryption. Keep the password separately in a password manager: there is no password recovery. Test restoring your backup before relying on it. Downloading or sharing a file does not prove it was saved successfully. The file includes your budget, names and optional photo.
 

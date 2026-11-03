@@ -35,3 +35,23 @@ test('malicious file import and pasted merge preserve the saved budget; CSP bloc
  assert.equal(await page.evaluate(()=>window.__injected),undefined);
  await context.close();
 });
+test('device vault migrates, survives encrypted profile saves, locks and unlocks',async()=>{
+ const context=await browser.newContext({serviceWorkers:'block'}),page=await context.newPage();page.on('dialog',d=>d.accept());
+ await page.goto(url);await page.locator('[data-act="startExample"]').click();
+ const original=await page.evaluate(()=>JSON.parse(localStorage.getItem('moneyAhead.v2')));
+ await page.locator('#profileBtn').click();await page.locator('#vaultSettings summary').click();await page.locator('[data-act="enableVault"]').click();
+ const passwords=page.locator('input[type="password"]');await passwords.nth(0).fill('device-test-password-2026');await passwords.nth(1).fill('device-test-password-2026');await page.getByRole('button',{name:'Continue',exact:true}).click();
+ await page.getByRole('heading',{name:'Unlock Take Control',exact:true}).waitFor();
+ assert.equal(await page.evaluate(()=>localStorage.getItem('moneyAhead.v2')),null);
+ assert.equal(await page.evaluate(()=>TakeControlVault.active()),false);
+ const encrypted=await page.evaluate(()=>localStorage.getItem('moneyAhead.vault.v1'));assert.ok(!encrypted.includes('Jordan'));
+ await page.locator('input[type="password"]').fill('device-test-password-2026');await page.getByRole('button',{name:'Continue',exact:true}).click();
+ await page.waitForFunction(()=>TakeControlVault.active());await page.locator('#profileBtn').click();await page.locator('[data-avatar="2"]').click();
+ await page.waitForFunction(previous=>localStorage.getItem('moneyAhead.vault.v1')!==previous,encrypted);
+ assert.equal(await page.evaluate(()=>localStorage.getItem('moneyAhead.v2')),null);
+ await page.locator('#vaultSettings summary').click();await page.locator('[data-act="lockVault"]').click();
+ await page.getByRole('heading',{name:'Unlock Take Control',exact:true}).waitFor();assert.equal(await page.evaluate(()=>TakeControlVault.active()),false);
+ await page.locator('input[type="password"]').fill('device-test-password-2026');await page.getByRole('button',{name:'Continue',exact:true}).click();await page.waitForFunction(()=>TakeControlVault.active());
+ const recovered=await page.evaluate(async()=>{await TakeControlVault.flush();await TakeControlVault.lock();return TakeControlVault.unlock('device-test-password-2026',x=>{if(x.v!==2)throw Error('bad');});});
+ assert.deepEqual(recovered.tx,original.tx);assert.equal(recovered.anchor.balance,original.anchor.balance);await context.close();
+});

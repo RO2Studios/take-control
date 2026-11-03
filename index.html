@@ -3,7 +3,7 @@
 <head>
 <meta name="referrer" content="no-referrer">
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-gz8kynV3ruu0Ia2hygzFC8dJi827P5gntW5kcD5/nos=' 'sha256-L/Gk8NvXyj3uTPtsPWJBnt2UduAgAbqsrCJ7rlMYfPo=' 'sha256-TLlwGHo6fLz1E65JG8tciN+CDXim1I+dKgvqZSIM8z0=' 'sha256-/DUC1OeADy8PMHjlR0bdsMAE+nmVWrTKvaCljzUxCX4='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-gz8kynV3ruu0Ia2hygzFC8dJi827P5gntW5kcD5/nos=' 'sha256-L/Gk8NvXyj3uTPtsPWJBnt2UduAgAbqsrCJ7rlMYfPo=' 'sha256-VRKdyaiahFlUjfwrM3eux9Y9eciJxA2Jvz/8jNjRRKw=' 'sha256-/DUC1OeADy8PMHjlR0bdsMAE+nmVWrTKvaCljzUxCX4='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Take Control</title>
 <meta name="description" content="Budget first, then manage every day. A private budgeting app that lives on your phone.">
@@ -362,6 +362,7 @@ input[type=file] { font-size: 14px; }
 <script src="money-insights.js"></script>
 <script src="money-levels.js"></script>
 <script src="encrypted-backup.js"></script>
+<script src="local-vault.js"></script>
 </head>
 <body>
 
@@ -1037,7 +1038,7 @@ function nextTarget(state) {
 </script>
 
 <script>
-(function () {
+(async function () {
   var KEY = 'moneyAhead.v2';
   var $ = function (s) { return document.querySelector(s); };
   var state = null, storeOk = true, cur = 'plan', V = null, shownDay = todayNum(), monthOffset = 0, wizNote = '';
@@ -1149,7 +1150,7 @@ function nextTarget(state) {
       if (typeof x === 'number') {
         if (!Number.isFinite(x) || Math.abs(x) > Number.MAX_SAFE_INTEGER || (cents.test(key) && !Number.isSafeInteger(x))) throw Error('Invalid amount.');
       } else if (typeof x === 'string') {
-        if (x.length > (key === 'photo' ? 200000 : 20000)) throw Error('Text is too long.');
+        if (x.length > ((key === 'photo' || key === 'src') ? 200000 : 20000)) throw Error('Text is too long.');
       } else if (Array.isArray(x)) {
         if (x.length > 10000) throw Error('Too many records.');
         x.forEach(function(v) { walk(v, depth + 1, ''); });
@@ -1192,6 +1193,10 @@ function nextTarget(state) {
     validateState(next);
     next.sample = false; next.updated = Date.now();
     // Write before replacing live state. Quota failures preserve both prior copies.
+    if (typeof window !== 'undefined' && window.TakeControlVault && TakeControlVault.active()) {
+      document.body.inert=true;
+      return TakeControlVault.write(next).then(function(){state = next;}).finally(function(){document.body.inert=false;});
+    }
     localStorage.setItem(KEY, JSON.stringify(next));
     state = next;
   }
@@ -1286,7 +1291,7 @@ function nextTarget(state) {
     else if(p.level>state.moneyLevelSeen){state.moneyLevelSeen=p.level;if(!state.sample)pendingMoneyLevelUp=p.level;}
     // The level and earned XP are monotonic; editing an old expense cannot take a level away.
   }
-  function save() { updateMoneyLevelOnSave(); state.updated = Date.now(); try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { storeOk = false; $('#storeBanner').hidden = false; } if(state&&state.budget.done)renderMoneyLevel(); }
+  function save() { updateMoneyLevelOnSave(); state.updated = Date.now(); try { if(window.TakeControlVault&&TakeControlVault.active()){TakeControlVault.write(state).catch(function(){storeOk=false;$('#storeBanner').hidden=false;});}else localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { storeOk = false; $('#storeBanner').hidden = false; } if(state&&state.budget.done)renderMoneyLevel(); }
   function probeStorage() { try { localStorage.setItem(KEY + '.t', '1'); localStorage.removeItem(KEY + '.t'); } catch (e) { storeOk = false; } }
   var meIdx = null, lastDone = false, sub = 'spend';
   try { var sv = localStorage.getItem('moneyAhead.sub'); if (['spend', 'goals', 'outlook', 'bank'].indexOf(sv) >= 0) sub = sv; } catch (e) {}
@@ -1691,7 +1696,7 @@ function nextTarget(state) {
       if (!confirm('Import '+inc.tx.length+' transactions and '+inc.recs.length+' recurring entries? '+(state.budget.done?'This will merge with your current budget.':'This will load the budget on this device.'))) return;
       var merging = state.budget.done;
       var next = merging ? mergeStates(clone(state),norm(inc)) : norm(inc);
-      commitImport(next); resetDraft(); loadMe(); setView(state.budget.done?'today':'plan');
+      await commitImport(next); resetDraft(); loadMe(); setView(state.budget.done?'today':'plan');
       backupMessage('Backup restored.');
     } catch(e) { backupMessage(e.message || 'Could not restore backup. Your budget is unchanged.'); }
   }
@@ -2094,7 +2099,7 @@ function nextTarget(state) {
   function saveProfile(p){
     var previous=state.profiles,updated=state.updated;
     state.profiles=cleanProfiles(state.profiles);state.profiles[profileKey()]=Object.assign({},p,{updated:Date.now()});state.updated=Date.now();
-    try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){state.profiles=previous;state.updated=updated;profileMessage('Could not save the picture. Device storage may be full. Try an emoji instead.',true);return false;}
+    try{if(window.TakeControlVault&&TakeControlVault.active()){var copy=clone(state);state.profiles=previous;state.updated=updated;return commitImport(copy).then(function(){cancelProfileDraft();renderProfile();var editor=$('#profileSettings');if(editor)editor.outerHTML=profileSettingsHTML();profileMessage('Profile picture saved.');},function(){profileMessage('Could not save the picture. Your previous picture is unchanged.',true);});}localStorage.setItem(KEY,JSON.stringify(state));}catch(e){state.profiles=previous;state.updated=updated;profileMessage('Could not save the picture. Device storage may be full. Try an emoji instead.',true);return false;}
     cancelProfileDraft();renderProfile();var editor=$('#profileSettings');if(editor)editor.outerHTML=profileSettingsHTML();profileMessage('Profile picture saved.');var focus=document.querySelector('#profileSettings [aria-pressed="true"]')||document.querySelector('[data-act="profileUpload"]');if(focus)focus.focus({preventScroll:true});return true;
   }
   function drawProfileCrop(){
@@ -2115,9 +2120,46 @@ function nextTarget(state) {
     image.onerror=function(){URL.revokeObjectURL(url);if(token===profileLoad)profileMessage('This browser could not open the image. Try a JPG, PNG, or WebP photo.',true);};image.src=url;
   }
 
+  function vaultSettingsHTML() {
+    var protectedBudget=window.TakeControlVault&&TakeControlVault.active();
+    return '<details id="vaultSettings"><summary>Device encryption</summary><div class="stack"><p class="hint">'+(protectedBudget?'Your saved budget is encrypted. Reloading or 15 minutes of inactivity locks this device. The password is never saved.':'This browser budget is currently unencrypted. Enable a password-protected vault to encrypt saved data. There is no password reset: keep a tested encrypted backup and its password.')+'</p><button class="btn alt" type="button" data-act="'+(protectedBudget?'lockVault':'enableVault')+'">'+(protectedBudget?'Lock this device':'Enable device encryption')+'</button><p id="vaultMessage" class="hint" role="status"></p></div></details>';
+  }
+  function vaultMessage(text) {var el=$('#vaultMessage');if(el)el.textContent=text;}
+  async function enableVault() {
+    if(!window.crypto||!crypto.subtle){vaultMessage('Device encryption requires an updated browser over HTTPS.');return;}
+    if(!confirm('Save and test an encrypted backup before enabling device encryption. Have you verified your recovery backup and stored its password safely?'))return;
+    var pw=await backupDialog('Protect this device',['Device password','Confirm password'],'Use 12–1024 characters. You must unlock on reload. There is no password reset. Keep the password in your password manager.');
+    if(!pw)return;
+    if(pw[0]!==pw[1]){vaultMessage('Passwords must match. Your budget is unchanged.');return;}
+    try{
+      vaultMessage('Encrypting and verifying saved data…');
+      // Block edits while migration encrypts a stable snapshot.
+      document.body.inert=true;
+      await TakeControlVault.enable(state,pw[0],validateState);
+      location.reload();
+    }catch(e){document.body.inert=false;vaultMessage(e.message+' Your existing budget has been retained.');}
+  }
+  async function lockVault() {
+    document.body.inert=true;
+    try{await TakeControlVault.lock();location.reload();}
+    catch(e){document.body.inert=false;$('#storeBanner').hidden=false;alert('Could not finish saving. Device was not locked; keep this tab open and export an encrypted backup.');}
+  }
+  async function loadVault() {
+    if(!window.TakeControlVault||!TakeControlVault.exists())return load();
+    document.querySelector('.wrap').hidden=true;
+    while(true){
+      var pw=await backupDialog('Unlock Take Control',['Device password'],'Your saved budget is encrypted. Enter this device’s password. There is no password reset. Cancel keeps the budget locked.');
+      if(!pw){
+        var gate=document.createElement('div');gate.className='wrap';
+        var button=document.createElement('button');button.className='btn';button.textContent='Unlock Take Control';button.onclick=function(){location.reload();};gate.appendChild(button);document.body.appendChild(gate);return null;
+      }
+      try{var unlocked=await TakeControlVault.unlock(pw[0],validateState);delete unlocked.lastImport;document.querySelector('.wrap').hidden=false;return norm(unlocked);}
+      catch(e){alert('Could not unlock the saved budget. Check your password. A damaged vault or unavailable browser storage also prevents unlock. No budget was replaced.');}
+    }
+  }
   function settingsHTML() {
     var n = state.names;
-    return '<section class="card" id="settingsCard"><h2 tabindex="-1">Settings</h2>' + profileSettingsHTML() +
+    return '<section class="card" id="settingsCard"><h2 tabindex="-1">Settings</h2>' + profileSettingsHTML() + vaultSettingsHTML() +
       '<details open style="border-top:0;margin-top:0;padding-top:0"><summary>Names and this phone</summary><form class="stack" data-form="namesEdit" autocomplete="off"><div class="two"><div><label class="f" for="en1">First name</label><input type="text" id="en1" name="n1" maxlength="20" value="' + esc(n[0] || '') + '"></div><div><label class="f" for="en2">Partner\'s first name (optional)</label><input type="text" id="en2" name="n2" maxlength="20" value="' + esc(n[1] || '') + '"></div></div>' +
       '<div><label class="f" for="enP">Accountability partner</label><input type="text" id="enP" name="partner" maxlength="24" value="' + esc(state.partner || '') + '" placeholder="A parent, sibling or friend"></div>' +
       (n.length > 1 ? '<div><label class="f" for="enMe">This phone belongs to</label><select id="enMe" name="me">' + n.map(function (x, i) { return '<option value="' + i + '"' + (i === meIdx ? ' selected' : '') + '>' + esc(x) + '</option>'; }).join('') + '</select></div>' : '') +
@@ -2128,7 +2170,7 @@ function nextTarget(state) {
       '<button class="btn alt" type="submit">Save</button><p class="err" id="prefErr" role="alert"></p></form></details>' +
       calHTML() +
       '<details' + (state.lastBackupDay == null || todayNum() - state.lastBackupDay >= 14 ? ' open' : '') + '><summary>Back up to iCloud or Google Drive</summary><div class="stack"><p class="hint" style="margin:0">Your numbers live only on this phone. Save a backup file every week or two. On iPhone, tap Save backup, then choose Save to Files and pick iCloud Drive. On Android, choose Google Drive.' + (state.lastBackupDay != null ? ' Last backup: ' + dLong(state.lastBackupDay) + '.' : ' No backup yet.') + '</p><div class="actions"><button class="btn" type="button" data-act="backupFile">Save encrypted backup</button><label class="btn alt" style="display:inline-flex;align-items:center;cursor:pointer">Restore from a backup file<input type="file" id="restoreFile" accept=".json,application/json" style="display:none"></label></div><p class="hint" id="backupFileMsg" role="status"></p></div></details>' +
-      '<p class="hint">Browser budget storage is unencrypted. Backup files are password protected; manual text sync is unencrypted. Clearing browser data can erase your budget. <a href="PRIVACY.md" target="_blank" rel="noopener noreferrer">Privacy and recovery</a></p><details><summary>Sync two phones (unencrypted)</summary><div class="stack"><p class="hint" style="margin:0">Entries live on this phone. To bring two phones in line, or move to a new phone, tap Copy my data, send it in a text, and paste it below on the other phone and tap Merge. Do it in both directions whenever you want the phones to match. It is also a good backup.</p><textarea id="backup" aria-label="Sync text" spellcheck="false"></textarea><div class="actions"><button class="btn alt" type="button" data-act="copyBackup">Copy my data</button><button class="btn" type="button" data-act="mergeSync">Merge pasted data</button></div><div class="actions"><button class="link" type="button" data-act="restoreBackup">Replace this phone with the pasted data instead</button></div><p class="hint" id="backupMsg" role="status"></p></div></details>' +
+      '<p class="hint">Check Device encryption above for this browser’s protection status. Backup files are password protected; manual text sync is unencrypted. Clearing browser data can erase your budget. <a href="PRIVACY.md" target="_blank" rel="noopener noreferrer">Privacy and recovery</a></p><details><summary>Sync two phones (unencrypted)</summary><div class="stack"><p class="hint" style="margin:0">Entries live on this phone. To bring two phones in line, or move to a new phone, tap Copy my data, send it in a text, and paste it below on the other phone and tap Merge. Do it in both directions whenever you want the phones to match. It is also a good backup.</p><textarea id="backup" aria-label="Sync text" spellcheck="false"></textarea><div class="actions"><button class="btn alt" type="button" data-act="copyBackup">Copy my data</button><button class="btn" type="button" data-act="mergeSync">Merge pasted data</button></div><div class="actions"><button class="link" type="button" data-act="restoreBackup">Replace this phone with the pasted data instead</button></div><p class="hint" id="backupMsg" role="status"></p></div></details>' +
       '<details><summary>Start over</summary><div class="stack"><p class="hint" style="margin:0">Erases every entry, bill, budget and balance on this phone.</p><div class="actions" id="resetRow"><button class="btn alt" type="button" data-act="resetAsk">Erase everything</button></div></div></details></section>';
   }
   function welcomeHTML() {
@@ -2785,7 +2827,7 @@ function nextTarget(state) {
 
   document.addEventListener('toggle', function(e) {if(e.target.id==='moneyLevelDetails'){try{localStorage.setItem('moneyAhead.levelExpanded',e.target.open?'1':'0');}catch(err){}}}, true);
   document.addEventListener('keydown',function(e){if(e.key==='Escape')closeMoneyLevelUp();});
-  document.addEventListener('click', function (e) {
+  document.addEventListener('click', async function (e) {
     var b = e.target.closest('[data-act]');
     if (!b) return;
     var act = b.getAttribute('data-act'), id = b.getAttribute('data-id');
@@ -2807,6 +2849,8 @@ function nextTarget(state) {
       case 'viewMoneyMissions': closeMoneyLevelUp(); try{localStorage.setItem('moneyAhead.levelExpanded','1');}catch(e){} renderMoneyLevel(); var missionBox=$('#moneyLevelDetails .ml-missions'); if(missionBox)missionBox.open=true; var card=$('#moneyLevelRoot');if(card)card.scrollIntoView({behavior:'smooth',block:'start'}); break;
       case 'moneyMission': setView(b.getAttribute('data-view')); break;
       case 'tab': cancelProfileDraft();setView(b.getAttribute('data-view')); if (cur === 'today') setSub('spend'); break;
+      case 'enableVault': await enableVault(); break;
+      case 'lockVault': await lockVault(); break;
       case 'openSettings': setView('plan'); { var settings = $('#settingsCard'); if (settings) { settings.scrollIntoView({ block: 'start' }); settings.querySelector('h2').focus({ preventScroll: true }); } } break;
       case 'openCheck': setView('today'); setSub('check'); clearPurchaseResult(); window.scrollTo({ top: 0 }); $('#askH').focus({ preventScroll: true }); break;
       case 'backToday': setSub('spend'); window.scrollTo({ top: 0 }); $('#dailyH').focus({ preventScroll: true }); break;
@@ -2881,7 +2925,7 @@ function nextTarget(state) {
       }
       case 'restoreBackup': {
         var m2 = $('#backupMsg');
-        try { var s = parseBackup($('#backup').value); if (!valid(s)) throw new Error('bad'); s.sample = false; commitImport(norm(s)); resetDraft(); loadMe(); setView(state.budget.done ? 'today' : 'plan'); }
+        try { var s = parseBackup($('#backup').value); if (!valid(s)) throw new Error('bad'); s.sample = false; await commitImport(norm(s)); resetDraft(); loadMe(); setView(state.budget.done ? 'today' : 'plan'); }
         catch (x) { m2.textContent = 'That text is not a valid backup. Copy the full backup and try again.'; }
         break;
       }
@@ -2891,7 +2935,7 @@ function nextTarget(state) {
           var inc = parseBackup($('#backup').value); if (!valid(inc)) throw new Error('bad');
           var n0 = state.tx.length, merged = mergeStates(state, norm(inc));
           var added = merged.tx.length - n0;
-          commitImport(merged); loadMe(); render();
+          await commitImport(merged); loadMe(); render();
           var m4 = $('#backupMsg'); if (m4) m4.textContent = 'Merged. ' + (added > 0 ? added + ' new entr' + (added === 1 ? 'y' : 'ies') + ' added.' : 'Nothing new to add.') + ' Send your data back so the other phone matches.';
         } catch (x) { m3.textContent = 'That text is not valid sync data. Copy the full text from the other phone and try again.'; }
         break;
@@ -2963,7 +3007,13 @@ function nextTarget(state) {
 
   /* ---------- boot ---------- */
   probeStorage();
-  state = load();
+  state = await loadVault();
+  if(!state)return;
+  var vaultIdle=null;
+  function resetVaultIdle(){if(!TakeControlVault.active())return;clearTimeout(vaultIdle);vaultIdle=setTimeout(lockVault,15*60*1000);}
+  ['pointerdown','keydown','touchstart'].forEach(function(event){document.addEventListener(event,resetVaultIdle,{passive:true});});
+  resetVaultIdle();
+  window.addEventListener('beforeunload',function(e){if(TakeControlVault.pending()){e.preventDefault();e.returnValue='';}});
   if(!Number.isInteger(state.moneyLevelSeen)){state.moneyLevelSeen=TakeControlLevels.progress(state).level;state.moneyXPHigh=TakeControlLevels.progress(state).xp;save();}
   loadMe();
   if (!storeOk) $('#storeBanner').hidden = false;
