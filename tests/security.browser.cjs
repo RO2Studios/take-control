@@ -8,6 +8,10 @@ before(async()=>{
  const root=path.join(__dirname,'..');
  server=http.createServer((req,res)=>{
   const name=new URL(req.url,'http://localhost').pathname;
+  if(name==='/legacy-worker.js'){
+   res.writeHead(200,{'Content-Type':'text/javascript'});
+   res.end("self.addEventListener('install',()=>self.skipWaiting());self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));self.addEventListener('fetch',e=>{const u=new URL(e.request.url);if(u.pathname==='/local-vault.js'&&!u.search)e.respondWith(Promise.resolve(new Response('window.TakeControlVault={legacy:true}',{headers:{'Content-Type':'text/javascript'}})));});");return;
+  }
   const file=path.join(root,name==='/'?'index.html':name);
   const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css','.svg':'image/svg+xml','.webp':'image/webp'};
   fs.readFile(file,(err,data)=>{res.writeHead(err?404:200,{'Content-Type':mime[path.extname(file)]||'application/octet-stream'});res.end(err?'Not found':data);});
@@ -79,5 +83,25 @@ test('unlocked budget backs up with one password and a fresh save-location click
  await page.getByRole('button',{name:'Save encrypted backup',exact:true}).click();await dialog.waitFor();
  assert.equal(await page.locator('input[type="password"]').count(),0);
  await dialog.getByRole('button',{name:'Cancel',exact:true}).click();
+ await context.close();
+});
+test('an older offline worker cannot mix old encryption code into the updated app after unlock',async()=>{
+ const context=await browser.newContext(),page=await context.newPage();
+ await page.goto(url);await page.getByRole('button',{name:'See an example first',exact:true}).click();
+ await page.locator('#profileBtn').click();await page.locator('#vaultSettings summary').click();
+ await page.getByRole('button',{name:'Save encrypted backup',exact:true}).click();
+ await page.getByLabel('Take Control password',{exact:true}).fill('upgrade-recovery-password');await page.getByLabel('Confirm password',{exact:true}).fill('upgrade-recovery-password');
+ await page.getByRole('button',{name:'Continue',exact:true}).click();
+ await page.getByRole('dialog',{name:'Save your encrypted backup',exact:true}).getByRole('button',{name:'Cancel',exact:true}).click();
+ const saved=await page.evaluate(()=>localStorage.getItem('moneyAhead.vault.v1'));
+ await page.evaluate(async()=>{await navigator.serviceWorker.register('/legacy-worker.js');await navigator.serviceWorker.ready;});
+ await page.waitForFunction(()=>!!navigator.serviceWorker.controller);
+ await page.reload();await page.getByLabel('Take Control password',{exact:true}).fill('upgrade-recovery-password');await page.getByRole('button',{name:'Continue',exact:true}).click();
+ await page.waitForFunction(()=>TakeControlVault.active());assert.equal(await page.evaluate(()=>typeof TakeControlVault.backup),'function');
+ await page.locator('#profileBtn').click();await page.locator('#vaultSettings summary').click();
+ await page.getByRole('button',{name:'Save encrypted backup',exact:true}).click();
+ await page.getByRole('dialog',{name:'Save your encrypted backup',exact:true}).waitFor();
+ assert.equal(await page.locator('input[type="password"]').count(),0);
+ assert.equal(await page.evaluate(()=>localStorage.getItem('moneyAhead.vault.v1')),saved);
  await context.close();
 });

@@ -3,7 +3,7 @@
 <head>
 <meta name="referrer" content="no-referrer">
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-gz8kynV3ruu0Ia2hygzFC8dJi827P5gntW5kcD5/nos=' 'sha256-L/Gk8NvXyj3uTPtsPWJBnt2UduAgAbqsrCJ7rlMYfPo=' 'sha256-T6xHPH1skx40BCROeznsBZip5dXRY2AVWng1TRLWMhw=' 'sha256-/DUC1OeADy8PMHjlR0bdsMAE+nmVWrTKvaCljzUxCX4='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-gz8kynV3ruu0Ia2hygzFC8dJi827P5gntW5kcD5/nos=' 'sha256-L/Gk8NvXyj3uTPtsPWJBnt2UduAgAbqsrCJ7rlMYfPo=' 'sha256-2pLcDK0eD2654+uwb9/DXJ0kBga/t0EtWJzKX407gVA=' 'sha256-f08ESePDGo/4swLN4HzjmTfZ9BmZiWUa4PyZ9q5Nr5k='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Take Control</title>
 <meta name="description" content="Budget first, then manage every day. A private budgeting app that lives on your phone.">
@@ -358,12 +358,12 @@ input[type=file] { font-size: 14px; }
 .install .row-a { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 </style>
 <style>html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);-webkit-text-size-adjust:100%}body{margin:0;min-height:100vh;-webkit-tap-highlight-color:transparent}button{-webkit-appearance:none;appearance:none}</style>
-<link rel="stylesheet" href="ui.css?v=56">
-<script src="money-insights.js"></script>
-<script src="money-levels.js"></script>
-<script src="encrypted-backup.js"></script>
-<script src="local-vault.js"></script>
-<script src="backup-save.js"></script>
+<link rel="stylesheet" href="ui.css?v=57">
+<script src="money-insights.js?v=57"></script>
+<script src="money-levels.js?v=57"></script>
+<script src="encrypted-backup.js?v=57"></script>
+<script src="local-vault.js?v=57"></script>
+<script src="backup-save.js?v=57"></script>
 </head>
 <body>
 
@@ -1678,6 +1678,7 @@ function nextTarget(state) {
   }
   async function backupFile() {
     if(!window.crypto || !crypto.subtle || !window.TakeControlBackup){backupMessage('Secure backup is unavailable in this browser. Use an updated browser over HTTPS.');return;}
+    if(!window.TakeControlVault||typeof TakeControlVault.backup!=='function'||!window.TakeControlSave){backupMessage('An older app component is still loaded. Reload this page to finish the update, unlock your budget, then tap Save encrypted backup again.');return;}
     if(!TakeControlVault.active()){
       if(!await setupProtection())return;
       render();
@@ -2135,7 +2136,7 @@ function nextTarget(state) {
 
   function vaultSettingsHTML() {
     var protectedBudget=window.TakeControlVault&&TakeControlVault.active();
-    return '<details id="vaultSettings"><summary>Budget protection and backups</summary><div class="stack"><p class="hint">'+(protectedBudget?'One Take Control password protects this browser budget and all new backups. You do not need to enter it again to save a backup while unlocked. Reloading or 15 minutes of inactivity locks this device.':'Set one Take Control password to protect both your budget on this device and your backup files. There is no password reset. Keep your password in a password manager and test a recovery backup.')+'</p><button class="btn alt" type="button" data-act="'+(protectedBudget?'lockVault':'enableVault')+'">'+(protectedBudget?'Lock this device':'Enable device encryption')+'</button><p id="vaultMessage" class="hint" role="status"></p><p class="hint">Save a backup every week or two. You choose the save option after the file is encrypted. Older backups keep the password used when they were created.</p><div class="actions"><button class="btn" type="button" data-act="backupFile">Save encrypted backup</button><label class="btn alt" style="display:inline-flex;align-items:center;cursor:pointer">Restore from a backup file<input type="file" id="restoreFile" accept=".json,application/json" style="display:none"></label></div><p class="hint" id="backupFileMsg" role="status"></p></div></details>';
+    return '<p class="hint" id="appRelease">Take Control · Version 57</p><details id="vaultSettings"><summary>Budget protection and backups</summary><div class="stack"><p class="hint">'+(protectedBudget?'One Take Control password protects this browser budget and all new backups. You do not need to enter it again to save a backup while unlocked. Reloading or 15 minutes of inactivity locks this device.':'Set one Take Control password to protect both your budget on this device and your backup files. There is no password reset. Keep your password in a password manager and test a recovery backup.')+'</p><button class="btn alt" type="button" data-act="'+(protectedBudget?'lockVault':'enableVault')+'">'+(protectedBudget?'Lock this device':'Enable device encryption')+'</button><p id="vaultMessage" class="hint" role="status"></p><p class="hint">Save a backup every week or two. You choose the save option after the file is encrypted. Older backups keep the password used when they were created.</p><div class="actions"><button class="btn" type="button" data-act="backupFile">Save encrypted backup</button><label class="btn alt" style="display:inline-flex;align-items:center;cursor:pointer">Restore from a backup file<input type="file" id="restoreFile" accept=".json,application/json" style="display:none"></label></div><p class="hint" id="backupFileMsg" role="status"></p></div></details>';
   }
   function vaultMessage(text) {var el=$('#vaultMessage');if(el)el.textContent=text;}
   async function setupProtection() {
@@ -3043,6 +3044,21 @@ function nextTarget(state) {
 })();
 </script>
 
-<script>if("serviceWorker"in navigator&&location.protocol==="https:"){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").then(function(r){r.update()}).catch(function(){})})}</script>
+<script>
+if('serviceWorker' in navigator && location.protocol==='https:'){
+  var alreadyControlled=!!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange',function(){
+    if(!alreadyControlled||document.getElementById('appUpdateNotice'))return;
+    var notice=document.createElement('aside');notice.id='appUpdateNotice';notice.setAttribute('role','status');notice.style.cssText='position:fixed;bottom:90px;left:16px;right:16px;z-index:10000;background:var(--surface);color:var(--ink);border:2px solid var(--line);border-radius:12px;padding:16px;box-shadow:0 4px 20px #0004';
+    var text=document.createElement('p');text.textContent='An app update is ready. Finish your edits, then reload to use the latest version. Your saved budget will stay on this device.';notice.appendChild(text);
+    var button=document.createElement('button');button.type='button';button.className='btn';button.textContent='Reload updated app';button.onclick=async function(){
+      button.disabled=true;
+      try{if(window.TakeControlVault)await TakeControlVault.flush();location.reload();}
+      catch(e){text.textContent='Your latest changes could not be saved. Keep this page open and try saving a backup before reloading.';button.disabled=false;}
+    };notice.appendChild(button);document.body.appendChild(notice);
+  });
+  window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(function(r){r.update();}).catch(function(){});});
+}
+</script>
 </body>
 </html>
