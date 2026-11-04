@@ -24,8 +24,8 @@ const sw=fs.readFileSync('sw.js','utf8');
 test('worker leaves sibling caches and unexpected requests alone',async()=>{
  const events={},removed=[];let response;
  const c={match:async()=>({cached:true}),put:async()=>{throw Error('must not overwrite on error');}};
- const context={URL,Set,Promise,caches:{keys:async()=>['unrelated-app-canary','takecontrol-v54','takecontrol-v55'],delete:async k=>removed.push(k),open:async()=>c},fetch:async()=>({ok:false,status:500}),self:{location:{href:'https://example.test/take-control/sw.js'},clients:{claim:async()=>{}},addEventListener:(n,fn)=>events[n]=fn}};
- vm.runInNewContext(sw,context);await events.activate({waitUntil:p=>response=p});await response;assert.deepEqual(removed,['takecontrol-v54']);
+ const context={URL,Set,Promise,caches:{keys:async()=>['unrelated-app-canary','takecontrol-v55','takecontrol-v56'],delete:async k=>removed.push(k),open:async()=>c},fetch:async()=>({ok:false,status:500}),self:{location:{href:'https://example.test/take-control/sw.js'},clients:{claim:async()=>{}},addEventListener:(n,fn)=>events[n]=fn}};
+ vm.runInNewContext(sw,context);await events.activate({waitUntil:p=>response=p});await response;assert.deepEqual(removed,['takecontrol-v55']);
  for(const url of ['https://evil.test/a','https://example.test/api/private'])events.fetch({request:{method:'GET',url},respondWith:()=>assert.fail('unexpected intercepted URL')});
  events.fetch({request:{method:'GET',mode:'navigate',url:'https://example.test/take-control/'},respondWith:p=>response=p});assert.deepEqual(await response,{cached:true});
 });

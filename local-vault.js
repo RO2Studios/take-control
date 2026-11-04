@@ -58,6 +58,16 @@
    return task.finally(()=>{pending--;});
   },
   async flush(){await queue;},
+  async backup(state){
+   if(!key)throw Error('Unlock your budget before saving a backup.');
+   const k=key,s=salt,iv=crypto.getRandomValues(new Uint8Array(12));
+   const text=JSON.stringify(state);
+   if(text.length>5000000)throw Error('Budget exceeds the 5 MB backup limit.');
+   // Reuse the unlocked encryption key, never retain the password. A fresh IV
+   // and distinct authenticated context separate backups from local storage.
+   const data=await crypto.subtle.encrypt({name:'AES-GCM',iv,additionalData:enc.encode('take-control-backup-v1'),tagLength:128},k,enc.encode(text));
+   return {format:'take-control-encrypted-backup',version:1,kdf:'PBKDF2-SHA256',iterations:ITERATIONS,cipher:'AES-256-GCM',salt:b64(s),iv:b64(iv),data:b64(new Uint8Array(data))};
+  },
   async lock(){await queue;key=null;salt=null;}
  };
  root.TakeControlVault=api;

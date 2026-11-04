@@ -3,7 +3,7 @@
 <head>
 <meta name="referrer" content="no-referrer">
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-gz8kynV3ruu0Ia2hygzFC8dJi827P5gntW5kcD5/nos=' 'sha256-L/Gk8NvXyj3uTPtsPWJBnt2UduAgAbqsrCJ7rlMYfPo=' 'sha256-VRKdyaiahFlUjfwrM3eux9Y9eciJxA2Jvz/8jNjRRKw=' 'sha256-/DUC1OeADy8PMHjlR0bdsMAE+nmVWrTKvaCljzUxCX4='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-gz8kynV3ruu0Ia2hygzFC8dJi827P5gntW5kcD5/nos=' 'sha256-L/Gk8NvXyj3uTPtsPWJBnt2UduAgAbqsrCJ7rlMYfPo=' 'sha256-SkILJcxhCApc8E0WAsN3T1H8/2Scr0Z9AeTyC2wlGqk=' 'sha256-/DUC1OeADy8PMHjlR0bdsMAE+nmVWrTKvaCljzUxCX4='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Take Control</title>
 <meta name="description" content="Budget first, then manage every day. A private budgeting app that lives on your phone.">
@@ -358,11 +358,12 @@ input[type=file] { font-size: 14px; }
 .install .row-a { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 </style>
 <style>html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);-webkit-text-size-adjust:100%}body{margin:0;min-height:100vh;-webkit-tap-highlight-color:transparent}button{-webkit-appearance:none;appearance:none}</style>
-<link rel="stylesheet" href="ui.css?v=55">
+<link rel="stylesheet" href="ui.css?v=56">
 <script src="money-insights.js"></script>
 <script src="money-levels.js"></script>
 <script src="encrypted-backup.js"></script>
 <script src="local-vault.js"></script>
+<script src="backup-save.js"></script>
 </head>
 <body>
 
@@ -1654,28 +1655,39 @@ function nextTarget(state) {
     });
   }
   function backupMessage(message) { var el=$('#backupFileMsg'); if(el) el.textContent=message; }
+  function chooseBackupLocation(file) {
+    return new Promise(function(resolve) {
+      var overlay=document.createElement('div');overlay.style.cssText='position:fixed;inset:0;z-index:9999;background:#000b;display:grid;place-items:center;padding:18px';
+      var card=document.createElement('section');card.setAttribute('role','dialog');card.setAttribute('aria-modal','true');card.setAttribute('aria-label','Save your encrypted backup');card.style.cssText='width:min(440px,100%);background:var(--surface);color:var(--ink);border-radius:16px;padding:22px;display:grid;gap:12px';
+      var h=document.createElement('h2');h.textContent='Save your encrypted backup';card.appendChild(h);
+      var info=document.createElement('p');info.className='hint';info.textContent='Uses your Take Control password. Choose where to save this file. On iPhone, tap Choose location / share, then Save to Files to pick iCloud Drive, On My iPhone, or another available provider.';card.appendChild(info);
+      var status=document.createElement('p');status.setAttribute('role','status');card.appendChild(status);
+      function finish(){document.removeEventListener('keydown',escape);overlay.remove();resolve();}
+      function escape(e){if(e.key==='Escape')finish();}document.addEventListener('keydown',escape);
+      function option(label,method){var btn=document.createElement('button');btn.type='button';btn.className='btn alt';btn.textContent=label;btn.onclick=async function(){
+        var buttons=card.querySelectorAll('button');buttons.forEach(function(b){b.disabled=true;});
+        try{var result=await TakeControlSave.save(file,method);backupMessage(result);finish();}
+        catch(e){status.textContent=e.name==='AbortError'?'Save cancelled. Choose a location when you are ready.':'Could not save there. Try again or choose another option.';buttons.forEach(function(b){b.disabled=false;});}
+      };card.appendChild(btn);}
+      if(TakeControlSave.canChooseFolder())option('Choose folder and save','folder');
+      if(TakeControlSave.canShare(file))option('Choose location / share','share');
+      if(!TakeControlSave.canChooseFolder()&&!TakeControlSave.canShare(file)){var hint=document.createElement('p');hint.className='hint';hint.textContent='This browser cannot open a folder picker or file share sheet. Download uses the browser’s configured download location.';card.appendChild(hint);}
+      option('Download to browser location','download');
+      var cancel=document.createElement('button');cancel.type='button';cancel.className='btn alt';cancel.textContent='Cancel';cancel.onclick=finish;card.appendChild(cancel);overlay.appendChild(card);document.body.appendChild(overlay);card.querySelector('button').focus();
+    });
+  }
   async function backupFile() {
     if(!window.crypto || !crypto.subtle || !window.TakeControlBackup){backupMessage('Secure backup is unavailable in this browser. Use an updated browser over HTTPS.');return;}
-    var pw=await backupDialog('Protect your backup',['Backup password','Confirm password'],'Use at least 12 characters. The password cannot be recovered if lost. It is needed to restore this file.');
-    if(!pw)return;
-    if(pw[0].length<12 || pw[0]!==pw[1]){backupMessage('Passwords must match and contain at least 12 characters. No backup was created.');return;}
+    if(!TakeControlVault.active()){
+      if(!await setupProtection())return;
+      render();
+    }
     try {
-      backupMessage('Encrypting your backup…');
-      var envelope=await TakeControlBackup.encrypt(state,pw[0]);
+      backupMessage('Encrypting your backup with your Take Control password…');
+      var envelope=await TakeControlVault.backup(state);
       var name='Take Control backup '+toISO(todayNum())+'.json';
-      var blob=new Blob([JSON.stringify(envelope)],{type:'application/json'});
-      var file=new File([blob],name,{type:'application/json'});
-      if(navigator.canShare && navigator.canShare({files:[file]})){
-        try {await navigator.share({files:[file],title:'Encrypted Take Control backup'});}
-        catch(e){backupMessage('Backup sharing cancelled or failed. No backup was confirmed.');return;}
-        // Share success does not guarantee durable storage on the destination.
-        backupMessage('Encrypted backup shared. Verify it was saved in your selected folder.');
-      } else {
-        var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();
-        setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},2000);
-        backupMessage('Encrypted backup download started. Verify the file was saved before relying on it.');
-      }
-      // Do not claim storage was verified or mutate budget state.
+      var file=new File([JSON.stringify(envelope)],name,{type:'application/json'});
+      await chooseBackupLocation(file);
     } catch(e){backupMessage('Could not create encrypted backup. Your budget was not changed.');}
   }
   async function restoreFile(f) {
@@ -2122,22 +2134,23 @@ function nextTarget(state) {
 
   function vaultSettingsHTML() {
     var protectedBudget=window.TakeControlVault&&TakeControlVault.active();
-    return '<details id="vaultSettings"><summary>Device encryption</summary><div class="stack"><p class="hint">'+(protectedBudget?'Your saved budget is encrypted. Reloading or 15 minutes of inactivity locks this device. The password is never saved.':'This browser budget is currently unencrypted. Enable a password-protected vault to encrypt saved data. There is no password reset: keep a tested encrypted backup and its password.')+'</p><button class="btn alt" type="button" data-act="'+(protectedBudget?'lockVault':'enableVault')+'">'+(protectedBudget?'Lock this device':'Enable device encryption')+'</button><p id="vaultMessage" class="hint" role="status"></p></div></details>';
+    return '<details id="vaultSettings"><summary>Budget protection and backups</summary><div class="stack"><p class="hint">'+(protectedBudget?'One Take Control password protects this browser budget and all new backups. You do not need to enter it again to save a backup while unlocked. Reloading or 15 minutes of inactivity locks this device.':'Set one Take Control password to protect both your budget on this device and your backup files. There is no password reset. Keep your password in a password manager and test a recovery backup.')+'</p><button class="btn alt" type="button" data-act="'+(protectedBudget?'lockVault':'enableVault')+'">'+(protectedBudget?'Lock this device':'Enable device encryption')+'</button><p id="vaultMessage" class="hint" role="status"></p><p class="hint">Save a backup every week or two. You choose the save option after the file is encrypted. Older backups keep the password used when they were created.</p><div class="actions"><button class="btn" type="button" data-act="backupFile">Save encrypted backup</button><label class="btn alt" style="display:inline-flex;align-items:center;cursor:pointer">Restore from a backup file<input type="file" id="restoreFile" accept=".json,application/json" style="display:none"></label></div><p class="hint" id="backupFileMsg" role="status"></p></div></details>';
   }
   function vaultMessage(text) {var el=$('#vaultMessage');if(el)el.textContent=text;}
-  async function enableVault() {
-    if(!window.crypto||!crypto.subtle){vaultMessage('Device encryption requires an updated browser over HTTPS.');return;}
-    if(!confirm('Save and test an encrypted backup before enabling device encryption. Have you verified your recovery backup and stored its password safely?'))return;
-    var pw=await backupDialog('Protect this device',['Device password','Confirm password'],'Use 12–1024 characters. You must unlock on reload. There is no password reset. Keep the password in your password manager.');
-    if(!pw)return;
-    if(pw[0]!==pw[1]){vaultMessage('Passwords must match. Your budget is unchanged.');return;}
+  async function setupProtection() {
+    if(!window.crypto||!crypto.subtle){vaultMessage('Device encryption requires an updated browser over HTTPS.');return false;}
+    if(TakeControlVault.exists()){vaultMessage('Unlock your budget before saving a backup.');return false;}
+    var pw=await backupDialog('Protect your budget and backups',['Take Control password','Confirm password'],'One password encrypts this browser budget and all new backups. Use 12–1024 characters. There is no password reset. Keep it in your password manager. Older backups keep their original password.');
+    if(!pw)return false;
+    if(pw[0]!==pw[1]||pw[0].length<12||pw[0].length>1024){vaultMessage('Passwords must match and contain 12–1024 characters. Your budget is unchanged.');return false;}
     try{
-      vaultMessage('Encrypting and verifying saved data…');
-      // Block edits while migration encrypts a stable snapshot.
-      document.body.inert=true;
+      vaultMessage('Encrypting and verifying saved data…');document.body.inert=true;
       await TakeControlVault.enable(state,pw[0],validateState);
-      location.reload();
-    }catch(e){document.body.inert=false;vaultMessage(e.message+' Your existing budget has been retained.');}
+      document.body.inert=false;return true;
+    }catch(e){document.body.inert=false;vaultMessage(e.message+' Your existing budget has been retained.');return false;}
+  }
+  async function enableVault() {
+    if(await setupProtection())await lockVault();
   }
   async function lockVault() {
     document.body.inert=true;
@@ -2148,7 +2161,7 @@ function nextTarget(state) {
     if(!window.TakeControlVault||!TakeControlVault.exists())return load();
     document.querySelector('.wrap').hidden=true;
     while(true){
-      var pw=await backupDialog('Unlock Take Control',['Device password'],'Your saved budget is encrypted. Enter this device’s password. There is no password reset. Cancel keeps the budget locked.');
+      var pw=await backupDialog('Unlock Take Control',['Take Control password'],'Your saved budget is encrypted. Enter your Take Control password. There is no password reset. Cancel keeps the budget locked.');
       if(!pw){
         var gate=document.createElement('div');gate.className='wrap';
         var button=document.createElement('button');button.className='btn';button.textContent='Unlock Take Control';button.onclick=function(){location.reload();};gate.appendChild(button);document.body.appendChild(gate);return null;
@@ -2169,8 +2182,7 @@ function nextTarget(state) {
       '<div><label class="f" for="pOverride">My own daily spending number for the forecast</label><input type="text" id="pOverride" inputmode="decimal" placeholder="" value="' + inputVal(state.dailyOverride) + '"><p class="hint">Leave blank to use your recent pace, or your budget until you have a few days of entries.</p></div>' +
       '<button class="btn alt" type="submit">Save</button><p class="err" id="prefErr" role="alert"></p></form></details>' +
       calHTML() +
-      '<details' + (state.lastBackupDay == null || todayNum() - state.lastBackupDay >= 14 ? ' open' : '') + '><summary>Back up to iCloud or Google Drive</summary><div class="stack"><p class="hint" style="margin:0">Your numbers live only on this phone. Save a backup file every week or two. On iPhone, tap Save backup, then choose Save to Files and pick iCloud Drive. On Android, choose Google Drive.' + (state.lastBackupDay != null ? ' Last backup: ' + dLong(state.lastBackupDay) + '.' : ' No backup yet.') + '</p><div class="actions"><button class="btn" type="button" data-act="backupFile">Save encrypted backup</button><label class="btn alt" style="display:inline-flex;align-items:center;cursor:pointer">Restore from a backup file<input type="file" id="restoreFile" accept=".json,application/json" style="display:none"></label></div><p class="hint" id="backupFileMsg" role="status"></p></div></details>' +
-      '<p class="hint">Check Device encryption above for this browser’s protection status. Backup files are password protected; manual text sync is unencrypted. Clearing browser data can erase your budget. <a href="PRIVACY.md" target="_blank" rel="noopener noreferrer">Privacy and recovery</a></p><details><summary>Sync two phones (unencrypted)</summary><div class="stack"><p class="hint" style="margin:0">Entries live on this phone. To bring two phones in line, or move to a new phone, tap Copy my data, send it in a text, and paste it below on the other phone and tap Merge. Do it in both directions whenever you want the phones to match. It is also a good backup.</p><textarea id="backup" aria-label="Sync text" spellcheck="false"></textarea><div class="actions"><button class="btn alt" type="button" data-act="copyBackup">Copy my data</button><button class="btn" type="button" data-act="mergeSync">Merge pasted data</button></div><div class="actions"><button class="link" type="button" data-act="restoreBackup">Replace this phone with the pasted data instead</button></div><p class="hint" id="backupMsg" role="status"></p></div></details>' +
+      '<p class="hint">Budget protection and backups above use one Take Control password. Backup files are password protected; manual text sync is unencrypted. Clearing browser data can erase your budget. <a href="PRIVACY.md" target="_blank" rel="noopener noreferrer">Privacy and recovery</a></p><details><summary>Sync two phones (unencrypted)</summary><div class="stack"><p class="hint" style="margin:0">Entries live on this phone. To bring two phones in line, or move to a new phone, tap Copy my data, send it in a text, and paste it below on the other phone and tap Merge. Do it in both directions whenever you want the phones to match. It is also a good backup.</p><textarea id="backup" aria-label="Sync text" spellcheck="false"></textarea><div class="actions"><button class="btn alt" type="button" data-act="copyBackup">Copy my data</button><button class="btn" type="button" data-act="mergeSync">Merge pasted data</button></div><div class="actions"><button class="link" type="button" data-act="restoreBackup">Replace this phone with the pasted data instead</button></div><p class="hint" id="backupMsg" role="status"></p></div></details>' +
       '<details><summary>Start over</summary><div class="stack"><p class="hint" style="margin:0">Erases every entry, bill, budget and balance on this phone.</p><div class="actions" id="resetRow"><button class="btn alt" type="button" data-act="resetAsk">Erase everything</button></div></div></details></section>';
   }
   function welcomeHTML() {

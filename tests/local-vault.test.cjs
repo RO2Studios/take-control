@@ -30,3 +30,16 @@ test('writes are ordered, tampering fails, invalid recovery data never replaces 
  await assert.rejects(f.api.unlock(pw,validate));assert.equal(f.api.active(),false);
  const fresh=fixture();fresh.store.set('moneyAhead.v2','original');await assert.rejects(fresh.api.enable({v:3},pw,validate));assert.equal(fresh.store.get('moneyAhead.v2'),'original');
 });
+test('one password restores device-generated backups after unlock without storing the password',async()=>{
+ require('../encrypted-backup.js');const backup=globalThis.TakeControlBackup;
+ const f=fixture(),state={v:2,amount:12345,secret:'synthetic budget'};
+ await assert.rejects(f.api.backup(state));
+ await f.api.enable(state,pw,validate);
+ const a=await f.api.backup(state),b=await f.api.backup(state);
+ assert.notEqual(a.iv,b.iv);assert.notEqual(a.data,b.data);
+ assert.deepEqual(await backup.decrypt(a,pw),state);
+ await assert.rejects(backup.decrypt(a,'wrong-password-2026'));
+ assert.equal(f.store.size,1);assert.ok(!f.store.get('moneyAhead.vault.v1').includes(pw));
+ await f.api.lock();await assert.rejects(f.api.backup(state));
+ await f.api.unlock(pw,validate);assert.deepEqual(await backup.decrypt(await f.api.backup(state),pw),state);
+});

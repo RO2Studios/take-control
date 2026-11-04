@@ -1,5 +1,5 @@
 /*
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-gz8kynV3ruu0Ia2hygzFC8dJi827P5gntW5kcD5/nos=' 'sha256-L/Gk8NvXyj3uTPtsPWJBnt2UduAgAbqsrCJ7rlMYfPo=' 'sha256-VRKdyaiahFlUjfwrM3eux9Y9eciJxA2Jvz/8jNjRRKw=' 'sha256-/DUC1OeADy8PMHjlR0bdsMAE+nmVWrTKvaCljzUxCX4='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-gz8kynV3ruu0Ia2hygzFC8dJi827P5gntW5kcD5/nos=' 'sha256-L/Gk8NvXyj3uTPtsPWJBnt2UduAgAbqsrCJ7rlMYfPo=' 'sha256-SkILJcxhCApc8E0WAsN3T1H8/2Scr0Z9AeTyC2wlGqk=' 'sha256-/DUC1OeADy8PMHjlR0bdsMAE+nmVWrTKvaCljzUxCX4='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Referrer-Policy: no-referrer

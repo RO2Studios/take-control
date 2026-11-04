@@ -55,3 +55,29 @@ test('device vault migrates, survives encrypted profile saves, locks and unlocks
  const recovered=await page.evaluate(async()=>{await TakeControlVault.flush();await TakeControlVault.lock();return TakeControlVault.unlock('device-test-password-2026',x=>{if(x.v!==2)throw Error('bad');});});
  assert.deepEqual(recovered.tx,original.tx);assert.equal(recovered.anchor.balance,original.anchor.balance);await context.close();
 });
+test('unlocked budget backs up with one password and a fresh save-location click',async()=>{
+ const context=await browser.newContext({serviceWorkers:'block'}),page=await context.newPage();
+ await page.addInitScript(()=>{
+  Object.defineProperty(navigator,'canShare',{value:()=>true,configurable:true});
+  Object.defineProperty(navigator,'share',{value:async args=>{window.__shareHadActivation=navigator.userActivation.isActive;window.__sharedBackup=JSON.parse(await args.files[0].text());},configurable:true});
+ });
+ await page.goto(url);await page.getByRole('button',{name:'See an example first',exact:true}).click();
+ const original=await page.evaluate(()=>JSON.parse(localStorage.getItem('moneyAhead.v2')));
+ await page.locator('#profileBtn').click();await page.locator('#vaultSettings summary').click();
+ await page.getByRole('button',{name:'Save encrypted backup',exact:true}).click();
+ await page.getByLabel('Take Control password',{exact:true}).fill('shared-budget-password-2026');
+ await page.getByLabel('Confirm password',{exact:true}).fill('shared-budget-password-2026');
+ await page.getByRole('button',{name:'Continue',exact:true}).click();
+ const dialog=page.getByRole('dialog',{name:'Save your encrypted backup',exact:true});await dialog.waitFor();
+ assert.equal(await page.locator('input[type="password"]').count(),0);
+ assert.equal(await page.evaluate(()=>localStorage.getItem('moneyAhead.v2')),null);
+ await dialog.getByRole('button',{name:'Choose location / share',exact:true}).click();
+ await page.waitForFunction(()=>!!window.__sharedBackup);
+ assert.equal(await page.evaluate(()=>window.__shareHadActivation),true);
+ const recovered=await page.evaluate(()=>TakeControlBackup.decrypt(window.__sharedBackup,'shared-budget-password-2026'));
+ assert.deepEqual(recovered.tx,original.tx);assert.equal(recovered.anchor.balance,original.anchor.balance);
+ await page.getByRole('button',{name:'Save encrypted backup',exact:true}).click();await dialog.waitFor();
+ assert.equal(await page.locator('input[type="password"]').count(),0);
+ await dialog.getByRole('button',{name:'Cancel',exact:true}).click();
+ await context.close();
+});
