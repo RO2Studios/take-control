@@ -638,3 +638,12 @@ body .wrap h1 { min-width:0; gap:14px; font-size:29px; line-height:1.15; }
 .brand-home:visited { color:inherit; }
 .brand-home:focus-visible { outline:3px solid var(--accent); outline-offset:5px; }
 .brand-home .brand-copy { min-width:0; }
+
+/* Desktop sections share the navigation and progress-card content width. */
+@media (min-width: 900px) {
+  #planRoot { width: 100%; max-width: none; }
+  #learnRoot { width: 100%; max-width: none !important; }
+  .month-nav { width: 100%; max-width: none; }
+  body[data-sub="entry"] #todayGrid,
+  body[data-sub="check"] #todayGrid { width: 100%; max-width: none; }
+}
