@@ -1,0 +1,107 @@
+'use strict';
+const {test,before,after}=require('node:test');
+const assert=require('node:assert/strict');
+const fs=require('node:fs'),path=require('node:path'),http=require('node:http');
+const {chromium}=require('playwright');
+let server,browser,url;
+before(async()=>{
+ const root=path.join(__dirname,'..');
+ server=http.createServer((req,res)=>{
+  const name=new URL(req.url,'http://localhost').pathname;
+  if(name==='/legacy-worker.js'){
+   res.writeHead(200,{'Content-Type':'text/javascript'});
+   res.end("self.addEventListener('install',()=>self.skipWaiting());self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));self.addEventListener('fetch',e=>{const u=new URL(e.request.url);if(u.pathname==='/local-vault.js'&&!u.search)e.respondWith(Promise.resolve(new Response('window.TakeControlVault={legacy:true}',{headers:{'Content-Type':'text/javascript'}})));});");return;
+  }
+  const file=path.join(root,name==='/'?'index.html':name);
+  const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css','.svg':'image/svg+xml','.webp':'image/webp'};
+  fs.readFile(file,(err,data)=>{res.writeHead(err?404:200,{'Content-Type':mime[path.extname(file)]||'application/octet-stream'});res.end(err?'Not found':data);});
+ });
+ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+ url=`http://127.0.0.1:${server.address().port}/`;
+ browser=await chromium.launch({headless:true,...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?{executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH}:{channel:'chromium'})});
+});
+after(async()=>{if(browser)await browser.close();if(server)await new Promise(resolve=>server.close(resolve));});
+test('malicious file import and pasted merge preserve the saved budget; CSP blocks inline injection',async()=>{
+ const context=await browser.newContext({serviceWorkers:'block'}),page=await context.newPage();
+ await page.goto(url);await page.locator('[data-act="startExample"]').click();
+ const before=await page.evaluate(()=>localStorage.getItem('moneyAhead.v2'));
+ const attack=JSON.parse(before);attack.budget.cats[0].id='c" onclick="window.__injected=1';
+ await page.locator('#profileBtn').click();
+ page.on('dialog',d=>d.accept());
+ await page.locator('#restoreFile').setInputFiles({name:'synthetic.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(attack))});
+ await page.waitForFunction(()=>document.querySelector('#backupFileMsg')?.textContent.includes('Invalid'));
+ assert.equal(await page.evaluate(()=>localStorage.getItem('moneyAhead.v2')),before);
+ await page.getByText('Sync two phones (unencrypted)',{exact:true}).click();
+ await page.locator('#backup').fill(JSON.stringify(attack));
+ await page.locator('[data-act="mergeSync"]').click();
+ assert.equal(await page.evaluate(()=>localStorage.getItem('moneyAhead.v2')),before);
+ await page.evaluate(()=>{const s=document.createElement('script');s.textContent='window.__injected=1';document.body.appendChild(s);});
+ assert.equal(await page.evaluate(()=>window.__injected),undefined);
+ await context.close();
+});
+test('device vault migrates, survives encrypted profile saves, locks and unlocks',async()=>{
+ const context=await browser.newContext({serviceWorkers:'block'}),page=await context.newPage();page.on('dialog',d=>d.accept());
+ await page.goto(url);await page.locator('[data-act="startExample"]').click();
+ const original=await page.evaluate(()=>JSON.parse(localStorage.getItem('moneyAhead.v2')));
+ await page.locator('#profileBtn').click();await page.locator('#vaultSettings summary').click();await page.locator('[data-act="enableVault"]').click();
+ const passwords=page.locator('input[type="password"]');await passwords.nth(0).fill('device-test-password-2026');await passwords.nth(1).fill('device-test-password-2026');await page.getByRole('button',{name:'Continue',exact:true}).click();
+ await page.getByRole('heading',{name:'Unlock Take Control',exact:true}).waitFor();
+ assert.equal(await page.evaluate(()=>localStorage.getItem('moneyAhead.v2')),null);
+ assert.equal(await page.evaluate(()=>TakeControlVault.active()),false);
+ const encrypted=await page.evaluate(()=>localStorage.getItem('moneyAhead.vault.v1'));assert.ok(!encrypted.includes('Jordan'));
+ await page.locator('input[type="password"]').fill('device-test-password-2026');await page.getByRole('button',{name:'Continue',exact:true}).click();
+ await page.waitForFunction(()=>TakeControlVault.active());await page.locator('#profileBtn').click();await page.locator('[data-avatar="2"]').click();
+ await page.waitForFunction(previous=>localStorage.getItem('moneyAhead.vault.v1')!==previous,encrypted);
+ assert.equal(await page.evaluate(()=>localStorage.getItem('moneyAhead.v2')),null);
+ await page.locator('#vaultSettings summary').click();await page.locator('[data-act="lockVault"]').click();
+ await page.getByRole('heading',{name:'Unlock Take Control',exact:true}).waitFor();assert.equal(await page.evaluate(()=>TakeControlVault.active()),false);
+ await page.locator('input[type="password"]').fill('device-test-password-2026');await page.getByRole('button',{name:'Continue',exact:true}).click();await page.waitForFunction(()=>TakeControlVault.active());
+ const recovered=await page.evaluate(async()=>{await TakeControlVault.flush();await TakeControlVault.lock();return TakeControlVault.unlock('device-test-password-2026',x=>{if(x.v!==2)throw Error('bad');});});
+ assert.deepEqual(recovered.tx,original.tx);assert.equal(recovered.anchor.balance,original.anchor.balance);await context.close();
+});
+test('unlocked budget backs up with one password and a fresh save-location click',async()=>{
+ const context=await browser.newContext({serviceWorkers:'block'}),page=await context.newPage();
+ await page.addInitScript(()=>{
+  Object.defineProperty(navigator,'canShare',{value:()=>true,configurable:true});
+  Object.defineProperty(navigator,'share',{value:async args=>{window.__shareHadActivation=navigator.userActivation.isActive;window.__sharedBackup=JSON.parse(await args.files[0].text());},configurable:true});
+ });
+ await page.goto(url);await page.getByRole('button',{name:'See an example first',exact:true}).click();
+ const original=await page.evaluate(()=>JSON.parse(localStorage.getItem('moneyAhead.v2')));
+ await page.locator('#profileBtn').click();await page.locator('#vaultSettings summary').click();
+ await page.getByRole('button',{name:'Save encrypted backup',exact:true}).click();
+ await page.getByLabel('Take Control password',{exact:true}).fill('shared-budget-password-2026');
+ await page.getByLabel('Confirm password',{exact:true}).fill('shared-budget-password-2026');
+ await page.getByRole('button',{name:'Continue',exact:true}).click();
+ const dialog=page.getByRole('dialog',{name:'Save your encrypted backup',exact:true});await dialog.waitFor();
+ assert.equal(await page.locator('input[type="password"]').count(),0);
+ assert.equal(await page.evaluate(()=>localStorage.getItem('moneyAhead.v2')),null);
+ await dialog.getByRole('button',{name:'Choose location / share',exact:true}).click();
+ await page.waitForFunction(()=>!!window.__sharedBackup);
+ assert.equal(await page.evaluate(()=>window.__shareHadActivation),true);
+ const recovered=await page.evaluate(()=>TakeControlBackup.decrypt(window.__sharedBackup,'shared-budget-password-2026'));
+ assert.deepEqual(recovered.tx,original.tx);assert.equal(recovered.anchor.balance,original.anchor.balance);
+ await page.getByRole('button',{name:'Save encrypted backup',exact:true}).click();await dialog.waitFor();
+ assert.equal(await page.locator('input[type="password"]').count(),0);
+ await dialog.getByRole('button',{name:'Cancel',exact:true}).click();
+ await context.close();
+});
+test('an older offline worker cannot mix old encryption code into the updated app after unlock',async()=>{
+ const context=await browser.newContext(),page=await context.newPage();
+ await page.goto(url);await page.getByRole('button',{name:'See an example first',exact:true}).click();
+ await page.locator('#profileBtn').click();await page.locator('#vaultSettings summary').click();
+ await page.getByRole('button',{name:'Save encrypted backup',exact:true}).click();
+ await page.getByLabel('Take Control password',{exact:true}).fill('upgrade-recovery-password');await page.getByLabel('Confirm password',{exact:true}).fill('upgrade-recovery-password');
+ await page.getByRole('button',{name:'Continue',exact:true}).click();
+ await page.getByRole('dialog',{name:'Save your encrypted backup',exact:true}).getByRole('button',{name:'Cancel',exact:true}).click();
+ const saved=await page.evaluate(()=>localStorage.getItem('moneyAhead.vault.v1'));
+ await page.evaluate(async()=>{await navigator.serviceWorker.register('/legacy-worker.js');await navigator.serviceWorker.ready;});
+ await page.waitForFunction(()=>!!navigator.serviceWorker.controller);
+ await page.reload();await page.getByLabel('Take Control password',{exact:true}).fill('upgrade-recovery-password');await page.getByRole('button',{name:'Continue',exact:true}).click();
+ await page.waitForFunction(()=>TakeControlVault.active());assert.equal(await page.evaluate(()=>typeof TakeControlVault.backup),'function');
+ await page.locator('#profileBtn').click();await page.locator('#vaultSettings summary').click();
+ await page.getByRole('button',{name:'Save encrypted backup',exact:true}).click();
+ await page.getByRole('dialog',{name:'Save your encrypted backup',exact:true}).waitFor();
+ assert.equal(await page.locator('input[type="password"]').count(),0);
+ assert.equal(await page.evaluate(()=>localStorage.getItem('moneyAhead.vault.v1')),saved);
+ await context.close();
+});

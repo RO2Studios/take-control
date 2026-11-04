@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<meta name="referrer" content="no-referrer">
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-gz8kynV3ruu0Ia2hygzFC8dJi827P5gntW5kcD5/nos=' 'sha256-L/Gk8NvXyj3uTPtsPWJBnt2UduAgAbqsrCJ7rlMYfPo=' 'sha256-2pLcDK0eD2654+uwb9/DXJ0kBga/t0EtWJzKX407gVA=' 'sha256-f08ESePDGo/4swLN4HzjmTfZ9BmZiWUa4PyZ9q5Nr5k='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Take Control</title>
 <meta name="description" content="Budget first, then manage every day. A private budgeting app that lives on your phone.">
@@ -356,9 +358,12 @@ input[type=file] { font-size: 14px; }
 .install .row-a { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 </style>
 <style>html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);-webkit-text-size-adjust:100%}body{margin:0;min-height:100vh;-webkit-tap-highlight-color:transparent}button{-webkit-appearance:none;appearance:none}</style>
-<link rel="stylesheet" href="ui.css?v=54">
-<script src="money-insights.js"></script>
-<script src="money-levels.js"></script>
+<link rel="stylesheet" href="ui.css?v=57">
+<script src="money-insights.js?v=57"></script>
+<script src="money-levels.js?v=57"></script>
+<script src="encrypted-backup.js?v=57"></script>
+<script src="local-vault.js?v=57"></script>
+<script src="backup-save.js?v=57"></script>
 </head>
 <body>
 
@@ -1034,7 +1039,7 @@ function nextTarget(state) {
 </script>
 
 <script>
-(function () {
+(async function () {
   var KEY = 'moneyAhead.v2';
   var $ = function (s) { return document.querySelector(s); };
   var state = null, storeOk = true, cur = 'plan', V = null, shownDay = todayNum(), monthOffset = 0, wizNote = '';
@@ -1134,7 +1139,68 @@ function nextTarget(state) {
     log.forEach(function (l, i) { s.tx.push({ id: 'st' + i, ts: base + i + 1, day: t + l[0], type: 'out', amt: l[3], cat: l[1], note: l[2], by: i % 3 === 1 ? 'Casey' : 'Jordan' }); });
     return s;
   }
-  function valid(s) { return s && s.v === 2 && s.anchor && typeof s.anchor.balance === 'number' && Array.isArray(s.recs) && Array.isArray(s.tx) && s.budget && Array.isArray(s.budget.cats); }
+  function valid(s) {
+    try { validateState(s); return true; } catch (e) { return false; }
+  }
+  function validateState(s) {
+    var reserved = ['__proto__', 'constructor', 'prototype'];
+    var cents = /^(balance|amt|limit|buffer|dailyOverride|cardBalance|target|base|cancelled)$/;
+    function walk(x, depth, key) {
+      if (depth > 24) throw Error('Backup is too deeply nested.');
+      if (x === null) return;
+      if (typeof x === 'number') {
+        if (!Number.isFinite(x) || Math.abs(x) > Number.MAX_SAFE_INTEGER || (cents.test(key) && !Number.isSafeInteger(x))) throw Error('Invalid amount.');
+      } else if (typeof x === 'string') {
+        if (x.length > ((key === 'photo' || key === 'src') ? 200000 : 20000)) throw Error('Text is too long.');
+      } else if (Array.isArray(x)) {
+        if (x.length > 10000) throw Error('Too many records.');
+        x.forEach(function(v) { walk(v, depth + 1, ''); });
+      } else if (typeof x === 'object') {
+        if (Object.keys(x).length > 20000) throw Error('Too many fields.');
+        Object.keys(x).forEach(function(k) { if (reserved.indexOf(k) >= 0 || k.length > 256) throw Error('Invalid dictionary key.'); walk(x[k], depth + 1, k); });
+      } else if (typeof x !== 'boolean') throw Error('Invalid value.');
+    }
+    walk(s, 0, '');
+    if (!s || s.v !== 2 || !s.anchor || !Number.isSafeInteger(s.anchor.balance) || !Number.isInteger(s.anchor.day) || Math.abs(s.anchor.day)>365000 || !Number.isFinite(s.anchor.ts) || !Array.isArray(s.recs) || !Array.isArray(s.tx) || !s.budget || !Array.isArray(s.budget.cats)) throw Error('Invalid version 2 budget.');
+    [s.recs,s.tx,s.budget.cats].forEach(function(list,index) {
+      var ids = new Set();
+      list.forEach(function(r) {
+        if (!r || typeof r !== 'object' || Array.isArray(r) || typeof r.id !== 'string' || !/^[A-Za-z0-9_-]{1,100}$/.test(r.id) || reserved.indexOf(r.id)>=0 || ids.has(r.id)) throw Error('Invalid or duplicate record ID.');
+        ids.add(r.id);
+        if(index===2) { if(typeof r.name!=='string'||!Number.isSafeInteger(r.limit)||r.limit<0||['need','want'].indexOf(r.grp)<0)throw Error('Invalid category.'); }
+        else {
+          if(!Number.isSafeInteger(r.amt)||r.amt<0||['in','out'].indexOf(r.type)<0||typeof r.cat!=='string')throw Error('Invalid transaction.');
+          if(index===0) {
+            if(typeof r.name!=='string'||['once','weekly','biweekly','twice','monthly','quarterly','annual'].indexOf(r.freq)<0||typeof r.start!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(r.start)||!Number.isFinite(Date.parse(r.start))||new Date(r.start).toISOString().slice(0,10)!==r.start)throw Error('Invalid schedule.');
+          } else if(!Number.isInteger(r.day)||Math.abs(r.day)>365000)throw Error('Invalid transaction date.');
+        }
+      });
+    });
+    ['names','inbox','reviews','cancel'].forEach(function(k){if(s[k]!==undefined&&!Array.isArray(s[k]))throw Error('Invalid '+k);});
+    if(s.names && s.names.some(function(n){return typeof n!=='string';}))throw Error('Invalid name.');
+    ['saved','deleted','rules','imported','paydays','learned','milestones','profiles'].forEach(function(k){if(s[k]!==undefined&&(!s[k]||typeof s[k]!=='object'||Array.isArray(s[k])))throw Error('Invalid '+k);});
+    return s;
+  }
+  function parseBackup(text) {
+    if (typeof text !== 'string' || text.length > 5000000) throw Error('Backup exceeds 5 MB.');
+    var next = JSON.parse(text); validateState(next);
+    // Imported display summaries are not trusted HTML; regenerate on next reconcile.
+    delete next.lastImport;
+    return next;
+  }
+  function commitImport(next) {
+    // Merge may create absent optional properties; JSON omits these on disk.
+    next = JSON.parse(JSON.stringify(next));
+    validateState(next);
+    next.sample = false; next.updated = Date.now();
+    // Write before replacing live state. Quota failures preserve both prior copies.
+    if (typeof window !== 'undefined' && window.TakeControlVault && TakeControlVault.active()) {
+      document.body.inert=true;
+      return TakeControlVault.write(next).then(function(){state = next;}).finally(function(){document.body.inert=false;});
+    }
+    localStorage.setItem(KEY, JSON.stringify(next));
+    state = next;
+  }
   function refreshDemoSubscriptions(s) {
     // Only update the built-in example budget. Never modify a real user budget.
     if(!s || s.sample!==true || !Array.isArray(s.recs))return s;
@@ -1153,7 +1219,7 @@ function nextTarget(state) {
     return s;
   }
   function load() {
-    try { var raw = localStorage.getItem(KEY); if (raw) { var s = JSON.parse(raw); if (valid(s)) return refreshDemoNetworks(refreshDemoSubscriptions(norm(s))); } } catch (e) {}
+    try { var raw = localStorage.getItem(KEY); if (raw) { var s = JSON.parse(raw); if (valid(s)) { delete s.lastImport; return refreshDemoNetworks(refreshDemoSubscriptions(norm(s))); } } } catch (e) {}
     return makeBlank();
   }
   function norm(s) { s.profiles=cleanProfiles(s.profiles); if (!s.paydays) s.paydays = {}; if (s.startDay === undefined) s.startDay = null; if (s.budget && s.budget.done && s.startDay == null) s.startDay = todayNum(); if (!s.remind) s.remind = { recon: '09:00', review: '10:00', added: {} }; if (!s.remind.added) s.remind.added = {}; if (!s.learned) s.learned = {}; if (!s.givePct) s.givePct = 0; if (!s.partner) s.partner = ''; if (!Array.isArray(s.reviews)) s.reviews = []; if (!s.milestones) s.milestones = {}; if (!Array.isArray(s.cancel)) s.cancel = []; if (!s.cancelled) s.cancelled = 0; if (!s.rules) s.rules = {}; if (!Array.isArray(s.inbox)) s.inbox = []; if (!s.imported) s.imported = {}; if (!s.goals) s.goals = { asked: false, picks: [], ef: null }; if (!Array.isArray(s.goals.picks)) s.goals.picks = []; if (!s.budget.months) s.budget.months = {}; if (!s.saved) s.saved = {}; if (!Array.isArray(s.names)) s.names = []; if (!s.deleted) s.deleted = {}; if (!s.updated) s.updated = 0; return s; }
@@ -1226,7 +1292,7 @@ function nextTarget(state) {
     else if(p.level>state.moneyLevelSeen){state.moneyLevelSeen=p.level;if(!state.sample)pendingMoneyLevelUp=p.level;}
     // The level and earned XP are monotonic; editing an old expense cannot take a level away.
   }
-  function save() { updateMoneyLevelOnSave(); state.updated = Date.now(); try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { storeOk = false; $('#storeBanner').hidden = false; } if(state&&state.budget.done)renderMoneyLevel(); }
+  function save() { updateMoneyLevelOnSave(); state.updated = Date.now(); try { if(window.TakeControlVault&&TakeControlVault.active()){TakeControlVault.write(state).catch(function(){storeOk=false;$('#storeBanner').hidden=false;});}else localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { storeOk = false; $('#storeBanner').hidden = false; } if(state&&state.budget.done)renderMoneyLevel(); }
   function probeStorage() { try { localStorage.setItem(KEY + '.t', '1'); localStorage.removeItem(KEY + '.t'); } catch (e) { storeOk = false; } }
   var meIdx = null, lastDone = false, sub = 'spend';
   try { var sv = localStorage.getItem('moneyAhead.sub'); if (['spend', 'goals', 'outlook', 'bank'].indexOf(sv) >= 0) sub = sv; } catch (e) {}
@@ -1510,6 +1576,7 @@ function nextTarget(state) {
     el.innerHTML = h;
   }
   function loadCSV(text) {
+    if(text.length>2000000 || text.split(/\r?\n/).length>10001){$('#csvErr').textContent='CSV exceeds 2 MB or 10,000 rows. Import a smaller date range.';return;}
     var r = parseBank(text), err = $('#csvErr');
     if (r.err) { err.textContent = r.err; return; }
     var items = r.items.filter(function (it) { return !state.imported[importKey(it)]; }), matched = 0, used = {};
@@ -1561,26 +1628,91 @@ function nextTarget(state) {
     var bm = $('#backupFileMsg'); if (bm) bm.textContent = 'Reconcile done. Saving a backup next.';
     try { backupFile(); } catch (e) {}
   }
-  function backupFile() {
-    var msg = $('#backupFileMsg'), name = 'Take Control backup ' + toISO(todayNum()) + '.json';
-    var data = JSON.stringify(state), blob = new Blob([data], { type: 'application/json' });
-    var done = function () { state.lastBackupDay = todayNum(); save(); if (msg) msg.textContent = (who() ? who() + ', backup' : 'Backup') + ' saved. Keep it in iCloud Drive or Google Drive.'; };
-    try {
-      var file = new File([blob], name, { type: 'application/json' });
-      if (navigator.canShare && navigator.canShare({ files: [file] })) { navigator.share({ files: [file], title: 'Take Control backup' }).then(done, function () { if (msg) msg.textContent = 'Backup cancelled.'; }); return; }
-    } catch (e) {}
-    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 2000); done();
+  function backupDialog(title, fields, description) {
+    return new Promise(function(resolve) {
+      var overlay=document.createElement('div');
+      overlay.style.cssText='position:fixed;inset:0;z-index:9999;background:#000b;display:grid;place-items:center;padding:18px';
+      var card=document.createElement('form');
+      card.style.cssText='width:min(440px,100%);background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:16px;padding:22px;box-shadow:0 15px 50px #0006;display:grid;gap:12px';
+      var heading=document.createElement('h2');heading.textContent=title;heading.style.margin='0';card.appendChild(heading);
+      var info=document.createElement('p');info.className='hint';info.style.margin='0';info.textContent=description;card.appendChild(info);
+      var inputs=[];
+      fields.forEach(function(label) {
+        var wrapper=document.createElement('label');wrapper.textContent=label;wrapper.style.cssText='display:grid;gap:5px;font-size:13px';
+        var input=document.createElement('input');input.type='password';input.autocomplete='off';input.required=true;input.style.cssText='width:100%;min-height:44px;border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--surface-2);color:var(--ink)';
+        wrapper.appendChild(input);card.appendChild(wrapper);inputs.push(input);
+      });
+      var actions=document.createElement('div');actions.className='actions';
+      var cancel=document.createElement('button');cancel.type='button';cancel.className='btn alt';cancel.textContent='Cancel';
+      var ok=document.createElement('button');ok.type='submit';ok.className='btn';ok.textContent='Continue';
+      actions.appendChild(cancel);actions.appendChild(ok);card.appendChild(actions);overlay.appendChild(card);document.body.appendChild(overlay);
+      function finish(result){document.removeEventListener('keydown',keyHandler);overlay.remove();resolve(result);}
+      function keyHandler(e){if(e.key==='Escape')finish(null);}
+      document.addEventListener('keydown',keyHandler);
+      cancel.addEventListener('click',function(){finish(null);});
+      card.addEventListener('submit',function(e){e.preventDefault();finish(inputs.map(function(x){return x.value;}));});
+      inputs[0].focus();
+    });
   }
-  function restoreFile(f) {
-    var msg = $('#backupFileMsg'), rd = new FileReader();
-    rd.onload = function () {
-      try {
-        var inc = JSON.parse(String(rd.result)); if (!valid(inc)) throw new Error('bad');
-        if (state.budget.done) { var n0 = state.tx.length; state = mergeStates(state, norm(inc)); save(); loadMe(); render(); var m = $('#backupFileMsg'); if (m) m.textContent = 'Restored and merged. ' + Math.max(0, state.tx.length - n0) + ' entries added.'; }
-        else { inc.sample = false; state = norm(inc); resetDraft(); loadMe(); save(); setView(state.budget.done ? 'today' : 'plan'); }
-      } catch (e) { if (msg) msg.textContent = 'That file is not a Take Control backup.'; }
-    };
-    rd.readAsText(f);
+  function backupMessage(message) { var el=$('#backupFileMsg'); if(el) el.textContent=message; }
+  function chooseBackupLocation(file) {
+    return new Promise(function(resolve) {
+      var overlay=document.createElement('div');overlay.style.cssText='position:fixed;inset:0;z-index:9999;background:#000b;display:grid;place-items:center;padding:18px';
+      var card=document.createElement('section');card.setAttribute('role','dialog');card.setAttribute('aria-modal','true');card.setAttribute('aria-label','Save your encrypted backup');card.style.cssText='width:min(440px,100%);background:var(--surface);color:var(--ink);border-radius:16px;padding:22px;display:grid;gap:12px';
+      var h=document.createElement('h2');h.textContent='Save your encrypted backup';card.appendChild(h);
+      var info=document.createElement('p');info.className='hint';info.textContent='Uses your Take Control password. Choose where to save this file. On iPhone, tap Choose location / share, then Save to Files to pick iCloud Drive, On My iPhone, or another available provider.';card.appendChild(info);
+      var status=document.createElement('p');status.setAttribute('role','status');card.appendChild(status);
+      function finish(){document.removeEventListener('keydown',escape);overlay.remove();resolve();}
+      function escape(e){if(e.key==='Escape')finish();}document.addEventListener('keydown',escape);
+      function option(label,method){var btn=document.createElement('button');btn.type='button';btn.className='btn alt';btn.textContent=label;btn.onclick=async function(){
+        var buttons=card.querySelectorAll('button');buttons.forEach(function(b){b.disabled=true;});
+        try{var result=await TakeControlSave.save(file,method);backupMessage(result);finish();}
+        catch(e){status.textContent=e.name==='AbortError'?'Save cancelled. Choose a location when you are ready.':'Could not save there. Try again or choose another option.';buttons.forEach(function(b){b.disabled=false;});}
+      };card.appendChild(btn);}
+      if(TakeControlSave.canChooseFolder())option('Choose folder and save','folder');
+      if(TakeControlSave.canShare(file))option('Choose location / share','share');
+      if(!TakeControlSave.canChooseFolder()&&!TakeControlSave.canShare(file)){var hint=document.createElement('p');hint.className='hint';hint.textContent='This browser cannot open a folder picker or file share sheet. Download uses the browser’s configured download location.';card.appendChild(hint);}
+      option('Download to browser location','download');
+      var cancel=document.createElement('button');cancel.type='button';cancel.className='btn alt';cancel.textContent='Cancel';cancel.onclick=finish;card.appendChild(cancel);overlay.appendChild(card);document.body.appendChild(overlay);card.querySelector('button').focus();
+    });
+  }
+  async function backupFile() {
+    if(!window.crypto || !crypto.subtle || !window.TakeControlBackup){backupMessage('Secure backup is unavailable in this browser. Use an updated browser over HTTPS.');return;}
+    if(!window.TakeControlVault||typeof TakeControlVault.backup!=='function'||!window.TakeControlSave){backupMessage('An older app component is still loaded. Reload this page to finish the update, unlock your budget, then tap Save encrypted backup again.');return;}
+    if(!TakeControlVault.active()){
+      if(!await setupProtection())return;
+      render();
+      var protection=$('#vaultSettings');if(protection)protection.open=true;
+    }
+    try {
+      backupMessage('Encrypting your backup with your Take Control password…');
+      var envelope=await TakeControlVault.backup(state);
+      var name='Take Control backup '+toISO(todayNum())+'.json';
+      var file=new File([JSON.stringify(envelope)],name,{type:'application/json'});
+      await chooseBackupLocation(file);
+    } catch(e){backupMessage('Could not create encrypted backup. Your budget was not changed.');}
+  }
+  async function restoreFile(f) {
+    if (!f) return;
+    try {
+      if (f.size > 5000000) throw Error('Backup exceeds 5 MB.');
+      var text = await f.text(), raw = JSON.parse(text), inc;
+      if (TakeControlBackup.isEncrypted(raw)) {
+        var pw = await backupDialog('Unlock backup', ['Backup password'], 'Enter the password used to create this backup.');
+        if (!pw) return;
+        try { inc = await TakeControlBackup.decrypt(raw,pw[0]); }
+        catch(e) { throw Error('Incorrect password or damaged backup. Your budget is unchanged.'); }
+        inc = parseBackup(JSON.stringify(inc));
+      } else {
+        if (!confirm('This legacy backup is unencrypted. Import only a file you trust. Continue?')) return;
+        inc = parseBackup(text);
+      }
+      if (!confirm('Import '+inc.tx.length+' transactions and '+inc.recs.length+' recurring entries? '+(state.budget.done?'This will merge with your current budget.':'This will load the budget on this device.'))) return;
+      var merging = state.budget.done;
+      var next = merging ? mergeStates(clone(state),norm(inc)) : norm(inc);
+      await commitImport(next); resetDraft(); loadMe(); setView(state.budget.done?'today':'plan');
+      backupMessage('Backup restored.');
+    } catch(e) { backupMessage(e.message || 'Could not restore backup. Your budget is unchanged.'); }
   }
   /* ask */
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition, rec = null;
@@ -1713,7 +1845,7 @@ function nextTarget(state) {
   function lessonArt(id, big) {
     var a = ART[id] || ART.zero;
     var icon = '<div class="art" style="background:linear-gradient(135deg,' + a[0] + ',' + a[1] + ')"><svg viewBox="0 0 100 100" aria-hidden="true">' + a[2] + '</svg></div>';
-    if (big && window.__PWA && PHOTOS[id]) return '<div class="photo"><img src="images/' + id + '.jpg" alt="" loading="lazy" onerror="this.parentNode.className=\'photo failed\'">' + icon + '</div>';
+    if (big && window.__PWA && PHOTOS[id]) return '<div class="photo"><img src="images/' + id + '.jpg" alt="" loading="lazy">' + icon + '</div>';
     return icon;
   }
   function wrapText(str, max) { var words = String(str).split(' '), lines = [], cur = ''; words.forEach(function (w) { if ((cur + ' ' + w).trim().length > max) { lines.push(cur.trim()); cur = w; } else cur = (cur + ' ' + w); }); if (cur.trim()) lines.push(cur.trim()); return lines; }
@@ -1923,7 +2055,7 @@ function nextTarget(state) {
   function secEvery(wiz) {
     var cats = state.budget.cats;
     var rows = cats.length ? cats.map(function (c) {
-      return '<div class="catrow"><label for="lim-' + c.id + '">' + esc(c.name) + '<small>' + (c.grp === 'want' ? 'Want' : 'Need') + '</small></label><div class="moneyin"><span aria-hidden="true">$</span><input type="text" id="lim-' + c.id + '" data-limit="' + c.id + '" inputmode="decimal" placeholder="0" value="' + inputVal(c.limit) + '" aria-label="Monthly limit for ' + esc(c.name) + '"></div><button class="mini" type="button" data-act="delcat" data-id="' + c.id + '">Remove</button></div>';
+      return '<div class="catrow"><label for="lim-' + esc(c.id) + '">' + esc(c.name) + '<small>' + (c.grp === 'want' ? 'Want' : 'Need') + '</small></label><div class="moneyin"><span aria-hidden="true">$</span><input type="text" id="lim-' + esc(c.id) + '" data-limit="' + esc(c.id) + '" inputmode="decimal" placeholder="0" value="' + inputVal(c.limit) + '" aria-label="Monthly limit for ' + esc(c.name) + '"></div><button class="mini" type="button" data-act="delcat" data-id="' + esc(c.id) + '">Remove</button></div>';
     }).join('') : '<p class="empty">No categories yet. Add one below.</p>';
     return '<section class="card"><h2>' + (wiz ? 'Set a limit for everyday spending' : 'Everyday spending limits') + '</h2><p class="sub">Groceries, gas, eating out and the rest. Give each a monthly limit. This is the money you will log every day.</p>' +
       '<div>' + rows + '</div><p class="err" id="sugErr"></p>' +
@@ -1981,7 +2113,7 @@ function nextTarget(state) {
   function saveProfile(p){
     var previous=state.profiles,updated=state.updated;
     state.profiles=cleanProfiles(state.profiles);state.profiles[profileKey()]=Object.assign({},p,{updated:Date.now()});state.updated=Date.now();
-    try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){state.profiles=previous;state.updated=updated;profileMessage('Could not save the picture. Device storage may be full. Try an emoji instead.',true);return false;}
+    try{if(window.TakeControlVault&&TakeControlVault.active()){var copy=clone(state);state.profiles=previous;state.updated=updated;return commitImport(copy).then(function(){cancelProfileDraft();renderProfile();var editor=$('#profileSettings');if(editor)editor.outerHTML=profileSettingsHTML();profileMessage('Profile picture saved.');},function(){profileMessage('Could not save the picture. Your previous picture is unchanged.',true);});}localStorage.setItem(KEY,JSON.stringify(state));}catch(e){state.profiles=previous;state.updated=updated;profileMessage('Could not save the picture. Device storage may be full. Try an emoji instead.',true);return false;}
     cancelProfileDraft();renderProfile();var editor=$('#profileSettings');if(editor)editor.outerHTML=profileSettingsHTML();profileMessage('Profile picture saved.');var focus=document.querySelector('#profileSettings [aria-pressed="true"]')||document.querySelector('[data-act="profileUpload"]');if(focus)focus.focus({preventScroll:true});return true;
   }
   function drawProfileCrop(){
@@ -2002,9 +2134,47 @@ function nextTarget(state) {
     image.onerror=function(){URL.revokeObjectURL(url);if(token===profileLoad)profileMessage('This browser could not open the image. Try a JPG, PNG, or WebP photo.',true);};image.src=url;
   }
 
+  function vaultSettingsHTML() {
+    var protectedBudget=window.TakeControlVault&&TakeControlVault.active();
+    return '<p class="hint" id="appRelease">Take Control · Version 57</p><details id="vaultSettings"><summary>Budget protection and backups</summary><div class="stack"><p class="hint">'+(protectedBudget?'One Take Control password protects this browser budget and all new backups. You do not need to enter it again to save a backup while unlocked. Reloading or 15 minutes of inactivity locks this device.':'Set one Take Control password to protect both your budget on this device and your backup files. There is no password reset. Keep your password in a password manager and test a recovery backup.')+'</p><button class="btn alt" type="button" data-act="'+(protectedBudget?'lockVault':'enableVault')+'">'+(protectedBudget?'Lock this device':'Enable device encryption')+'</button><p id="vaultMessage" class="hint" role="status"></p><p class="hint">Save a backup every week or two. You choose the save option after the file is encrypted. Older backups keep the password used when they were created.</p><div class="actions"><button class="btn" type="button" data-act="backupFile">Save encrypted backup</button><label class="btn alt" style="display:inline-flex;align-items:center;cursor:pointer">Restore from a backup file<input type="file" id="restoreFile" accept=".json,application/json" style="display:none"></label></div><p class="hint" id="backupFileMsg" role="status"></p></div></details>';
+  }
+  function vaultMessage(text) {var el=$('#vaultMessage');if(el)el.textContent=text;}
+  async function setupProtection() {
+    if(!window.crypto||!crypto.subtle){vaultMessage('Device encryption requires an updated browser over HTTPS.');return false;}
+    if(TakeControlVault.exists()){vaultMessage('Unlock your budget before saving a backup.');return false;}
+    var pw=await backupDialog('Protect your budget and backups',['Take Control password','Confirm password'],'One password encrypts this browser budget and all new backups. Use 12–1024 characters. There is no password reset. Keep it in your password manager. Older backups keep their original password.');
+    if(!pw)return false;
+    if(pw[0]!==pw[1]||pw[0].length<12||pw[0].length>1024){vaultMessage('Passwords must match and contain 12–1024 characters. Your budget is unchanged.');return false;}
+    try{
+      vaultMessage('Encrypting and verifying saved data…');document.body.inert=true;
+      await TakeControlVault.enable(state,pw[0],validateState);
+      document.body.inert=false;return true;
+    }catch(e){document.body.inert=false;vaultMessage(e.message+' Your existing budget has been retained.');return false;}
+  }
+  async function enableVault() {
+    if(await setupProtection())await lockVault();
+  }
+  async function lockVault() {
+    document.body.inert=true;
+    try{await TakeControlVault.lock();location.reload();}
+    catch(e){document.body.inert=false;$('#storeBanner').hidden=false;alert('Could not finish saving. Device was not locked; keep this tab open and export an encrypted backup.');}
+  }
+  async function loadVault() {
+    if(!window.TakeControlVault||!TakeControlVault.exists())return load();
+    document.querySelector('.wrap').hidden=true;
+    while(true){
+      var pw=await backupDialog('Unlock Take Control',['Take Control password'],'Your saved budget is encrypted. Enter your Take Control password. There is no password reset. Cancel keeps the budget locked.');
+      if(!pw){
+        var gate=document.createElement('div');gate.className='wrap';
+        var button=document.createElement('button');button.className='btn';button.textContent='Unlock Take Control';button.onclick=function(){location.reload();};gate.appendChild(button);document.body.appendChild(gate);return null;
+      }
+      try{var unlocked=await TakeControlVault.unlock(pw[0],validateState);delete unlocked.lastImport;document.querySelector('.wrap').hidden=false;return norm(unlocked);}
+      catch(e){alert('Could not unlock the saved budget. Check your password. A damaged vault or unavailable browser storage also prevents unlock. No budget was replaced.');}
+    }
+  }
   function settingsHTML() {
     var n = state.names;
-    return '<section class="card" id="settingsCard"><h2 tabindex="-1">Settings</h2>' + profileSettingsHTML() +
+    return '<section class="card" id="settingsCard"><h2 tabindex="-1">Settings</h2>' + profileSettingsHTML() + vaultSettingsHTML() +
       '<details open style="border-top:0;margin-top:0;padding-top:0"><summary>Names and this phone</summary><form class="stack" data-form="namesEdit" autocomplete="off"><div class="two"><div><label class="f" for="en1">First name</label><input type="text" id="en1" name="n1" maxlength="20" value="' + esc(n[0] || '') + '"></div><div><label class="f" for="en2">Partner\'s first name (optional)</label><input type="text" id="en2" name="n2" maxlength="20" value="' + esc(n[1] || '') + '"></div></div>' +
       '<div><label class="f" for="enP">Accountability partner</label><input type="text" id="enP" name="partner" maxlength="24" value="' + esc(state.partner || '') + '" placeholder="A parent, sibling or friend"></div>' +
       (n.length > 1 ? '<div><label class="f" for="enMe">This phone belongs to</label><select id="enMe" name="me">' + n.map(function (x, i) { return '<option value="' + i + '"' + (i === meIdx ? ' selected' : '') + '>' + esc(x) + '</option>'; }).join('') + '</select></div>' : '') +
@@ -2014,8 +2184,7 @@ function nextTarget(state) {
       '<div><label class="f" for="pOverride">My own daily spending number for the forecast</label><input type="text" id="pOverride" inputmode="decimal" placeholder="" value="' + inputVal(state.dailyOverride) + '"><p class="hint">Leave blank to use your recent pace, or your budget until you have a few days of entries.</p></div>' +
       '<button class="btn alt" type="submit">Save</button><p class="err" id="prefErr" role="alert"></p></form></details>' +
       calHTML() +
-      '<details' + (state.lastBackupDay == null || todayNum() - state.lastBackupDay >= 14 ? ' open' : '') + '><summary>Back up to iCloud or Google Drive</summary><div class="stack"><p class="hint" style="margin:0">Your numbers live only on this phone. Save a backup file every week or two. On iPhone, tap Save backup, then choose Save to Files and pick iCloud Drive. On Android, choose Google Drive.' + (state.lastBackupDay != null ? ' Last backup: ' + dLong(state.lastBackupDay) + '.' : ' No backup yet.') + '</p><div class="actions"><button class="btn" type="button" data-act="backupFile">Save backup</button><label class="btn alt" style="display:inline-flex;align-items:center;cursor:pointer">Restore from a backup file<input type="file" id="restoreFile" accept=".json,application/json" style="display:none"></label></div><p class="hint" id="backupFileMsg" role="status"></p></div></details>' +
-      '<details><summary>Sync two phones and back up</summary><div class="stack"><p class="hint" style="margin:0">Entries live on this phone. To bring two phones in line, or move to a new phone, tap Copy my data, send it in a text, and paste it below on the other phone and tap Merge. Do it in both directions whenever you want the phones to match. It is also a good backup.</p><textarea id="backup" aria-label="Sync text" spellcheck="false"></textarea><div class="actions"><button class="btn alt" type="button" data-act="copyBackup">Copy my data</button><button class="btn" type="button" data-act="mergeSync">Merge pasted data</button></div><div class="actions"><button class="link" type="button" data-act="restoreBackup">Replace this phone with the pasted data instead</button></div><p class="hint" id="backupMsg" role="status"></p></div></details>' +
+      '<p class="hint">Budget protection and backups above use one Take Control password. Backup files are password protected; manual text sync is unencrypted. Clearing browser data can erase your budget. <a href="PRIVACY.md" target="_blank" rel="noopener noreferrer">Privacy and recovery</a></p><details><summary>Sync two phones (unencrypted)</summary><div class="stack"><p class="hint" style="margin:0">Entries live on this phone. To bring two phones in line, or move to a new phone, tap Copy my data, send it in a text, and paste it below on the other phone and tap Merge. Do it in both directions whenever you want the phones to match. It is also a good backup.</p><textarea id="backup" aria-label="Sync text" spellcheck="false"></textarea><div class="actions"><button class="btn alt" type="button" data-act="copyBackup">Copy my data</button><button class="btn" type="button" data-act="mergeSync">Merge pasted data</button></div><div class="actions"><button class="link" type="button" data-act="restoreBackup">Replace this phone with the pasted data instead</button></div><p class="hint" id="backupMsg" role="status"></p></div></details>' +
       '<details><summary>Start over</summary><div class="stack"><p class="hint" style="margin:0">Erases every entry, bill, budget and balance on this phone.</p><div class="actions" id="resetRow"><button class="btn alt" type="button" data-act="resetAsk">Erase everything</button></div></div></details></section>';
   }
   function welcomeHTML() {
@@ -2141,7 +2310,7 @@ function nextTarget(state) {
   }
   function challengeHTML() {
     var cs = challengeStatus(state, V.today);
-    if (!cs) return '<details style="margin-top:12px"><summary>Pick a challenge</summary><p class="hint" style="margin:6px 0 0">Short, one at a time, with a dollar result at the end.</p><div class="chal">' + CHALLENGES.map(function (c) { return '<button class="chip" type="button" data-act="chalStart" data-id="' + c.id + '"><b>' + esc(c.name) + '</b><br><span class="hint" style="display:inline">' + esc(c.desc) + '</span></button>'; }).join('') + '</div></details>';
+    if (!cs) return '<details style="margin-top:12px"><summary>Pick a challenge</summary><p class="hint" style="margin:6px 0 0">Short, one at a time, with a dollar result at the end.</p><div class="chal">' + CHALLENGES.map(function (c) { return '<button class="chip" type="button" data-act="chalStart" data-id="' + esc(c.id) + '"><b>' + esc(c.name) + '</b><br><span class="hint" style="display:inline">' + esc(c.desc) + '</span></button>'; }).join('') + '</div></details>';
     var d = cs.def, pct = Math.min(100, cs.ok / cs.need * 100);
     var body;
     if (cs.finished) body = cs.won ? '<b>You won ' + esc(d.name) + '.</b> ' + cs.ok + ' of ' + d.days + ' days. ' + (state.milestones.chal ? '' : '') : '<b>' + esc(d.name) + ' is over.</b> ' + cs.ok + ' of ' + cs.need + ' days. Close counts. Pick it again or try another.';
@@ -2333,7 +2502,7 @@ function nextTarget(state) {
       var efLeft = state.goals.ef ? Math.max(0, state.goals.ef.target - efSaved(state, today)) : 0;
       var rows = cats.map(function (c) {
         var nl = limitFor(state, c, nextKey);
-        return '<div class="catrow"><label for="nl-' + c.id + '">' + esc(c.name) + '<small>This month ' + fmt(ms.spent[c.id]) + ' of ' + fmt(ms.lim[c.id]) + '</small></label><div class="moneyin"><span aria-hidden="true">$</span><input type="text" id="nl-' + c.id + '" data-nl="' + c.id + '" inputmode="decimal" value="' + inputVal(nl) + '" aria-label="' + esc(monthName(nextKey)) + ' limit for ' + esc(c.name) + '"></div><span></span></div>';
+        return '<div class="catrow"><label for="nl-' + esc(c.id) + '">' + esc(c.name) + '<small>This month ' + fmt(ms.spent[c.id]) + ' of ' + fmt(ms.lim[c.id]) + '</small></label><div class="moneyin"><span aria-hidden="true">$</span><input type="text" id="nl-' + esc(c.id) + '" data-nl="' + esc(c.id) + '" inputmode="decimal" value="' + inputVal(nl) + '" aria-label="' + esc(monthName(nextKey)) + ' limit for ' + esc(c.name) + '"></div><span></span></div>';
       }).join('');
       check = '<section class="card" id="mcheck"><h2>Monthly check-in</h2><p class="sub">' + (lastDays <= 7 ? 'The month is almost over. ' : '') + (who() ? esc(who()) + ', do' : 'Do') + ' these three steps once a month, ideally in the last week.</p>' +
         '<ol class="todo"><li><b>Match your bank balance.</b> ' + (fresh ? '<span class="tag paid">Done this week</span>' : '<span class="tag">Not done this week</span>') + '<div class="hint">Log any missing purchases, then enter what your bank shows so the numbers stay honest.</div><button class="link" type="button" data-act="gomatch">Match my balance now</button></li>' +
@@ -2391,7 +2560,7 @@ function nextTarget(state) {
     var evs = calEvents(), r = state.remind;
     return '<details id="calCard"><summary>Reminders and calendar</summary><div class="stack"><p class="hint" style="margin:0">The app cannot send notifications on its own yet. Calendar events can. Add these and your phone reminds you.</p>' +
       '<div class="two"><div><label class="f" for="rmRecon">Reconcile time (Saturdays)</label><input type="time" id="rmRecon" value="' + esc(r.recon) + '"></div><div><label class="f" for="rmReview">Review time (Saturdays)</label><input type="time" id="rmReview" value="' + esc(r.review) + '"></div></div>' +
-      '<ul class="list">' + evs.map(function (e) { return '<li class="row" style="grid-template-columns:1fr"><div><div class="nm">' + esc(e.label) + (r.added[e.id] ? '<span class="tag paid">Added</span>' : '') + '</div><div class="d">' + esc(e.title) + '</div></div><div class="actions" style="margin-top:8px"><button class="btn alt" type="button" data-act="cal" data-id="' + e.id + '">' + (r.added[e.id] ? 'Add again' : 'Add to my calendar') + '</button>' + (e.partner ? '<button class="btn" type="button" data-act="calPartner" data-id="' + e.id + '">Invite accountability partner</button>' : '') + '</div></li>'; }).join('') + '</ul><p class="hint" id="calMsg" role="status"></p></div></details>';
+      '<ul class="list">' + evs.map(function (e) { return '<li class="row" style="grid-template-columns:1fr"><div><div class="nm">' + esc(e.label) + (r.added[e.id] ? '<span class="tag paid">Added</span>' : '') + '</div><div class="d">' + esc(e.title) + '</div></div><div class="actions" style="margin-top:8px"><button class="btn alt" type="button" data-act="cal" data-id="' + esc(e.id) + '">' + (r.added[e.id] ? 'Add again' : 'Add to my calendar') + '</button>' + (e.partner ? '<button class="btn" type="button" data-act="calPartner" data-id="' + esc(e.id) + '">Invite accountability partner</button>' : '') + '</div></li>'; }).join('') + '</ul><p class="hint" id="calMsg" role="status"></p></div></details>';
   }
   function renderCal() { var c = $('#calCard'); if (c) { var open = c.open; c.outerHTML = calHTML(); var n = $('#calCard'); if (n) n.open = open; } }
   /* ---------- REVIEW ---------- */
@@ -2662,7 +2831,7 @@ function nextTarget(state) {
     if (t.id === 'startBal') { var c = money(t.value); if (c != null) { state.anchor = { day: todayNum(), ts: Date.now(), balance: c }; state.lastBalanceMatchDay = todayNum(); save(); } }
     if (t.id === 'rmRecon' || t.id === 'rmReview') { if (/^\d\d:\d\d$/.test(t.value)) { state.remind[t.id === 'rmRecon' ? 'recon' : 'review'] = t.value; save(); renderCal(); } }
     if (t.id === 'restoreFile' && t.files && t.files[0]) { restoreFile(t.files[0]); t.value = ''; }
-    if (t.id === 'csvFile' && t.files && t.files[0]) { var rd = new FileReader(); rd.onload = function () { loadCSV(String(rd.result)); }; rd.readAsText(t.files[0]); }
+    if (t.id === 'csvFile' && t.files && t.files[0]) { if(t.files[0].size>2000000){$('#csvErr').textContent='CSV exceeds 2 MB.';return;} var rd = new FileReader(); rd.onload = function () { loadCSV(String(rd.result)); }; rd.readAsText(t.files[0]); }
     if (t.name === 'efhas') { efDraft.has = t.value; var aw = $('#efAmtWrap'); if (aw) { aw.hidden = t.value === 'no'; var ai = $('#efAmt'); if (ai) ai.placeholder = t.value === 'yes' ? '1,000' : '0.00'; } }
     if (t.name === 'etype') { fillCats(); updatePreview(); }
     if (t.id === 'eCat') { catHint(); updatePreview(); var nh0 = $('#noteHint'); if (nh0) nh0.textContent = ''; }
@@ -2672,7 +2841,7 @@ function nextTarget(state) {
 
   document.addEventListener('toggle', function(e) {if(e.target.id==='moneyLevelDetails'){try{localStorage.setItem('moneyAhead.levelExpanded',e.target.open?'1':'0');}catch(err){}}}, true);
   document.addEventListener('keydown',function(e){if(e.key==='Escape')closeMoneyLevelUp();});
-  document.addEventListener('click', function (e) {
+  document.addEventListener('click', async function (e) {
     var b = e.target.closest('[data-act]');
     if (!b) return;
     var act = b.getAttribute('data-act'), id = b.getAttribute('data-id');
@@ -2694,6 +2863,8 @@ function nextTarget(state) {
       case 'viewMoneyMissions': closeMoneyLevelUp(); try{localStorage.setItem('moneyAhead.levelExpanded','1');}catch(e){} renderMoneyLevel(); var missionBox=$('#moneyLevelDetails .ml-missions'); if(missionBox)missionBox.open=true; var card=$('#moneyLevelRoot');if(card)card.scrollIntoView({behavior:'smooth',block:'start'}); break;
       case 'moneyMission': setView(b.getAttribute('data-view')); break;
       case 'tab': cancelProfileDraft();setView(b.getAttribute('data-view')); if (cur === 'today') setSub('spend'); break;
+      case 'enableVault': await enableVault(); break;
+      case 'lockVault': await lockVault(); break;
       case 'openSettings': setView('plan'); { var settings = $('#settingsCard'); if (settings) { settings.scrollIntoView({ block: 'start' }); settings.querySelector('h2').focus({ preventScroll: true }); } } break;
       case 'openCheck': setView('today'); setSub('check'); clearPurchaseResult(); window.scrollTo({ top: 0 }); $('#askH').focus({ preventScroll: true }); break;
       case 'backToday': setSub('spend'); window.scrollTo({ top: 0 }); $('#dailyH').focus({ preventScroll: true }); break;
@@ -2758,6 +2929,7 @@ function nextTarget(state) {
         break;
       }
       case 'copyBackup': {
+        if(!confirm('Copy your full unencrypted budget, including names and photo, to the clipboard? Only paste it somewhere private.'))break;
         var ta = $('#backup'), msg = $('#backupMsg');
         ta.value = JSON.stringify(state); ta.focus(); ta.select();
         var done = function () { msg.textContent = 'Copied. Paste it into the same box on the other phone.'; };
@@ -2767,17 +2939,17 @@ function nextTarget(state) {
       }
       case 'restoreBackup': {
         var m2 = $('#backupMsg');
-        try { var s = JSON.parse($('#backup').value); if (!valid(s)) throw new Error('bad'); s.sample = false; state = norm(s); resetDraft(); loadMe(); save(); setView(state.budget.done ? 'today' : 'plan'); }
+        try { var s = parseBackup($('#backup').value); if (!valid(s)) throw new Error('bad'); s.sample = false; await commitImport(norm(s)); resetDraft(); loadMe(); setView(state.budget.done ? 'today' : 'plan'); }
         catch (x) { m2.textContent = 'That text is not a valid backup. Copy the full backup and try again.'; }
         break;
       }
       case 'mergeSync': {
         var m3 = $('#backupMsg');
         try {
-          var inc = JSON.parse($('#backup').value); if (!valid(inc)) throw new Error('bad');
+          var inc = parseBackup($('#backup').value); if (!valid(inc)) throw new Error('bad');
           var n0 = state.tx.length, merged = mergeStates(state, norm(inc));
           var added = merged.tx.length - n0;
-          state = merged; save(); loadMe(); render();
+          await commitImport(merged); loadMe(); render();
           var m4 = $('#backupMsg'); if (m4) m4.textContent = 'Merged. ' + (added > 0 ? added + ' new entr' + (added === 1 ? 'y' : 'ies') + ' added.' : 'Nothing new to add.') + ' Send your data back so the other phone matches.';
         } catch (x) { m3.textContent = 'That text is not valid sync data. Copy the full text from the other phone and try again.'; }
         break;
@@ -2849,7 +3021,13 @@ function nextTarget(state) {
 
   /* ---------- boot ---------- */
   probeStorage();
-  state = load();
+  state = await loadVault();
+  if(!state)return;
+  var vaultIdle=null;
+  function resetVaultIdle(){if(!TakeControlVault.active())return;clearTimeout(vaultIdle);vaultIdle=setTimeout(lockVault,15*60*1000);}
+  ['pointerdown','keydown','touchstart'].forEach(function(event){document.addEventListener(event,resetVaultIdle,{passive:true});});
+  resetVaultIdle();
+  window.addEventListener('beforeunload',function(e){if(TakeControlVault.pending()){e.preventDefault();e.returnValue='';}});
   if(!Number.isInteger(state.moneyLevelSeen)){state.moneyLevelSeen=TakeControlLevels.progress(state).level;state.moneyXPHigh=TakeControlLevels.progress(state).xp;save();}
   loadMe();
   if (!storeOk) $('#storeBanner').hidden = false;
@@ -2866,6 +3044,21 @@ function nextTarget(state) {
 })();
 </script>
 
-<script>if("serviceWorker"in navigator&&location.protocol==="https:"){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").then(function(r){r.update()}).catch(function(){})})}</script>
+<script>
+if('serviceWorker' in navigator && location.protocol==='https:'){
+  var alreadyControlled=!!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange',function(){
+    if(!alreadyControlled||document.getElementById('appUpdateNotice'))return;
+    var notice=document.createElement('aside');notice.id='appUpdateNotice';notice.setAttribute('role','status');notice.style.cssText='position:fixed;bottom:90px;left:16px;right:16px;z-index:10000;background:var(--surface);color:var(--ink);border:2px solid var(--line);border-radius:12px;padding:16px;box-shadow:0 4px 20px #0004';
+    var text=document.createElement('p');text.textContent='An app update is ready. Finish your edits, then reload to use the latest version. Your saved budget will stay on this device.';notice.appendChild(text);
+    var button=document.createElement('button');button.type='button';button.className='btn';button.textContent='Reload updated app';button.onclick=async function(){
+      button.disabled=true;
+      try{if(window.TakeControlVault)await TakeControlVault.flush();location.reload();}
+      catch(e){text.textContent='Your latest changes could not be saved. Keep this page open and try saving a backup before reloading.';button.disabled=false;}
+    };notice.appendChild(button);document.body.appendChild(notice);
+  });
+  window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(function(r){r.update();}).catch(function(){});});
+}
+</script>
 </body>
 </html>

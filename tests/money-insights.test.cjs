@@ -47,10 +47,10 @@ test('original inline scripts parse and new module is cached offline',()=>{
  for(const m of html.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g))new vm.Script(m[1]);
  new vm.Script(src);
  const sw=fs.readFileSync(path.join(__dirname,'..','sw.js'),'utf8');
- assert.ok(sw.includes("'money-insights.js'"));
- assert.ok(html.includes('src="money-insights.js"'));
- assert.ok(html.indexOf('src="money-insights.js"')<html.indexOf('<script id="logic">'));
- assert.ok(!html.includes('src="money-insights.js" defer'));
+ assert.ok(sw.includes("'money-insights.js?v=57'"));
+ assert.ok(html.includes('src="money-insights.js?v=57"'));
+ assert.ok(html.indexOf('src="money-insights.js?v=57"')<html.indexOf('<script id="logic">'));
+ assert.ok(!html.includes('src="money-insights.js?v=57" defer'));
  assert.ok(html.includes('Create my budget'));
 });
 
@@ -79,9 +79,9 @@ test('UI stylesheet and offline cache stay in sync for this release',()=>{
  const sw=fs.readFileSync(path.join(__dirname,'..','sw.js'),'utf8');
  assert.match(css,/\.mi-card\[open\] \.mi-chevron/);
  assert.match(css,/@media\(max-width:600px\)/);
- assert.ok(html.includes('href="ui.css?v=54"'));
- assert.ok(sw.includes("'ui.css?v=54'"));
- assert.ok(sw.includes('takecontrol-v54'));
+ assert.ok(html.includes('href="ui.css?v=57"'));
+ assert.ok(sw.includes("'ui.css?v=57'"));
+ assert.ok(sw.includes('takecontrol-v57'));
 });
 
 test('recognized merchants render distinct offline brand icons',()=>{
@@ -135,7 +135,7 @@ test('mobile navigation uses green background and white icon labels while deskto
  assert.match(css, /#tabs\.tabs \{\s*background: #15803d/);
  assert.match(css, /#tabs \.tab svg \{[\s\S]*?color: #ffffff/);
  assert.match(css, /#tabs \.tab\[aria-current="page"\] \{/);
- assert.ok(html.includes('href="ui.css?v=54"'));
+ assert.ok(html.includes('href="ui.css?v=57"'));
 });
 
 test('selected mobile tile inverts white background and green text and icon',()=>{
