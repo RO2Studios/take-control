@@ -1,7 +1,7 @@
 name: Financial insights tests
 on:
   push:
-    branches: [feature/annual-bills-and-debt, feature/financial-insights-demo-data, fix/money-journey-level-icons]
+    branches: [main]
   pull_request:
     paths:
       - 'index.html'

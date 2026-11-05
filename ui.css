@@ -125,9 +125,6 @@ body[data-sub="entry"] #todayGrid, body[data-sub="check"] #todayGrid { display: 
 }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 @media (max-width: 899px) {
-  body[data-sub="spend"] #v-today:not([hidden]) { display: flex; flex-direction: column; }
-  body[data-sub="spend"] #subs { order: 2; margin-top: 14px; margin-bottom: 0; }
-  body[data-sub="spend"] #todayGrid { order: 1; }
   .cash-status { margin-top: 14px; padding-top: 12px; }
   .balance-match { min-height: 36px; }
 }
