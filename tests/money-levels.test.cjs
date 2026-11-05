@@ -40,7 +40,7 @@ test('integrated UI is compact by default, expandable, and retains existing Toda
  assert.ok(html.includes('id="moneyLevelDetails"'));
  assert.ok(html.includes("localStorage.getItem('moneyAhead.levelExpanded')"));
  assert.ok(html.includes("localStorage.setItem('moneyAhead.levelExpanded'"));
- assert.ok(html.includes('ml-bar-label'));
+ assert.ok(html.includes('ml-bar-caption'));
  assert.ok(html.includes('id="todayGrid"'));
  assert.ok(html.includes('renderDaily(); renderDayUpcoming();'));
  assert.ok(html.includes('id="moneyLevelCelebration"'));
@@ -48,8 +48,8 @@ test('integrated UI is compact by default, expandable, and retains existing Toda
  assert.ok(html.includes("if(openLesson.pick===L0.q.answer)state.learned[L0.id] = 1"));
  assert.ok(css.includes('@media(prefers-reduced-motion:reduce)'));
  assert.ok(sw.includes("'money-levels.js'"));
- assert.ok(sw.includes('takecontrol-v58'));
- assert.ok(html.includes('ui.css?v=58'));
+ assert.ok(sw.includes('takecontrol-v59'));
+ assert.ok(html.includes('ui.css?v=59'));
  for(const m of html.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g))new vm.Script(m[1]);
 });
 
@@ -62,7 +62,7 @@ test('mockup-faithful compact responsive card, connected stages and overlay rema
  assert.match(css, /@media\(max-width:420px\)/);
  assert.match(css, /\.ml-ribbon/);
  assert.match(css, /\.ml-rewards/);
- assert.ok(html.includes('class="ml-bar-label"'));
+ assert.ok(html.includes('class="ml-bar-caption"'));
  assert.ok(html.includes('role="dialog" aria-modal="true"'));
  assert.ok(html.includes("data-act=\"viewMoneyMissions\""));
  assert.ok(html.includes("data-act=\"closeMoneyLevel\""));

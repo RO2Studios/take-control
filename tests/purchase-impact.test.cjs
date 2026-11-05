@@ -100,13 +100,28 @@ test('every inline script parses and the offline shell contains the new styleshe
   assert.ok(sw.includes("'" + stylesheet + "'"), 'offline shell caches the versioned stylesheet');
 });
 
-test('the original example warns for $400 groceries tomorrow', () => {
+test('the balanced example stays positive for $400 groceries tomorrow', () => {
   const r = evaluate(`(() => { const original=todayNum; todayNum=()=>TODAY;
     try { return purchaseImpact(makeSample(),TODAY,purchase(40000,TODAY+1)); }
     finally { todayNum=original; } })()`);
-  assert.equal(r.low.bal, -4361);
-  assert.equal(r.after.days[29].bal, 37449);
+  assert.equal(r.low.bal, 10489);
+  assert.equal(r.after.days[29].bal, 81999);
   assert.equal(r.categoryLeft, 37160);
+});
+
+test('the example still warns when a purchase pushes the lowest point below zero', () => {
+  const r = evaluate(`(() => { const original=todayNum; todayNum=()=>TODAY;
+    try { return purchaseImpact(makeSample(),TODAY,purchase(60000,TODAY+1)); }
+    finally { todayNum=original; } })()`);
+  assert.ok(r.low.bal < 0);
+});
+
+test('the example budget assigns every dollar (plan balances to zero)', () => {
+  const left = evaluate(`(() => { const s = makeSample(); const mo = r => { const m = { weekly: 52 / 12, biweekly: 26 / 12, twice: 2, monthly: 1, quarterly: 1 / 3, annual: 1 / 12, once: 0 }[r.freq]; return Math.round(r.amt * (m == null ? 1 : m)); };
+    let inc = 0, out = 0; s.recs.forEach(r => { if (r.type === 'in') inc += mo(r); else out += mo(r); });
+    let every = 0; s.budget.cats.forEach(c => { every += c.limit; });
+    return inc - out - every; })()`);
+  assert.equal(left, 0);
 });
 
 test('example budget demonstrates all new financial insights without changing the v2 schema', () => {

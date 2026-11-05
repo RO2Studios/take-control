@@ -90,10 +90,14 @@ for(const width of [320,375,1440])test(`thicker level indicator stays readable o
  for(const view of ['today','plan','review','month','learn']){
   await page.locator(`#tabs [data-view="${view}"]`).click();
   const track=page.locator('#moneyLevelRoot .ml-track');
-  assert.ok(await track.isVisible());assert.equal(Math.round((await track.boundingBox()).height),32);
-  const label=page.locator('#moneyLevelRoot .ml-bar-label').first();
-  assert.equal(await label.innerText(),'Journey to Money Master · 62%');
-  assert.ok(await label.evaluate(el=>el.scrollWidth<=el.clientWidth),'progress text fits');
+  if(view==='today'){
+   assert.ok(await track.isVisible());assert.equal(Math.round((await track.boundingBox()).height),12);
+   const label=page.locator('#moneyLevelRoot .ml-bar-caption').first();
+   assert.equal((await label.innerText()).replace(/\s+/g,' '),'Journey to Money Master 62%');
+   assert.ok(await label.evaluate(el=>el.scrollWidth<=el.clientWidth),'progress text fits');
+  } else {
+   assert.ok(!(await track.isVisible()),'journey card stays on Today so other tabs start with their own content');
+  }
  }
  await page.locator('#tabs [data-view="today"]').click();
  await page.locator('[data-act="openCheck"]').click();
