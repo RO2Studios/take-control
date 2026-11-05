@@ -29,7 +29,7 @@ for (const width of [320,375,390,768,1440]) {
   const sample = await page.evaluate(()=>JSON.parse(localStorage.getItem('moneyAhead.v2')));
   assert.equal(await page.locator('#moneyLevelRoot .ml-label strong').innerText(),'Level 3 · Money Strategist');
   assert.equal(await page.locator('#moneyLevelRoot .ml-pct').innerText(),'62% complete');
-  assert.equal(await page.locator('#moneyLevelRoot .ml-bar-label').first().innerText(),'Journey to Money Master · 62%');
+  assert.equal(await page.locator('#moneyLevelRoot .ml-bar-caption b').first().innerText(),'62%');
   if(process.env.MONEY_JOURNEY_SCREENSHOTS){
    await page.locator('#moneyLevelDetails').evaluate(el=>el.open=true);
    fs.mkdirSync(process.env.MONEY_JOURNEY_SCREENSHOTS,{recursive:true});
@@ -46,7 +46,7 @@ for (const width of [320,375,390,768,1440]) {
    const before = await page.evaluate(()=>localStorage.getItem('moneyAhead.v2'));
    const overall=Math.min(100,Math.floor(xp/290*100));
    assert.equal(await card.locator('.ml-pct').innerText(),overall+'% complete');
-   assert.equal(await card.locator('.ml-bar-label').first().innerText(),'Journey to Money Master · '+overall+'%');
+   assert.equal(await card.locator('.ml-bar-caption b').first().innerText(),overall+'%');
    assert.equal(await card.locator('.ml-fill').evaluate(el=>parseFloat(el.style.width)),overall);
    assert.equal(await card.locator('.ml-pct').evaluate(el=>getComputedStyle(el).color),'rgb(120, 86, 17)');
    assert.ok((await card.locator('.ml-fill').evaluate(el=>getComputedStyle(el).backgroundImage)).includes('rgb(21, 149, 46)'));
@@ -107,7 +107,7 @@ test('approved cartoon badges are available after an offline reload', async()=>{
  await page.evaluate(async()=>{await navigator.serviceWorker.register('sw.js');await navigator.serviceWorker.ready;localStorage.setItem('moneyAhead.levelExpanded','1');});
  await page.waitForFunction(()=>!!navigator.serviceWorker.controller);
  const assets=['rookie','builder','strategist','master'].map(k=>'icons/money-'+k+'-cartoon.webp');
- for(const asset of assets)assert.ok(await page.evaluate(async asset=>!!await (await caches.open('takecontrol-v58')).match(asset),asset));
+ for(const asset of assets)assert.ok(await page.evaluate(async asset=>!!await (await caches.open('takecontrol-v59')).match(asset),asset));
  await context.setOffline(true);
  await page.reload();
  const images=page.locator('#moneyLevelRoot .ml-stage img');

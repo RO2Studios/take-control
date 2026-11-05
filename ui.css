@@ -275,7 +275,9 @@ form[data-form="rec"]:has(select[name="billKind"] option[value="credit"]:checked
 .ml-pct{font-size:12px;font-weight:750;color:#15803d;background:#e3f3e8;border-radius:999px;padding:5px 8px;white-space:nowrap;}
 .ml-arrow{width:9px;height:9px;border-right:2px solid var(--ink-2);border-bottom:2px solid var(--ink-2);transform:rotate(45deg);margin:0 3px 5px 3px;flex:none;}
 .money-level details[open] .ml-arrow{transform:rotate(225deg);margin:6px 3px 0;}
-.ml-track{display:block;position:relative;height:23px;border-radius:999px;background:var(--pos-bg);overflow:hidden;}
+.ml-track{display:block;position:relative;height:12px;border-radius:999px;background:var(--pos-bg);overflow:hidden;margin-top:12px;}
+.ml-bar-caption{display:flex;justify-content:space-between;align-items:baseline;margin-top:6px;font-size:12px;color:var(--ink-2);font-weight:600;}
+.ml-bar-caption b{color:var(--ink);font-weight:800;}
 .ml-fill{height:100%;display:flex;align-items:center;justify-content:center;min-width:0;border-radius:999px;transition:width .4s ease;}
 .ml-inside{font-size:11px;color:#fff;font-weight:800;white-space:nowrap;padding:0 6px;}
 .ml-expanded{padding:14px 0 2px;border-top:1px solid var(--line);margin-top:14px;}
@@ -326,7 +328,7 @@ form[data-form="rec"]:has(select[name="billKind"] option[value="credit"]:checked
 #moneyLevelRoot .ml-label strong {font-size:15px;letter-spacing:-.018em;font-weight:800;}
 #moneyLevelRoot .ml-label small {font-size:12px;}
 #moneyLevelRoot .ml-pct {padding:5px 9px;color:#12642e;background:#e6f6e9;font-weight:750;}
-#moneyLevelRoot .ml-track {height:32px;background:#d9eddf;isolation:isolate;}
+#moneyLevelRoot .ml-track {height:12px;background:#d9eddf;isolation:isolate;}
 #moneyLevelRoot .ml-fill {position:absolute;left:0;top:0;bottom:0;display:block;min-width:0;transition:width .45s ease;}
 #moneyLevelRoot .ml-bar-label {font-weight:800;font-size:12px;letter-spacing:.01em;color:#143d2b;text-shadow:0 1px 2px #ffffffa8;z-index:1;}
 #moneyLevelRoot .ml-expanded {padding:14px 0 0;margin-top:14px;border-top:1px solid var(--line);}
@@ -647,3 +649,9 @@ body .wrap h1 { min-width:0; gap:14px; font-size:29px; line-height:1.15; }
   body[data-sub="entry"] #todayGrid,
   body[data-sub="check"] #todayGrid { width: 100%; max-width: none; }
 }
+
+/* Journey card lives on Today; other tabs get their own content above the fold */
+body[data-view]:not([data-view="today"]) #moneyLevelRoot{display:none;}
+body[data-view]:not([data-view="today"]) .sample-note{padding:8px 12px;margin:-4px 0 14px;gap:8px 12px;}
+body[data-view]:not([data-view="today"]) .sample-note p span{display:none;}
+body[data-view]:not([data-view="today"]) .sample-note .btn{min-height:36px;font-size:12px;padding:0 12px;}

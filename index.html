@@ -356,7 +356,7 @@ input[type=file] { font-size: 14px; }
 .install .row-a { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 </style>
 <style>html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);-webkit-text-size-adjust:100%}body{margin:0;min-height:100vh;-webkit-tap-highlight-color:transparent}button{-webkit-appearance:none;appearance:none}</style>
-<link rel="stylesheet" href="ui.css?v=58">
+<link rel="stylesheet" href="ui.css?v=59">
 <script src="money-insights.js"></script>
 <script src="money-levels.js"></script>
 </head>
@@ -1101,7 +1101,7 @@ function nextTarget(state) {
     var lims = [80000, 28000, 22000, 20000, 20000, 15000, 15000, 20000];
     s.budget.cats.forEach(function (c, i) { c.limit = lims[i]; });
     var recs = [
-      ['in', 'Paycheck (first earner)', 163500, 'biweekly', toISO(t - 9), 'Paycheck'],
+      ['in', 'Paycheck (first earner)', 180000, 'biweekly', toISO(t - 9), 'Paycheck'],
       ['in', 'Paycheck (second earner)', 136500, 'biweekly', toISO(t - 2), 'Paycheck'],
       ['out', 'Rent', 165000, 'monthly', mk(1), 'Housing'],
       ['out', 'Car payment', 38500, 'monthly', mk(12), 'Transportation'],
@@ -1112,7 +1112,7 @@ function nextTarget(state) {
       ['out', 'Streaming', 4500, 'monthly', mk(9), 'Subscriptions'],
       ['out', 'Daycare', 18000, 'weekly', toISO(t - 3), 'Childcare'],
       ['out', 'Emergency fund', 25000, 'monthly', mk(25), 'Savings'],
-      ['out', 'Tithe from Paycheck (first earner)', 16350, 'biweekly', toISO(t - 9), 'Giving'],
+      ['out', 'Tithe from Paycheck (first earner)', 18000, 'biweekly', toISO(t - 9), 'Giving'],
       ['out', 'Tithe from Paycheck (second earner)', 13650, 'biweekly', toISO(t - 2), 'Giving']
     ];
     recs.forEach(function (r, i) { var rc = { id: 'sr' + i, type: r[0], name: r[1], amt: r[2], freq: r[3], start: r[4], day2: 15, cat: r[5] }; if (r[1] === 'Emergency fund') rc.goal = 'ef'; if (r[5] === 'Giving') rc.auto = true; s.recs.push(rc); });
@@ -1121,7 +1121,7 @@ function nextTarget(state) {
     // These dates remain upcoming whenever a new example budget is created.
     var examples = [
       { id: 'demo-annual-insurance', type: 'out', name: 'Annual renters insurance', amt: 72000, freq: 'annual', start: toISO(t + 45), cat: 'Insurance', kind: 'bill' },
-      { id: 'demo-quarterly-bill', type: 'out', name: 'Quarterly water service', amt: 16500, freq: 'quarterly', start: toISO(t + 38), cat: 'Utilities', kind: 'bill' },
+      { id: 'demo-quarterly-bill', type: 'out', name: 'Quarterly water service', amt: 17631, freq: 'quarterly', start: toISO(t + 38), cat: 'Utilities', kind: 'bill' },
       { id: 'demo-annual-subscription', type: 'out', name: 'Apple iCloud+', amt: 11988, freq: 'annual', start: toISO(t + 52), cat: 'Subscriptions', kind: 'subscription' },
       { id: 'demo-credit-travel', type: 'out', name: 'Travel credit card payment', amt: 9500, freq: 'monthly', start: toISO(t + 35), cat: 'Debt', kind: 'credit', cardNetwork: 'visa', apr: 24.99, cardBalance: 285000 },
       { id: 'demo-credit-store', type: 'out', name: 'Store credit card payment', amt: 4500, freq: 'monthly', start: toISO(t + 40), cat: 'Debt', kind: 'credit', cardNetwork: 'mastercard', apr: 19.49, cardBalance: 112500 }
@@ -1145,6 +1145,16 @@ function nextTarget(state) {
     }
     return s;
   }
+  function refreshDemoBalance(s) {
+    // Example budget only: bring an older demo up to the balanced plan (every dollar has a job).
+    if(!s || s.sample!==true || !Array.isArray(s.recs))return s;
+    s.recs.forEach(function(r){
+      if(r.name==='Paycheck (first earner)'&&r.amt===163500)r.amt=180000;
+      if(r.name==='Tithe from Paycheck (first earner)'&&r.amt===16350)r.amt=18000;
+      if(r.id==='demo-quarterly-bill'&&r.amt===16500)r.amt=17631;
+    });
+    return s;
+  }
   function refreshDemoNetworks(s) {
     if(!s || s.sample!==true || !Array.isArray(s.recs))return s;
     var travel=s.recs.find(function(r){return r.id==='demo-credit-travel';}); if(travel && !travel.cardNetwork)travel.cardNetwork='visa';
@@ -1153,7 +1163,7 @@ function nextTarget(state) {
     return s;
   }
   function load() {
-    try { var raw = localStorage.getItem(KEY); if (raw) { var s = JSON.parse(raw); if (valid(s)) return refreshDemoNetworks(refreshDemoSubscriptions(norm(s))); } } catch (e) {}
+    try { var raw = localStorage.getItem(KEY); if (raw) { var s = JSON.parse(raw); if (valid(s)) return refreshDemoBalance(refreshDemoNetworks(refreshDemoSubscriptions(norm(s)))); } } catch (e) {}
     return makeBlank();
   }
   function norm(s) { s.profiles=cleanProfiles(s.profiles); if (!s.paydays) s.paydays = {}; if (s.startDay === undefined) s.startDay = null; if (s.budget && s.budget.done && s.startDay == null) s.startDay = todayNum(); if (!s.remind) s.remind = { recon: '09:00', review: '10:00', added: {} }; if (!s.remind.added) s.remind.added = {}; if (!s.learned) s.learned = {}; if (!s.givePct) s.givePct = 0; if (!s.partner) s.partner = ''; if (!Array.isArray(s.reviews)) s.reviews = []; if (!s.milestones) s.milestones = {}; if (!Array.isArray(s.cancel)) s.cancel = []; if (!s.cancelled) s.cancelled = 0; if (!s.rules) s.rules = {}; if (!Array.isArray(s.inbox)) s.inbox = []; if (!s.imported) s.imported = {}; if (!s.goals) s.goals = { asked: false, picks: [], ef: null }; if (!Array.isArray(s.goals.picks)) s.goals.picks = []; if (!s.budget.months) s.budget.months = {}; if (!s.saved) s.saved = {}; if (!Array.isArray(s.names)) s.names = []; if (!s.deleted) s.deleted = {}; if (!s.updated) s.updated = 0; return s; }
@@ -1196,7 +1206,7 @@ function nextTarget(state) {
       '<span class="ml-header"><span class="ml-current-icon" style="--stage:'+p.current.color+'">'+moneyLevelBadge(p.current.icon)+'</span>'+
       '<span class="ml-label"><strong>Level '+p.level+' · '+esc(p.current.name)+'</strong><small>'+(p.next?'You’re on your way to Level '+(p.level+1):'You reached the top level!')+'</small></span>'+
       '<span class="ml-pct">'+p.percent+'% complete</span><span class="ml-arrow" aria-hidden="true"></span></span>'+
-      '<span class="ml-track" style="--ml-progress:'+p.percent+'%" aria-label="'+p.percent+' percent of the journey to Money Master"><span class="ml-fill" style="width:'+p.percent+'%"></span><span class="ml-bar-label">'+'Journey to Money Master · '+p.percent+'%</span><span class="ml-bar-label ml-bar-light" aria-hidden="true">'+'Journey to Money Master · '+p.percent+'%</span></span></summary>'+
+      '<span class="ml-track" style="--ml-progress:'+p.percent+'%" aria-label="'+p.percent+' percent of the journey to Money Master"><span class="ml-fill" style="width:'+p.percent+'%"></span></span><span class="ml-bar-caption"><span>Journey to Money Master</span><b>'+p.percent+'%</b></span></summary>'+
       '<div class="ml-expanded"><p class="ml-caption">Your journey to Money Master</p>'+levelJourneyHTML(p)+
       '<details class="ml-missions"><summary class="ml-mission-trigger">'+moneyLevelIcon('target')+'<span>'+(p.next?missions.length+' missions available to move forward':'Level 4 achieved · keep building healthy habits')+'</span><span class="ml-mission-chevron" aria-hidden="true">›</span></summary>'+
       '<div class="ml-mission-content">'+(missions.length?'<ul>'+missions.slice(0,5).map(function(m){return '<li><span>'+esc(m.title)+'</span><button type="button" class="ml-go" data-act="moneyMission" data-view="'+m.view+'">Go</button></li>';}).join('')+'</ul>':'<p>Every available mission is complete.</p>')+
@@ -1269,6 +1279,7 @@ function nextTarget(state) {
     if (v !== cur) openLesson = null;
     cur = v;
     document.body.classList.add('compact');
+    document.body.setAttribute('data-view', v);
     ['plan', 'today', 'review', 'month', 'learn'].forEach(function (k) { $('#v-' + k).hidden = k !== v; });
     document.querySelectorAll('.tab').forEach(function (b) { if (b.getAttribute('data-view') === v) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
     render();
