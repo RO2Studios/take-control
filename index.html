@@ -356,7 +356,7 @@ input[type=file] { font-size: 14px; }
 .install .row-a { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 </style>
 <style>html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);-webkit-text-size-adjust:100%}body{margin:0;min-height:100vh;-webkit-tap-highlight-color:transparent}button{-webkit-appearance:none;appearance:none}</style>
-<link rel="stylesheet" href="ui.css?v=60">
+<link rel="stylesheet" href="ui.css?v=61">
 <script src="money-insights.js"></script>
 <script src="money-levels.js"></script>
 </head>
@@ -1063,7 +1063,7 @@ function nextTarget(state) {
   }
   function fmtC(c) { var v = c / 100; return (v < 0 ? '−' : '') + Math.abs(v).toLocaleString('en-US', { style: 'currency', currency: 'USD' }); }
   function icon(name) {
-    var paths = { check: '<path d="m5 12 4 4L19 6"/>', warn: '<path d="m12 3 10 18H2zM12 9v5M12 17h.01"/>', bank: '<path d="m3 8 9-5 9 5M3 9h18M5 10v8M10 10v8M14 10v8M19 10v8M3 21h18"/>', calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 11h18"/>' };
+    var paths = { check: '<path d="m5 12 4 4L19 6"/>', warn: '<path d="m12 3 10 18H2zM12 9v5M12 17h.01"/>', bank: '<path d="m3 8 9-5 9 5M3 9h18M5 10v8M10 10v8M14 10v8M19 10v8M3 21h18"/>', calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 11h18"/>', folder: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>', cloud: '<path d="M7 18a4 4 0 0 1-.6-7.95A6 6 0 0 1 18 9a4.5 4.5 0 0 1-.5 9z"/>' };
     return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (paths[name] || paths.check) + '</svg>';
   }
   function strictMoney(value) {
@@ -1514,7 +1514,7 @@ function nextTarget(state) {
     if (!ib.length) h += '<form class="stack" data-form="csv" autocomplete="off" style="margin-top:0"><div class="drop"><label for="csvFile" style="display:block;font-weight:600;color:var(--ink)">Choose the CSV from your bank</label><input type="file" id="csvFile" accept=".csv,text/csv" style="margin-top:8px"></div><details style="margin-top:4px"><summary>Or paste the text here</summary><textarea id="csvText" aria-label="Pasted CSV" placeholder="Date,Description,Amount" spellcheck="false"></textarea><button class="btn alt" type="submit" style="margin-top:8px">Read pasted text</button></details><p class="err" id="csvErr" role="alert"></p></form>';
     else { var page = ib.slice(0, PAGE), more = ib.length - page.length; h += '<div class="inbox"><p class="headline" style="margin:0 0 8px;font-size:15px">' + (more > 0 ? 'Sort these ' + page.length + ' first. ' + more + ' more come after, in small batches.' : page.length + ' transaction' + (page.length === 1 ? '' : 's') + ' to sort.') + ' Pick a category once and the app remembers it next time.</p><ul class="list">' + page.map(inboxRow).join('') + '</ul><div class="actions" style="margin-top:12px"><button class="btn" type="button" data-act="applyInbox">' + (more > 0 ? 'Add these ' + page.length + ', show the next batch' : 'Add these to my budget') + '</button><button class="btn alt" type="button" data-act="clearInbox">Cancel</button></div><p class="err" id="inboxErr" role="alert"></p></div>'; }
     if (last && !ib.length) h += '<div class="answer" style="margin-top:12px"><div class="say">' + esc(last.head) + '</div>' + last.body + '</div>';
-    if (!ib.length) h += '<div class="actions" style="margin-top:12px"><button class="btn alt" type="button" data-act="backupFile">Save a backup to iCloud</button></div><p class="hint" id="backupFileMsg" role="status" style="margin-top:4px">' + (state.lastBackupDay == null ? 'No backup yet. The app asks for one after every Saturday reconcile. Save it to the same iCloud Drive folder each time.' : state.lastBackupDay === todayNum() ? 'Backed up today.' : 'Last backup was ' + (todayNum() - state.lastBackupDay) + ' days ago. The app asks after every Saturday reconcile.') + '</p>';
+    if (!ib.length) h += '<div style="margin-top:12px"><div class="lbl" style="margin-bottom:6px">' + (state.reconJustDone ? 'Reconcile done. Save your backup' : 'Backup') + '</div>' + backupChooserHTML(true) + '</div><p class="hint backup-msg" role="status" style="margin-top:6px">' + (state.lastBackupDay == null ? 'No backup yet. The app asks for one after every Saturday reconcile. Save it to the same folder each time.' : state.lastBackupDay === todayNum() ? 'Backed up today.' : 'Last backup was ' + (todayNum() - state.lastBackupDay) + ' days ago. The app asks after every Saturday reconcile.') + '</p>';
     if (state.cancel.length || state.cancelled) {
       var cm = cancelTotals(state);
       h += '<div class="cancel-list" style="margin-top:14px"><h3>Cancel list</h3>' + (state.cancel.length ? '<p class="hint" style="margin:0 0 6px">These are costing you <b>' + fmt(cm) + ' a month</b>, ' + fmt(cm * 12) + ' a year. Cancel them in the app or by calling, then tap Cancelled.</p><ul class="list">' + state.cancel.map(function (c, i) { return '<li class="row"><div><div class="nm">' + esc(c.name) + '</div><div class="d">' + fmtC(c.amt) + ' a month' + '</div></div><div class="actions"><button class="btn alt" type="button" data-act="cancelDone" data-i="' + i + '">Cancelled</button><button class="mini" type="button" data-act="cancelKeep" data-i="' + i + '">Keep</button></div></li>'; }).join('') + '</ul>' : '') +
@@ -1571,25 +1571,60 @@ function nextTarget(state) {
     if (remaining.length) { state.lastImport.head = 'Batch done. ' + remaining.length + ' left to sort.'; save(); render(); setSub('bank'); window.scrollTo({ top: 0 }); return; }
     save(); render();
     setSub('bank');
-    var bm = $('#backupFileMsg'); if (bm) bm.textContent = 'Reconcile done. Saving a backup next.';
-    try { backupFile(); } catch (e) {}
+    state.reconJustDone = true; save(); renderImport();
+    var bp = document.querySelector('#impDyn .backup-pick'); if (bp) bp.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
-  function backupFile() {
-    var msg = $('#backupFileMsg'), name = 'Take Control backup ' + toISO(todayNum()) + '.json';
+  function backupMsg(t) { document.querySelectorAll('.backup-msg').forEach(function (el) { el.textContent = t; }); }
+  var bkMsgProxy = { set textContent(t) { backupMsg(t); } };
+  var BACKUP_DEST = { files: { label: 'Files / iCloud Drive', icon: 'folder' }, drive: { label: 'Google Drive', icon: 'cloud' }, pc: { label: 'this computer', icon: 'folder' } };
+  function isPhone() { return /iphone|ipad|ipod|android/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /macintosh/i.test(navigator.userAgent)); }
+  function backupChooserHTML(compact) {
+    if (!isPhone()) {
+      return '<div class="backup-pick" role="group" aria-label="Save the backup"><button class="btn" type="button" data-act="backupTo" data-dest="pc">' + icon('folder') + '<span>Save backup to this computer<small>' + (window.showSaveFilePicker ? 'You choose the folder. Pick one that syncs, like iCloud Drive or Google Drive, and it is backed up twice.' : 'Goes to your Downloads folder. Move it into a folder that syncs, like iCloud Drive or Google Drive.') + '</small></span></button></div>';
+    }
+    var last = state.backupDest && BACKUP_DEST[state.backupDest] ? BACKUP_DEST[state.backupDest].label : '';
+    return '<div class="backup-pick" role="group" aria-label="Where to save the backup">' +
+      '<button class="btn' + (state.backupDest === 'drive' ? ' alt' : '') + '" type="button" data-act="backupTo" data-dest="files">' + icon('folder') + '<span>Save to Files<small>iCloud Drive on iPhone, device storage on Android</small></span></button>' +
+      '<button class="btn' + (state.backupDest === 'drive' ? '' : ' alt') + '" type="button" data-act="backupTo" data-dest="drive">' + icon('cloud') + '<span>Save to Google Drive<small>Drive app must be installed on the phone</small></span></button>' +
+      '</div>' + (last && !compact ? '<p class="hint" style="margin:6px 0 0">Last time you chose ' + esc(last) + '. Saving to the same place every time keeps one tidy folder of backups.</p>' : '');
+  }
+  function backupFile(dest) {
+    var msg = bkMsgProxy, name = 'Take Control backup ' + toISO(todayNum()) + '.json';
+    dest = dest || (isPhone() ? (state.backupDest || 'files') : 'pc');
+    if (dest !== 'pc') { state.backupDest = dest; save(); }
+    var where = dest === 'drive' ? 'Google Drive' : dest === 'pc' ? 'this computer' : 'Files';
+    var sheetHint = dest === 'drive' ? 'In the sheet that opens, tap Drive (or Save to Files, then Google Drive).' : 'In the sheet that opens, tap Save to Files, then pick iCloud Drive or On My iPhone.';
     var data = JSON.stringify(state), blob = new Blob([data], { type: 'application/json' });
-    var done = function () { state.lastBackupDay = todayNum(); save(); if (msg) msg.textContent = (who() ? who() + ', backup' : 'Backup') + ' saved. Keep it in iCloud Drive or Google Drive.'; };
-    try {
+    var done = function () { state.lastBackupDay = todayNum(); save(); if (msg) msg.textContent = (who() ? who() + ', backup' : 'Backup') + ' saved to ' + where + '.' + (dest === 'pc' ? '' : ' Same place next time and you will always have one tidy folder.'); };
+    var download = function (note) { var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 2000); done(); if (msg && note) msg.textContent = note; };
+    // 1. Desktop browsers with a real save dialog (Chrome, Edge): the user picks the folder, including a Google Drive or iCloud folder.
+    if (dest === 'pc' && window.showSaveFilePicker) {
+      window.showSaveFilePicker({ suggestedName: name, types: [{ description: 'Take Control backup', accept: { 'application/json': ['.json'] } }] })
+        .then(function (h) { return h.createWritable().then(function (w) { return w.write(blob).then(function () { return w.close(); }); }); })
+        .then(done, function (e) { if (e && e.name === 'AbortError') { if (msg) msg.textContent = 'Backup cancelled.'; } else download('Saved to your Downloads folder. Move it into ' + where + ' when you get a chance.'); });
+      return;
+    }
+    // 2. Phones: the system share sheet is the only way to reach Files, iCloud Drive or the Drive app.
+    if (dest !== 'pc') try {
       var file = new File([blob], name, { type: 'application/json' });
-      if (navigator.canShare && navigator.canShare({ files: [file] })) { navigator.share({ files: [file], title: 'Take Control backup' }).then(done, function () { if (msg) msg.textContent = 'Backup cancelled.'; }); return; }
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        if (msg) msg.textContent = sheetHint;
+        navigator.share({ files: [file], title: 'Take Control backup' }).then(done, function (e) {
+          if (e && e.name === 'AbortError') { if (msg) msg.textContent = 'Backup cancelled. Nothing was saved.'; }
+          else download('The share sheet would not open, so the file went to Downloads. Move it into ' + where + '.');
+        });
+        return;
+      }
     } catch (e) {}
-    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 2000); done();
+    // 3. Everything else: plain download.
+    download(dest === 'pc' ? 'Saved to your Downloads folder. Move it into a folder that syncs, like iCloud Drive or Google Drive, when you get a chance.' : 'Saved to your Downloads folder. Move it into ' + where + ' when you get a chance.');
   }
   function restoreFile(f) {
-    var msg = $('#backupFileMsg'), rd = new FileReader();
+    var msg = bkMsgProxy, rd = new FileReader();
     rd.onload = function () {
       try {
         var inc = JSON.parse(String(rd.result)); if (!valid(inc)) throw new Error('bad');
-        if (state.budget.done) { var n0 = state.tx.length; state = mergeStates(state, norm(inc)); save(); loadMe(); render(); var m = $('#backupFileMsg'); if (m) m.textContent = 'Restored and merged. ' + Math.max(0, state.tx.length - n0) + ' entries added.'; }
+        if (state.budget.done) { var n0 = state.tx.length; state = mergeStates(state, norm(inc)); save(); loadMe(); render(); var m = bkMsgProxy; if (m) m.textContent = 'Restored and merged. ' + Math.max(0, state.tx.length - n0) + ' entries added.'; }
         else { inc.sample = false; state = norm(inc); resetDraft(); loadMe(); save(); setView(state.budget.done ? 'today' : 'plan'); }
       } catch (e) { if (msg) msg.textContent = 'That file is not a Take Control backup.'; }
     };
@@ -2027,7 +2062,7 @@ function nextTarget(state) {
       '<div><label class="f" for="pOverride">My own daily spending number for the forecast</label><input type="text" id="pOverride" inputmode="decimal" placeholder="" value="' + inputVal(state.dailyOverride) + '"><p class="hint">Leave blank to use your recent pace, or your budget until you have a few days of entries.</p></div>' +
       '<button class="btn alt" type="submit">Save</button><p class="err" id="prefErr" role="alert"></p></form></details>' +
       calHTML() +
-      '<details' + (state.lastBackupDay == null || todayNum() - state.lastBackupDay >= 14 ? ' open' : '') + '><summary>Back up to iCloud or Google Drive</summary><div class="stack"><p class="hint" style="margin:0">Your numbers live only on this phone. Save a backup file every week or two. On iPhone, tap Save backup, then choose Save to Files and pick iCloud Drive. On Android, choose Google Drive.' + (state.lastBackupDay != null ? ' Last backup: ' + dLong(state.lastBackupDay) + '.' : ' No backup yet.') + '</p><div class="actions"><button class="btn" type="button" data-act="backupFile">Save backup</button><label class="btn alt" style="display:inline-flex;align-items:center;cursor:pointer">Restore from a backup file<input type="file" id="restoreFile" accept=".json,application/json" style="display:none"></label></div><p class="hint" id="backupFileMsg" role="status"></p></div></details>' +
+      '<details' + (state.lastBackupDay == null || todayNum() - state.lastBackupDay >= 14 ? ' open' : '') + '><summary>Back up to iCloud or Google Drive</summary><div class="stack"><p class="hint" style="margin:0">Your numbers live only on this phone. Save a backup file every week or two and pick where it goes.' + (state.lastBackupDay != null ? ' Last backup: ' + dLong(state.lastBackupDay) + '.' : ' No backup yet.') + '</p>' + backupChooserHTML(false) + '<p class="hint backup-msg" role="status"></p><div class="actions"><label class="btn alt" style="display:inline-flex;align-items:center;cursor:pointer">Restore from a backup file<input type="file" id="restoreFile" accept=".json,application/json" style="display:none"></label></div></div></details>' +
       '<details><summary>Sync two phones and back up</summary><div class="stack"><p class="hint" style="margin:0">Entries live on this phone. To bring two phones in line, or move to a new phone, tap Copy my data, send it in a text, and paste it below on the other phone and tap Merge. Do it in both directions whenever you want the phones to match. It is also a good backup.</p><textarea id="backup" aria-label="Sync text" spellcheck="false"></textarea><div class="actions"><button class="btn alt" type="button" data-act="copyBackup">Copy my data</button><button class="btn" type="button" data-act="mergeSync">Merge pasted data</button></div><div class="actions"><button class="link" type="button" data-act="restoreBackup">Replace this phone with the pasted data instead</button></div><p class="hint" id="backupMsg" role="status"></p></div></details>' +
       '<details><summary>Start over</summary><div class="stack"><p class="hint" style="margin:0">Erases every entry, bill, budget and balance on this phone.</p><div class="actions" id="resetRow"><button class="btn alt" type="button" data-act="resetAsk">Erase everything</button></div></div></details></section>';
   }
@@ -2037,7 +2072,7 @@ function nextTarget(state) {
       '<div><label class="f" for="nmP">Accountability partner (optional)</label><input type="text" id="nmP" name="partner" maxlength="24" placeholder="A parent, sibling or friend"><p class="hint">Someone you will send a one-screen summary to every Saturday. A weekly look from someone you trust is what makes this stick.</p></div>' +
       '<ol class="todo" style="margin:6px 0 4px"><li><b>Goals.</b> Tell the app where you stand. The first goal is a $1,000 emergency fund, and the app builds a plan to get you there.</li><li><b>Plan.</b> Enter what you make, then give every dollar a job: bills, savings and everyday spending limits.</li><li><b>Today.</b> Log what you spend each day. The app shows what is left for today, how your money looks over the next week and month, and how each purchase affects your goal.</li><li><b>Month.</b> Once a month, check what went over, then set up next month.</li></ol>' +
       lessonLink('zero') + '<div class="actions"><button class="btn" type="submit">Build my budget</button><button class="btn alt" type="button" data-act="startExample">See an example first</button></div><p class="err" role="alert"></p></form>' +
-      '<details><summary>Already set up on another phone, or have a backup?</summary><div class="stack"><div class="actions"><label class="btn alt" style="display:inline-flex;align-items:center;cursor:pointer">Restore from a backup file<input type="file" id="restoreFile" accept=".json,application/json" style="display:none"></label></div><p class="hint" id="backupFileMsg" role="status"></p><p class="hint" style="margin:0">Or, on the other phone, open Plan, then Settings, then Sync. Tap Copy my data, send it to this phone, and paste it here.</p><textarea id="backup" aria-label="Pasted data" spellcheck="false"></textarea><div class="actions"><button class="btn alt" type="button" data-act="restoreBackup">Load it on this phone</button></div><p class="hint" id="backupMsg" role="status"></p></div></details></section>';
+      '<details><summary>Already set up on another phone, or have a backup?</summary><div class="stack"><div class="actions"><label class="btn alt" style="display:inline-flex;align-items:center;cursor:pointer">Restore from a backup file<input type="file" id="restoreFile" accept=".json,application/json" style="display:none"></label></div><p class="hint backup-msg" role="status"></p><p class="hint" style="margin:0">Or, on the other phone, open Plan, then Settings, then Sync. Tap Copy my data, send it to this phone, and paste it here.</p><textarea id="backup" aria-label="Pasted data" spellcheck="false"></textarea><div class="actions"><button class="btn alt" type="button" data-act="restoreBackup">Load it on this phone</button></div><p class="hint" id="backupMsg" role="status"></p></div></details></section>';
   }
   function wizardHTML() {
     var i = state.budget.step, last = i === STEPS.length - 1;
@@ -2738,6 +2773,7 @@ function nextTarget(state) {
       case 'chalStart': state.challenge = { id: b.getAttribute('data-id'), start: todayNum() }; save(); render(); break;
       case 'chalStop': { var cs0 = challengeStatus(state, todayNum()); if (cs0 && cs0.finished && cs0.won) state.milestones.chal = 1; state.challenge = null; save(); render(); break; }
       case 'backupFile': backupFile(); break;
+      case 'backupTo': state.reconJustDone = false; backupFile(b.getAttribute('data-dest')); break;
       case 'askHow': answerHow(); break;
       case 'applyInbox': applyInbox(); break;
       case 'cancelDone': { var cc = state.cancel.splice(parseInt(b.getAttribute('data-i'), 10), 1)[0]; if (cc) state.cancelled += cc.amt; save(); renderImport(); break; }

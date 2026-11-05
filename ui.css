@@ -652,3 +652,11 @@ body[data-view]:not([data-view="today"]) #moneyLevelRoot{display:none;}
 body[data-view]:not([data-view="today"]) .sample-note{padding:8px 12px;margin:-4px 0 14px;gap:8px 12px;}
 body[data-view]:not([data-view="today"]) .sample-note p span{display:none;}
 body[data-view]:not([data-view="today"]) .sample-note .btn{min-height:36px;font-size:12px;padding:0 12px;}
+
+/* Backup destination chooser */
+.backup-pick{display:grid;gap:8px;margin-top:10px;}
+.backup-pick .btn{display:flex;align-items:center;gap:12px;text-align:left;min-height:56px;padding:10px 14px;}
+.backup-pick .btn svg{width:22px;height:22px;flex:none;}
+.backup-pick .btn span{display:grid;gap:1px;line-height:1.2;}
+.backup-pick .btn small{font-weight:500;font-size:12px;opacity:.85;}
+@media(min-width:600px){.backup-pick{grid-template-columns:1fr 1fr;}}

@@ -158,3 +158,12 @@ test('actual demo and an identical real budget earn the same level and overall p
  assert.equal(result.demo.levelPercent,8);
  assert.equal(result.demo.completed,6);
 });
+
+test('backup offers a destination choice and never fires the share sheet without a tap', () => {
+  const html = require('node:fs').readFileSync(require('node:path').join(__dirname, '..', 'index.html'), 'utf8');
+  assert.ok(html.includes('data-act="backupTo" data-dest="files"'));
+  assert.ok(html.includes('data-act="backupTo" data-dest="drive"'));
+  assert.ok(html.includes('window.showSaveFilePicker'), 'desktop browsers get a real save dialog');
+  assert.ok(!html.includes("try { backupFile(); } catch (e) {}"), 'reconcile no longer auto-fires a backup from a non-gesture');
+  assert.equal((html.match(/class="hint backup-msg"/g) || []).length, 3, 'one status line per backup spot');
+});
