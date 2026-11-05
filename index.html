@@ -1576,8 +1576,12 @@ function nextTarget(state) {
   }
   function backupMsg(t) { document.querySelectorAll('.backup-msg').forEach(function (el) { el.textContent = t; }); }
   var bkMsgProxy = { set textContent(t) { backupMsg(t); } };
-  var BACKUP_DEST = { files: { label: 'Files / iCloud Drive', icon: 'folder' }, drive: { label: 'Google Drive', icon: 'cloud' } };
+  var BACKUP_DEST = { files: { label: 'Files / iCloud Drive', icon: 'folder' }, drive: { label: 'Google Drive', icon: 'cloud' }, pc: { label: 'this computer', icon: 'folder' } };
+  function isPhone() { return /iphone|ipad|ipod|android/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /macintosh/i.test(navigator.userAgent)); }
   function backupChooserHTML(compact) {
+    if (!isPhone()) {
+      return '<div class="backup-pick" role="group" aria-label="Save the backup"><button class="btn" type="button" data-act="backupTo" data-dest="pc">' + icon('folder') + '<span>Save backup to this computer<small>' + (window.showSaveFilePicker ? 'You choose the folder. Pick one that syncs, like iCloud Drive or Google Drive, and it is backed up twice.' : 'Goes to your Downloads folder. Move it into a folder that syncs, like iCloud Drive or Google Drive.') + '</small></span></button></div>';
+    }
     var last = state.backupDest && BACKUP_DEST[state.backupDest] ? BACKUP_DEST[state.backupDest].label : '';
     return '<div class="backup-pick" role="group" aria-label="Where to save the backup">' +
       '<button class="btn' + (state.backupDest === 'drive' ? ' alt' : '') + '" type="button" data-act="backupTo" data-dest="files">' + icon('folder') + '<span>Save to Files<small>iCloud Drive on iPhone, device storage on Android</small></span></button>' +
@@ -1586,22 +1590,22 @@ function nextTarget(state) {
   }
   function backupFile(dest) {
     var msg = bkMsgProxy, name = 'Take Control backup ' + toISO(todayNum()) + '.json';
-    dest = dest || state.backupDest || 'files';
-    state.backupDest = dest; save();
-    var where = dest === 'drive' ? 'Google Drive' : 'Files';
+    dest = dest || (isPhone() ? (state.backupDest || 'files') : 'pc');
+    if (dest !== 'pc') { state.backupDest = dest; save(); }
+    var where = dest === 'drive' ? 'Google Drive' : dest === 'pc' ? 'this computer' : 'Files';
     var sheetHint = dest === 'drive' ? 'In the sheet that opens, tap Drive (or Save to Files, then Google Drive).' : 'In the sheet that opens, tap Save to Files, then pick iCloud Drive or On My iPhone.';
     var data = JSON.stringify(state), blob = new Blob([data], { type: 'application/json' });
-    var done = function () { state.lastBackupDay = todayNum(); save(); if (msg) msg.textContent = (who() ? who() + ', backup' : 'Backup') + ' saved to ' + where + '. Same place next time and you will always have one tidy folder.'; };
+    var done = function () { state.lastBackupDay = todayNum(); save(); if (msg) msg.textContent = (who() ? who() + ', backup' : 'Backup') + ' saved to ' + where + '.' + (dest === 'pc' ? '' : ' Same place next time and you will always have one tidy folder.'); };
     var download = function (note) { var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 2000); done(); if (msg && note) msg.textContent = note; };
     // 1. Desktop browsers with a real save dialog (Chrome, Edge): the user picks the folder, including a Google Drive or iCloud folder.
-    if (window.showSaveFilePicker && !/iphone|ipad|android/i.test(navigator.userAgent)) {
+    if (dest === 'pc' && window.showSaveFilePicker) {
       window.showSaveFilePicker({ suggestedName: name, types: [{ description: 'Take Control backup', accept: { 'application/json': ['.json'] } }] })
         .then(function (h) { return h.createWritable().then(function (w) { return w.write(blob).then(function () { return w.close(); }); }); })
         .then(done, function (e) { if (e && e.name === 'AbortError') { if (msg) msg.textContent = 'Backup cancelled.'; } else download('Saved to your Downloads folder. Move it into ' + where + ' when you get a chance.'); });
       return;
     }
     // 2. Phones: the system share sheet is the only way to reach Files, iCloud Drive or the Drive app.
-    try {
+    if (dest !== 'pc') try {
       var file = new File([blob], name, { type: 'application/json' });
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         if (msg) msg.textContent = sheetHint;
@@ -1613,7 +1617,7 @@ function nextTarget(state) {
       }
     } catch (e) {}
     // 3. Everything else: plain download.
-    download('Saved to your Downloads folder. Move it into ' + where + ' when you get a chance.');
+    download(dest === 'pc' ? 'Saved to your Downloads folder. Move it into a folder that syncs, like iCloud Drive or Google Drive, when you get a chance.' : 'Saved to your Downloads folder. Move it into ' + where + ' when you get a chance.');
   }
   function restoreFile(f) {
     var msg = bkMsgProxy, rd = new FileReader();
