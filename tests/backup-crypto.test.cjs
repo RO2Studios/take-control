@@ -36,3 +36,10 @@ test('restore UI offers an unlock field on both restore entry points', () => {
   assert.equal((html.match(/id="bkRestoreWrap"/g) || []).length, 2);
   assert.ok(html.includes('data-act="bkUnlock"'));
 });
+
+test('stored reconcile summary is data, not markup, and the page ships a Content-Security-Policy', () => {
+  assert.ok(!html.includes('last.body'), 'no stored HTML string is rendered');
+  assert.ok(html.includes("delete s.lastImport.body"), 'legacy stored HTML is stripped on load');
+  assert.match(html, /http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'/);
+  assert.ok(/img-src 'self' data: blob:/.test(html) && /connect-src 'self'/.test(html) && /object-src 'none'/.test(html));
+});

@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; media-src 'none'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'; manifest-src 'self'; worker-src 'self'">
 <title>Take Control</title>
 <meta name="description" content="Budget first, then manage every day. A private budgeting app that lives on your phone.">
 <meta name="theme-color" content="#16a34a">
@@ -356,7 +357,7 @@ input[type=file] { font-size: 14px; }
 .install .row-a { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 </style>
 <style>html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);-webkit-text-size-adjust:100%}body{margin:0;min-height:100vh;-webkit-tap-highlight-color:transparent}button{-webkit-appearance:none;appearance:none}</style>
-<link rel="stylesheet" href="ui.css?v=62">
+<link rel="stylesheet" href="ui.css?v=63">
 <script src="money-insights.js"></script>
 <script src="money-levels.js"></script>
 </head>
@@ -1167,7 +1168,7 @@ function nextTarget(state) {
     try { var raw = localStorage.getItem(KEY); if (raw) { var s = JSON.parse(raw); if (valid(s)) return refreshDemoBalance(refreshDemoNetworks(refreshDemoSubscriptions(norm(s)))); } } catch (e) {}
     return makeBlank();
   }
-  function norm(s) { s.profiles=cleanProfiles(s.profiles); if (!s.paydays) s.paydays = {}; if (s.startDay === undefined) s.startDay = null; if (s.budget && s.budget.done && s.startDay == null) s.startDay = todayNum(); if (!s.remind) s.remind = { recon: '09:00', review: '10:00', added: {} }; if (!s.remind.added) s.remind.added = {}; if (!s.learned) s.learned = {}; if (!s.givePct) s.givePct = 0; if (!s.partner) s.partner = ''; if (!Array.isArray(s.reviews)) s.reviews = []; if (!s.milestones) s.milestones = {}; if (!Array.isArray(s.cancel)) s.cancel = []; if (!s.cancelled) s.cancelled = 0; if (!s.rules) s.rules = {}; if (!Array.isArray(s.inbox)) s.inbox = []; if (!s.imported) s.imported = {}; if (!s.goals) s.goals = { asked: false, picks: [], ef: null }; if (!Array.isArray(s.goals.picks)) s.goals.picks = []; if (!s.budget.months) s.budget.months = {}; if (!s.saved) s.saved = {}; if (!Array.isArray(s.names)) s.names = []; if (!s.deleted) s.deleted = {}; if (!s.updated) s.updated = 0; return s; }
+  function norm(s) { s.profiles=cleanProfiles(s.profiles); if (s.lastImport && typeof s.lastImport === 'object') { if (typeof s.lastImport.head !== 'string') s.lastImport.head = ''; delete s.lastImport.body; if (!Array.isArray(s.lastImport.rows)) s.lastImport.rows = []; } if (!s.paydays) s.paydays = {}; if (s.startDay === undefined) s.startDay = null; if (s.budget && s.budget.done && s.startDay == null) s.startDay = todayNum(); if (!s.remind) s.remind = { recon: '09:00', review: '10:00', added: {} }; if (!s.remind.added) s.remind.added = {}; if (!s.learned) s.learned = {}; if (!s.givePct) s.givePct = 0; if (!s.partner) s.partner = ''; if (!Array.isArray(s.reviews)) s.reviews = []; if (!s.milestones) s.milestones = {}; if (!Array.isArray(s.cancel)) s.cancel = []; if (!s.cancelled) s.cancelled = 0; if (!s.rules) s.rules = {}; if (!Array.isArray(s.inbox)) s.inbox = []; if (!s.imported) s.imported = {}; if (!s.goals) s.goals = { asked: false, picks: [], ef: null }; if (!Array.isArray(s.goals.picks)) s.goals.picks = []; if (!s.budget.months) s.budget.months = {}; if (!s.saved) s.saved = {}; if (!Array.isArray(s.names)) s.names = []; if (!s.deleted) s.deleted = {}; if (!s.updated) s.updated = 0; return s; }
 
   var pendingMoneyLevelUp = null;
   function moneyLevelIcon(name) {
@@ -1513,7 +1514,7 @@ function nextTarget(state) {
     if (ib.length) h += '<div class="recon"><div><b>' + (state.reconTotal || 0) + '</b><small>from the bank</small></div><div><b class="pos">' + ((state.reconMatched || 0) + autoN) + '</b><small>' + (autoN ? 'matched or auto-sorted' : 'matched what you logged') + '</small></div><div><b class="neg">' + ib.length + '</b><small>slipped by</small></div></div>';
     if (!ib.length) h += '<form class="stack" data-form="csv" autocomplete="off" style="margin-top:0"><div class="drop"><label for="csvFile" style="display:block;font-weight:600;color:var(--ink)">Choose the CSV from your bank</label><input type="file" id="csvFile" accept=".csv,text/csv" style="margin-top:8px"></div><details style="margin-top:4px"><summary>Or paste the text here</summary><textarea id="csvText" aria-label="Pasted CSV" placeholder="Date,Description,Amount" spellcheck="false"></textarea><button class="btn alt" type="submit" style="margin-top:8px">Read pasted text</button></details><p class="err" id="csvErr" role="alert"></p></form>';
     else { var page = ib.slice(0, PAGE), more = ib.length - page.length; h += '<div class="inbox"><p class="headline" style="margin:0 0 8px;font-size:15px">' + (more > 0 ? 'Sort these ' + page.length + ' first. ' + more + ' more come after, in small batches.' : page.length + ' transaction' + (page.length === 1 ? '' : 's') + ' to sort.') + ' Pick a category once and the app remembers it next time.</p><ul class="list">' + page.map(inboxRow).join('') + '</ul><div class="actions" style="margin-top:12px"><button class="btn" type="button" data-act="applyInbox">' + (more > 0 ? 'Add these ' + page.length + ', show the next batch' : 'Add these to my budget') + '</button><button class="btn alt" type="button" data-act="clearInbox">Cancel</button></div><p class="err" id="inboxErr" role="alert"></p></div>'; }
-    if (last && !ib.length) h += '<div class="answer" style="margin-top:12px"><div class="say">' + esc(last.head) + '</div>' + last.body + '</div>';
+    if (last && !ib.length) h += '<div class="answer" style="margin-top:12px"><div class="say">' + esc(last.head) + '</div>' + (Array.isArray(last.rows) ? last.rows.map(function (r) { return '<div class="ln"><span>' + esc(r.l) + '</span><span class="' + (r.neg ? 'neg' : '') + '">' + esc(r.r) + '</span></div>'; }).join('') : '') + '</div>';
     if (!ib.length) h += '<div style="margin-top:12px"><div class="lbl" style="margin-bottom:6px">' + (state.reconJustDone ? 'Reconcile done. Save your backup' : 'Backup') + '</div>' + backupPasswordHTML() + backupChooserHTML(true) + '</div><p class="hint backup-msg" role="status" style="margin-top:6px">' + (state.lastBackupDay == null ? 'No backup yet. The app asks for one after every Saturday reconcile. Save it to the same folder each time.' : state.lastBackupDay === todayNum() ? 'Backed up today.' : 'Last backup was ' + (todayNum() - state.lastBackupDay) + ' days ago. The app asks after every Saturday reconcile.') + '</p>';
     if (state.cancel.length || state.cancelled) {
       var cm = cancelTotals(state);
@@ -1540,7 +1541,7 @@ function nextTarget(state) {
     });
     rest.sort(function (a, b) { return (b.sub ? 1 : 0) - (a.sub ? 1 : 0) || b.day - a.day; });
     state.inbox = rest.slice(0, 200); state.reconMatched = matched; state.reconTotal = items.length; state.reconAuto = { skip: autoSkip, add: autoAdd, spent: autoSpent }; state.reconRun = { added: 0, spent: 0 }; state.lastImportDay = todayNum();
-    if (!rest.length) state.lastImport = { head: (who() ? who() + ', ' : '') + (matched ? matched + ' matched what you logged. ' : '') + (autoAdd ? autoAdd + ' sorted automatically from what you taught the app (' + fmt(autoSpent) + '). ' : '') + (autoSkip ? autoSkip + ' bill' + (autoSkip === 1 ? '' : 's') + ' already in your plan. ' : '') + 'Nothing to sort by hand.', body: '' };
+    if (!rest.length) state.lastImport = { rows: [], head: (who() ? who() + ', ' : '') + (matched ? matched + ' matched what you logged. ' : '') + (autoAdd ? autoAdd + ' sorted automatically from what you taught the app (' + fmt(autoSpent) + '). ' : '') + (autoSkip ? autoSkip + ' bill' + (autoSkip === 1 ? '' : 's') + ' already in your plan. ' : '') + 'Nothing to sort by hand.', body: '' };
     save(); render(); setSub('bank'); window.scrollTo({ top: 0 });
   }
   function applyInbox() {
@@ -1563,11 +1564,11 @@ function nextTarget(state) {
     var after = snapFor(state), ms1 = monthStats(state, mkey(today), today), spent = 0, byCat = {};
     added.forEach(function (t) { if (t.type === 'out' && !t.goal) { spent += t.amt; byCat[t.cat] = (byCat[t.cat] || 0) + t.amt; } });
     var cats = Object.keys(byCat).sort(function (a, b) { return byCat[b] - byCat[a]; });
-    var lines = cats.slice(0, 4).map(function (n) { var c = state.budget.cats.find(function (x) { return x.name === n; }); var left = c ? ms1.lim[c.id] - ms1.spent[c.id] : null; return '<div class="ln"><span>' + esc(n) + ' ' + fmt(byCat[n]) + '</span><span>' + (left == null ? '' : (left >= 0 ? fmt(left) + ' left' : '<span class="neg">' + fmt(-left) + ' over</span>')) + '</span></div>'; }).join('');
+    var rows = cats.slice(0, 4).map(function (n) { var c = state.budget.cats.find(function (x) { return x.name === n; }); var left = c ? ms1.lim[c.id] - ms1.spent[c.id] : null; return { l: n + ' ' + fmt(byCat[n]), r: left == null ? '' : (left >= 0 ? fmt(left) + ' left' : fmt(-left) + ' over'), neg: left != null && left < 0 }; });
     var d = after.dp.allowance - before.dp.allowance;
     if (!state.reconRun) state.reconRun = { added: 0, spent: 0 }; state.reconRun.added += added.length; state.reconRun.spent += spent;
     var ra2 = state.reconAuto || { add: 0, spent: 0 };
-    state.lastImport = { head: (who() ? who() + ', ' : '') + (state.reconMatched ? state.reconMatched + ' matched what you logged. ' : '') + (ra2.add ? ra2.add + ' sorted automatically from what you taught the app. ' : '') + 'Added ' + state.reconRun.added + ' you did not know about, ' + fmt(state.reconRun.spent) + ' of spending.' + (bills ? ' ' + bills + ' subscription' + (bills === 1 ? '' : 's') + ' added to your bills.' : '') + (cancels ? ' ' + fmt(cancels) + ' a month moved to your cancel list.' : ''), body: lines + '<div class="ln"><span>Daily allowance for the rest of ' + monthName(mkey(today)) + '</span><span><b>' + fmt(before.dp.allowance) + '</b> → <b>' + fmt(after.dp.allowance) + '</b> <span class="' + (d >= 0 ? 'pos' : 'neg') + '">(' + (d === 0 ? 'no change' : sgn(d)) + ')</span></span></div><div class="ln"><span>Balance in 30 days</span><span><b>' + fmt(before.d30) + '</b> → <b>' + fmt(after.d30) + '</b></span></div>' };
+    state.lastImport = { head: (who() ? who() + ', ' : '') + (state.reconMatched ? state.reconMatched + ' matched what you logged. ' : '') + (ra2.add ? ra2.add + ' sorted automatically from what you taught the app. ' : '') + 'Added ' + state.reconRun.added + ' you did not know about, ' + fmt(state.reconRun.spent) + ' of spending.' + (bills ? ' ' + bills + ' subscription' + (bills === 1 ? '' : 's') + ' added to your bills.' : '') + (cancels ? ' ' + fmt(cancels) + ' a month moved to your cancel list.' : ''), rows: rows.concat([{ l: 'Daily allowance for the rest of ' + monthName(mkey(today)), r: fmt(before.dp.allowance) + ' \u2192 ' + fmt(after.dp.allowance) + ' (' + (d === 0 ? 'no change' : sgn(d)) + ')', neg: d < 0 }, { l: 'Balance in 30 days', r: fmt(before.d30) + ' \u2192 ' + fmt(after.d30), neg: after.d30 < before.d30 }]) };
     if (remaining.length) { state.lastImport.head = 'Batch done. ' + remaining.length + ' left to sort.'; save(); render(); setSub('bank'); window.scrollTo({ top: 0 }); return; }
     save(); render();
     setSub('bank');
