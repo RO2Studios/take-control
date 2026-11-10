@@ -357,7 +357,7 @@ input[type=file] { font-size: 14px; }
 .install .row-a { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 </style>
 <style>html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);-webkit-text-size-adjust:100%}body{margin:0;min-height:100vh;-webkit-tap-highlight-color:transparent}button{-webkit-appearance:none;appearance:none}</style>
-<link rel="stylesheet" href="ui.css?v=65">
+<link rel="stylesheet" href="ui.css?v=66">
 <script src="money-insights.js"></script>
 <script src="money-levels.js"></script>
 </head>
@@ -1259,8 +1259,18 @@ function nextTarget(state) {
   function renderMoneyLevel() {
     var root=$('#moneyLevelRoot');if(!root)return;
     if(!state.budget.done){root.innerHTML='';root.hidden=true;return;}
+    if(cur==='settings'){root.innerHTML='';root.hidden=true;return;}
     root.hidden=false;
     var p=TakeControlLevels.progress(state);
+    if(cur!=='today'){
+      var nx=p.remaining&&p.remaining[0];
+      root.innerHTML='<button class="ml-strip" type="button" data-act="levelOpen" aria-label="Level '+p.level+', '+esc(p.current.name)+', '+p.percent+' percent.'+(nx?' Next: '+esc(nx.title)+'.':'')+' Open your journey">'+
+        '<span class="ml-strip-icon" style="--stage:'+p.current.color+'">'+moneyLevelBadge(p.current.icon)+'</span>'+
+        '<span class="ml-strip-body"><span class="ml-strip-top"><b>Level '+p.level+' · '+p.percent+'%</b><span class="ml-strip-track"><span style="width:'+p.percent+'%"></span></span></span>'+
+        '<span class="ml-strip-next">'+(nx?'Next: <b>'+esc(nx.title)+'</b>':'Top level reached. Keep the habits going.')+'</span></span>'+
+        '<span class="plan-chev" aria-hidden="true">›</span></button>';
+      return;
+    }
     var expanded=false;try{expanded=localStorage.getItem('moneyAhead.levelExpanded')==='1';}catch(e){}
     var missions=p.remaining;
     root.innerHTML='<section class="money-level card" aria-label="Money level and milestones"><details id="moneyLevelDetails"'+(expanded?' open':'')+'>'+
@@ -1339,6 +1349,7 @@ function nextTarget(state) {
   function setView(v) {
     if (!state.budget.done) v = 'plan';
     if (v !== cur) openLesson = null;
+    planSec = null;
     cur = v;
     document.body.classList.add('compact');
     document.body.setAttribute('data-view', v);
@@ -1424,7 +1435,7 @@ function nextTarget(state) {
       '<div class="legend">' + (t.give ? '<span><i style="background:var(--c-give)"></i>Giving</span>' : '') + '<span><i style="background:var(--c-bill)"></i>Bills</span><span><i style="background:var(--c-save)"></i>Savings</span><span><i style="background:var(--c-every)"></i>Everyday</span></div>' +
       '<div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center"><span class="hint" style="margin:0">Monthly, based on an average month</span>' + pill + '</div></div>';
   }
-  function updatePlanTotals() { var el = $('#planTotals'); if (el) el.outerHTML = totalsHTML(); }
+  function updatePlanTotals() { var el = $('#planTotals'); if (el) el.outerHTML = totalsHTML(); var pl = $('#planLeft'); if (pl) pl.innerHTML = planPillHTML(); }
 
 
   /* ---------- GOALS ---------- */
@@ -2201,10 +2212,46 @@ function nextTarget(state) {
     var nav = '<div class="wiz-nav"><button class="btn alt" type="button" data-act="back"' + (i === 0 ? ' disabled' : '') + '>Back</button><button class="btn" type="button" data-act="next">' + (last ? 'Start tracking' : 'Next: ' + STEPS[i + 1]) + '</button></div><p class="err" id="wizErr" role="alert">' + esc(wizNote) + '</p>';
     return prog + (i > 1 ? '<section class="card" style="padding:14px">' + totalsHTML() + '</section>' : '') + body + nav;
   }
-  function editHTML() {
+  /* Plan is a one-screen summary. Each part opens on its own short page; "everything on one page" is one tap away. */
+  var planSec = null;
+  var PLAN_SECS = { income: ['Income', secIncome], giving: ['Giving', secGiving], bills: ['Bills', secBills], savings: ['Savings', secSavings], every: ['Everyday spending', secEvery], goals: ['Your goals', secGoals], review: ['How your plan adds up', secReview] };
+  function planPillHTML() {
+    var t = planTotals(state);
+    return t.inc === 0 ? '' : t.left === 0 ? '<span class="pill ok">Every dollar has a job</span>' : t.left > 0 ? '<span class="pill tight">' + fmt(t.left) + ' left to assign</span>' : '<span class="pill short">Over by ' + fmt(-t.left) + '</span>';
+  }
+  function planLeftHTML() { return '<div class="plan-left" id="planLeft">' + planPillHTML() + '</div>'; }
+  function planHomeHTML() {
+    var t = planTotals(state), inc = Math.max(t.inc, 1), n = function (f) { return state.recs.filter(f).length; };
+    var nIn = n(function (r) { return r.type === 'in'; }), nBill = n(function (r) { return r.type === 'out' && r.cat !== 'Savings' && r.cat !== 'Giving'; }), nSave = n(function (r) { return r.type === 'out' && r.cat === 'Savings'; }), nCat = state.budget.cats.length;
+    var plural = function (k, one, many) { return k + ' ' + (k === 1 ? one : many); };
+    var w = function (x) { return Math.max(0, Math.min(100, x / inc * 100)).toFixed(1) + '%'; };
+    var row = function (key, cls, name, sub, amt) {
+      return '<button class="plan-row" type="button" data-act="planSec" data-sec="' + key + '"><i class="' + cls + '" aria-hidden="true"></i><span class="plan-row-text"><b>' + name + '</b><small>' + esc(sub) + '</small></span><span class="plan-row-amt">' + fmt(amt) + '</span><span class="plan-chev" aria-hidden="true">›</span></button>';
+    };
+    var more = function (key, label) { return '<button class="plan-more" type="button" data-act="planSec" data-sec="' + key + '"><span>' + label + '</span><span class="plan-chev" aria-hidden="true">›</span></button>'; };
+    return '<section class="card plan-home"><h2>Your budget</h2><p class="sub">Five parts, monthly. Tap one to change it.</p>' +
+      '<div class="plan-rows">' +
+      row('income', 'p-inc', 'Income', nIn ? plural(nIn, 'paycheck', 'paychecks') : 'Add your take-home pay', t.inc) +
+      row('giving', 'p-give', 'Giving', state.givePct ? state.givePct + '% of each paycheck' : (t.give ? 'Set amounts' : 'Not set'), t.give) +
+      row('bills', 'p-bill', 'Bills', nBill ? plural(nBill, 'bill or subscription', 'bills and subscriptions') : 'Nothing added yet', t.fixed) +
+      row('savings', 'p-save', 'Savings', nSave ? plural(nSave, 'deposit', 'deposits') + ' each month' : 'Nothing set aside yet', t.save) +
+      row('every', 'p-every', 'Everyday spending', nCat ? plural(nCat, 'category', 'categories') : 'No categories yet', t.every) +
+      '</div>' +
+      '<div class="stackbar' + (t.left < 0 ? ' over' : '') + '" role="img" aria-label="How take-home pay is assigned"><i class="s-give" style="width:' + w(t.give) + '"></i><i class="s-bill" style="width:' + w(t.fixed) + '"></i><i class="s-save" style="width:' + w(t.save) + '"></i><i class="s-every" style="width:' + w(t.every) + '"></i></div>' +
+      planLeftHTML() + '</section>' +
+      '<section class="card plan-tools"><p class="lbl">More tools</p>' + more('goals', 'Your goals') + more('review', 'Compare with 50/30/20') + '</section>' +
+      '<p class="plan-all"><button class="link" type="button" data-act="planSec" data-sec="all">Show everything on one page</button></p>';
+  }
+  function planAllHTML() {
     return '<section class="card"><h2>Your budget</h2><p class="sub">Change anything here and it applies from now on. Next month\'s limits can also be set in the monthly check-in.</p>' + totalsHTML() + '</section>' +
-      secReview(false) + secGoals(false) + secIncome(false) + secGiving(false) + secBills(false) + secEvery(false) + secSavings(false) +
-      '<section class="card" id="settingsLink"><p class="hint" style="margin:0">Profile picture, names, reminders, backup and sync moved to <button class="link" type="button" data-act="openSettings" style="padding:0;min-height:0">Settings</button>, behind your picture at the top.</p></section>';
+      secReview(false) + secGoals(false) + secIncome(false) + secGiving(false) + secBills(false) + secEvery(false) + secSavings(false);
+  }
+  function editHTML() {
+    var back = '<button class="back-link" type="button" data-act="planSec" data-sec="">← Your budget</button>';
+    var foot = '<section class="card" id="settingsLink"><p class="hint" style="margin:0">Profile picture, names, reminders, backup and sync are in <button class="link" type="button" data-act="openSettings" style="padding:0;min-height:0">Settings</button>, behind your picture at the top.</p></section>';
+    if (planSec === 'all') return back + planAllHTML() + foot;
+    if (planSec && PLAN_SECS[planSec]) return back + planLeftHTML() + PLAN_SECS[planSec][1](false) + '<p class="plan-all"><button class="btn alt" type="button" data-act="planSec" data-sec="">Done</button></p>';
+    return planHomeHTML() + foot;
   }
   function renderSettings() {
     var root = $('#settingsRoot'); if (!root) return;
@@ -2964,6 +3011,8 @@ function nextTarget(state) {
         if (m4) m4.textContent = okM ? 'Merged. ' + (addedN > 0 ? addedN + ' new entr' + (addedN === 1 ? 'y' : 'ies') + ' added.' : 'Nothing new to add.') + ' Send your data back so the other phone matches.' : 'That text is not valid sync data. Your budget was not changed. Copy the full text from the other phone and try again.';
         break;
       }
+      case 'planSec': planSec = b.getAttribute('data-sec') || null; renderPlan(); window.scrollTo({ top: 0 }); break;
+      case 'levelOpen': try { localStorage.setItem('moneyAhead.levelExpanded', '1'); } catch (e) {} setView('today'); break;
       case 'resetAsk': $('#resetRow').innerHTML = '<button class="btn danger" type="button" data-act="resetYes">Yes, erase everything</button><button class="btn alt" type="button" data-act="resetNo">Cancel</button>'; break;
       case 'resetNo': $('#resetRow').innerHTML = '<button class="btn alt" type="button" data-act="resetAsk">Erase everything</button>'; break;
       case 'resetYes': state = makeBlank(); resetDraft(); meIdx = null; save(); wizNote = ''; monthOffset = 0; lastDone = false; setView('plan'); break;
