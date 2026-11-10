@@ -357,7 +357,7 @@ input[type=file] { font-size: 14px; }
 .install .row-a { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 </style>
 <style>html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);-webkit-text-size-adjust:100%}body{margin:0;min-height:100vh;-webkit-tap-highlight-color:transparent}button{-webkit-appearance:none;appearance:none}</style>
-<link rel="stylesheet" href="ui.css?v=67">
+<link rel="stylesheet" href="ui.css?v=68">
 <script src="money-insights.js"></script>
 <script src="money-levels.js"></script>
 </head>
@@ -1424,6 +1424,10 @@ function nextTarget(state) {
       '<div class="day2" hidden><label class="f" for="rf-' + kind + '-day2">Second day of the month</label><input type="number" id="rf-' + kind + '-day2" name="day2" min="1" max="31" value="15"></div>' +
       '<button class="btn" type="submit">' + (kind === 'in' ? 'Add income' : kind === 'bill' ? 'Add bill' : kind === 'give' ? 'Add giving' : 'Add savings') + '</button><p class="err" role="alert"></p></form>';
   }
+  function addFold(kind, label, empty) {
+    return '<details class="add-fold"' + (empty ? ' open' : '') + '><summary><span aria-hidden="true">＋</span> ' + label + '</summary>' + chipsHTML(kind) + recForm(kind) + '</details>';
+  }
+  function countRecs(f) { return state.recs.filter(f).length; }
   function totalsHTML() {
     var t = planTotals(state), inc = Math.max(t.inc, 1);
     var pill = t.inc === 0 ? '' : t.left === 0 ? '<span class="pill ok">Every dollar has a job</span>' : t.left > 0 ? '<span class="pill tight">' + fmt(t.left) + ' left to assign</span>' : '<span class="pill short">Over by ' + fmt(-t.left) + '</span>';
@@ -1514,8 +1518,9 @@ function nextTarget(state) {
       var pk = state.goals.picks.filter(function (k) { return nx[k]; });
       if (pk.length) h += '<p class="hint" style="margin-top:10px">' + esc(nx[pk[0]]) + '</p>';
     } else {
-      h += '<p class="headline">' + (pr.days != null ? (pr.days > 730 ? 'At the current pace the fund is more than two years away. A bigger monthly amount below shortens that.' : fmt(pr.remaining) + ' to go. At your current pace you reach ' + fmt(pr.target) + ' on <b>' + dFull(pr.eta) + '</b>.') : fmt(pr.remaining) + ' to go. Nothing is going into the fund yet, so there is no finish date. Pick a step below.') + '</p>' +
-        '<p class="fund-meta"><span>Automatic: <b>' + fmt(pr.auto) + '</b> a month</span>' + (lo.ok ? '<span>' + (lo.leftover >= 0 ? fmt(lo.leftover) + ' under' : fmt(-lo.leftover) + ' over') + ' budget so far</span>' : '<span>Log 3 days of spending and leftover money starts counting toward your date.</span>') + '</p>';
+      // The ring already states the amount to go and the date, so the headline only appears when it adds something.
+      h += (pr.days != null ? (pr.days > 730 ? '<p class="headline">At the current pace the fund is more than two years away. A bigger monthly amount shortens that.</p>' : '') : '<p class="headline">Nothing is going into the fund yet, so there is no finish date. Pick a step below.</p>');
+      var fundMeta = '<p class="fund-meta"><span>Automatic: <b>' + fmt(pr.auto) + '</b> a month</span>' + (lo.ok ? '<span>' + (lo.leftover >= 0 ? fmt(lo.leftover) + ' under' : fmt(-lo.leftover) + ' over') + ' budget so far</span>' : '<span>Log 3 days of spending and leftover money starts counting toward your date.</span>') + '</p>';
       var li = [];
       if (lo.ok && lo.paceLeftover < -500) li.push('<li class="warn">At your current spending pace you finish ' + mn + ' about <b>' + fmt(-lo.paceLeftover) + ' over</b> your everyday budget. Every overspent dollar is a dollar the fund does not get. Stay near <b>' + fmt(dp.allowance) + ' a day</b> for the rest of the month.</li>');
       if (adv.over.length) li.push('<li class="warn">Over limit this month: ' + adv.over.slice(0, 3).map(function (o) { return esc(o.c.name) + ' by ' + fmt(o.by); }).join(', ') + '. Rein these in first.</li>');
@@ -1531,7 +1536,11 @@ function nextTarget(state) {
       if (adv.steps.length && adv.etaAll != null) li.push('<li class="good"><span>Doing all of this puts you at ' + fmt(pr.target) + ' by <b>' + dFull(adv.etaAll) + '</b>.</span></li>');
       if (!adv.steps.length && pr.auto > 0) li.push('<li class="good">You are on track. ' + fmt(pr.auto) + ' a month reaches ' + fmt(pr.target) + ' on <b>' + dFull(pr.eta) + '</b>. Keep logging every purchase and this date updates as you go.</li>');
       if (!adv.steps.length && pr.auto === 0 && pr.sweep === 0) li.push('<li>Your plan has no room for the fund yet. Lower an everyday limit in Plan, then come back and set aside about <b>' + fmt(adv.need90) + ' a month</b> to finish in about 90 days.</li>');
-      h += '<ul class="coach">' + li.join('') + '</ul>';
+      // Lead with a warning if there is one, otherwise the first step the user can act on.
+      var lead = 0, wi = -1, bi = -1; li.forEach(function (x, i) { if (wi < 0 && x.indexOf('<li class="warn"') === 0) wi = i; if (bi < 0 && x.indexOf('<button') > 0) bi = i; });
+      lead = wi >= 0 ? wi : bi >= 0 ? bi : 0; if (lead > 0) li.unshift(li.splice(lead, 1)[0]);
+      h += '<div class="lbl" style="margin-top:14px">Your next step</div><ul class="coach">' + (li[0] || '') + '</ul>' +
+        '<details class="more-steps"><summary>' + (li.length > 1 ? (li.length - 1) + ' more way' + (li.length === 2 ? '' : 's') + ' to get there' : 'How this is calculated') + '</summary>' + fundMeta + (li.length > 1 ? '<ul class="coach">' + li.slice(1).join('') + '</ul>' : '') + '</details>';
     }
     var LD = efLadder(state), ip = investPct(state, V.today);
     h += '<details style="margin-top:12px"><summary>The savings ladder</summary><ul class="list" style="margin-top:6px">' + LD.map(function (r) { var got = pr.saved >= r.target, now = !got && pr.target === r.target; return '<li class="row"><div><div class="nm">' + (got ? '\u2713 ' : '') + esc(r.name) + (now ? '<span class="tag">Current</span>' : '') + '</div><div class="d">' + esc(r.why) + '</div></div><div class="am ' + (got ? 'pos' : '') + '">' + fmt(r.target) + '</div></li>'; }).join('') + '</ul><p class="hint">Essentials are your needs: rent, utilities, insurance, debt payments, groceries, gas. About ' + fmt(essentials(state)) + ' a month for you.</p>' +
@@ -1843,7 +1852,7 @@ function nextTarget(state) {
 
   function secIncome(wiz) {
     return '<section class="card"><h2>' + (wiz ? 'What comes in each month?' : 'Income') + '</h2><p class="sub">' + (who() ? esc(who()) + ', add' : 'Add') + ' every paycheck. Use take-home pay, the amount that lands in your account after taxes.</p>' +
-      recList(function (r) { return r.type === 'in'; }, 'No income added yet.') + chipsHTML('in') + recForm('in') +
+      recList(function (r) { return r.type === 'in'; }, 'No income added yet.') + (wiz ? chipsHTML('in') + recForm('in') : addFold('in', 'Add income', !countRecs(function (r) { return r.type === 'in'; }))) +
       (wiz ? '<div style="margin-top:16px"><label class="f" for="startBal">Balance in your checking account right now</label><input type="text" id="startBal" inputmode="decimal" placeholder="0.00" value="' + (state.anchor.balance ? (state.anchor.balance / 100).toFixed(2) : '') + '"><p class="hint">Check your banking app. This is the starting point for tracking your money.</p></div>' : '') +
       '</section>';
   }
@@ -2097,7 +2106,7 @@ function nextTarget(state) {
   }
   function secBills(wiz) {
     return '<section class="card"><h2>' + (wiz ? 'Bills that come due on a schedule' : 'Bills') + '</h2><p class="sub">Rent, utilities, insurance, loan payments and subscriptions. Tap a quick pick or add your own. These post by themselves on their due date.</p>' +
-      recList(function (r) { return r.type === 'out' && r.cat !== 'Savings'; }, 'No bills added yet.') + chipsHTML('bill') + recForm('bill') + (wiz?'':'<details><summary>Annual bills · paycheck savings plan</summary>'+futureBillsHTML()+'</details>'+subscriptionSummaryHTML()+debtSummaryHTML()) + '</section>'; 
+      recList(function (r) { return r.type === 'out' && r.cat !== 'Savings'; }, 'No bills added yet.') + (wiz ? chipsHTML('bill') + recForm('bill') : addFold('bill', 'Add a bill', !countRecs(function (r) { return r.type === 'out' && r.cat !== 'Savings'; }))) + (wiz?'':'<details><summary>Annual bills · paycheck savings plan</summary>'+futureBillsHTML()+'</details>'+subscriptionSummaryHTML()+debtSummaryHTML()) + '</section>'; 
   }
   function secEvery(wiz) {
     var cats = state.budget.cats;
@@ -2114,7 +2123,7 @@ function nextTarget(state) {
     var t = planTotals(state), ten = Math.round(t.inc * 0.1);
     var ip = investPct(state, todayNum()), gate = ip.stage === 'locked' ? '<p class="hint" style="margin:0 0 8px">Invest in yourself (the 3% rule) unlocks once your emergency fund reaches $1,000. ' + fmt(ip.next) + ' to go.</p>' : ip.stage === 'light' ? '<p class="hint" style="margin:0 0 8px">Invest in yourself is open at 1% for low-cost learning (books, short certifications). The full 3% opens at one month of essentials, ' + fmt(ip.next) + ' to go.</p>' : ip.stage === 'full' ? '<p class="hint" style="margin:0 0 8px">Invest in yourself is open at the full 3%. At $5,000 saved, consider stepping up to 5%.</p>' : '<p class="hint" style="margin:0 0 8px">Invest in yourself is open at 5%.</p>';
     return '<section class="card"><h2>' + (wiz ? 'Pay yourself first' : 'Savings and debt') + '</h2><p class="sub">Money you set aside before everyday spending, such as an emergency fund or extra payments on debt.' + (t.inc ? ' A common starting target is about 10% of take-home, which is ' + fmt(ten) + ' a month for you.' : '') + '</p>' +
-      recList(function (r) { return r.type === 'out' && r.cat === 'Savings'; }, 'Nothing set aside yet. Small deposits count. Piggy banks are not picky.') + (wiz ? efSaveHint() : '') + chipsHTML('save') + gate + recForm('save') + '</section>';
+      recList(function (r) { return r.type === 'out' && r.cat === 'Savings'; }, 'Nothing set aside yet. Small deposits count. Piggy banks are not picky.') + (wiz ? efSaveHint() + chipsHTML('save') + gate + recForm('save') : gate + addFold('save', 'Add savings', !countRecs(function (r) { return r.type === 'out' && r.cat === 'Savings'; }))) + '</section>';
   }
   function secReview(wiz) {
     var t = planTotals(state), inc = Math.max(t.inc, 1);
@@ -2381,19 +2390,19 @@ function nextTarget(state) {
     var v = V, f = v.f, el = $('#sumDyn');
     var d7 = f.days[6], d30 = f.days[29];
     var pillTxt = { ok: 'On track', tight: 'Tight', short: 'Short' }[v.status];
-    var room = Math.max(v.room, 0), cushion = v.buf > 0 ? 'below your ' + fmt(v.buf) + ' cushion' : 'below $0', head;
-    if (v.status === 'short') head = v.room <= 0 ? 'Paychecks and bills alone leave you ' + cushion + ' by ' + dLong(v.firstShort.n) + ', before any everyday spending.' : 'At a pace of ' + fmt(f.est) + ' a day you would go ' + cushion + ' on ' + dLong(v.firstShort.n) + '. Everyday spending needs to average ' + fmt(room) + ' a day or less.';
-    else if (v.status === 'tight') head = 'You make it through the next 30 days with little to spare. Keep everyday spending under ' + fmt(room) + ' a day. Your pace is ' + fmt(f.est) + '.';
-    else head = 'You are covered for the next 30 days. There is room for about ' + fmt(room) + ' a day of everyday spending, and your pace is ' + fmt(f.est) + '.';
-    function delta(c) { var x = c - f.bal0; return '<span class="note ' + (x >= 0 ? 'up' : 'down') + '">' + (x === 0 ? 'No change' : sgn(x) + ' from today') + '</span>'; }
+    var room = Math.max(v.room, 0), cushion = v.buf > 0 ? 'below your ' + fmt(v.buf) + ' cushion' : 'below $0';
+    var head, line;
+    if (v.status === 'short') { head = 'You would go ' + cushion + ' on ' + dLong(v.firstShort.n) + '.'; line = v.room <= 0 ? 'Paychecks and bills alone do this, before any everyday spending.' : 'Keep everyday spending to ' + fmt(room) + ' a day or less. Your pace is ' + fmt(f.est) + '.'; }
+    else if (v.status === 'tight') { head = 'You make it through the next 30 days, with little to spare.'; line = 'Keep everyday spending under ' + fmt(room) + ' a day. Your pace is ' + fmt(f.est) + '.'; }
+    else { head = 'You are covered for the next 30 days.'; line = 'Room for about ' + fmt(room) + ' a day. Your pace is ' + fmt(f.est) + '.'; }
     el.innerHTML =
       '<div class="sum-top"><div><div class="lbl">Balance today</div><div class="big' + (f.bal0 < 0 ? ' neg' : '') + '">' + fmt(f.bal0) + '</div></div><span class="pill ' + v.status + '">' + pillTxt + '</span></div>' +
-      '<p class="headline">' + esc(head) + '</p>' +
-      '<dl class="stats">' +
-      '<div><dt>In 7 days</dt><dd class="' + (d7.bal < 0 ? 'neg' : '') + '">' + fmt(d7.bal) + '</dd>' + delta(d7.bal) + '</div>' +
-      '<div><dt>In 30 days</dt><dd class="' + (d30.bal < 0 ? 'neg' : '') + '">' + fmt(d30.bal) + '</dd>' + delta(d30.bal) + '</div>' +
+      '<p class="headline" style="margin-bottom:4px">' + esc(head) + '</p><p class="hint" style="margin:0 0 12px">' + esc(line) + '</p>' +
+      '<dl class="stats compact">' +
+      '<div><dt>In 7 days</dt><dd class="' + (d7.bal < 0 ? 'neg' : '') + '">' + fmt(d7.bal) + '</dd></div>' +
+      '<div><dt>In 30 days</dt><dd class="' + (d30.bal < 0 ? 'neg' : '') + '">' + fmt(d30.bal) + '</dd></div>' +
       '<div><dt>Lowest point</dt><dd class="' + (v.low.bal < 0 ? 'neg' : '') + '">' + fmt(v.low.bal) + '</dd><span class="note">' + (v.low.i === 0 ? 'Today' : dShort(v.low.n)) + '</span></div></dl>' +
-      (v.f2 ? '<p class="hint">If you hold to your budget (' + fmt(v.bd) + ' a day), you end the 30 days at <b>' + fmt(v.f2.days[29].bal) + '</b>.</p>' : '');
+      (v.f2 ? '<p class="hint" style="margin:0">If you hold to your budget (' + fmt(v.bd) + ' a day), you end the 30 days at <b>' + fmt(v.f2.days[29].bal) + '</b>.</p>' : '');
   }
   function niceTicks(lo, hi) {
     var span = (hi - lo) / 100;
