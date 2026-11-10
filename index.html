@@ -357,7 +357,7 @@ input[type=file] { font-size: 14px; }
 .install .row-a { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 </style>
 <style>html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);-webkit-text-size-adjust:100%}body{margin:0;min-height:100vh;-webkit-tap-highlight-color:transparent}button{-webkit-appearance:none;appearance:none}</style>
-<link rel="stylesheet" href="ui.css?v=63">
+<link rel="stylesheet" href="ui.css?v=64">
 <script src="money-insights.js"></script>
 <script src="money-levels.js"></script>
 </head>
@@ -1136,7 +1136,7 @@ function nextTarget(state) {
     log.forEach(function (l, i) { s.tx.push({ id: 'st' + i, ts: base + i + 1, day: t + l[0], type: 'out', amt: l[3], cat: l[1], note: l[2], by: i % 3 === 1 ? 'Casey' : 'Jordan' }); });
     return s;
   }
-  function valid(s) { return s && s.v === 2 && s.anchor && typeof s.anchor.balance === 'number' && Array.isArray(s.recs) && Array.isArray(s.tx) && s.budget && Array.isArray(s.budget.cats); }
+  function valid(s) { return s && typeof s === 'object' && s.v === 2 && s.anchor && typeof s.anchor === 'object' && typeof s.anchor.balance === 'number' && typeof s.budget === 'object' && Array.isArray(s.recs) && Array.isArray(s.tx) && s.budget && Array.isArray(s.budget.cats); }
   function refreshDemoSubscriptions(s) {
     // Only update the built-in example budget. Never modify a real user budget.
     if(!s || s.sample!==true || !Array.isArray(s.recs))return s;
@@ -1168,7 +1168,67 @@ function nextTarget(state) {
     try { var raw = localStorage.getItem(KEY); if (raw) { var s = JSON.parse(raw); if (valid(s)) return refreshDemoBalance(refreshDemoNetworks(refreshDemoSubscriptions(norm(s)))); } } catch (e) {}
     return makeBlank();
   }
-  function norm(s) { s.profiles=cleanProfiles(s.profiles); if (s.lastImport && typeof s.lastImport === 'object') { if (typeof s.lastImport.head !== 'string') s.lastImport.head = ''; delete s.lastImport.body; if (!Array.isArray(s.lastImport.rows)) s.lastImport.rows = []; } if (!s.paydays) s.paydays = {}; if (s.startDay === undefined) s.startDay = null; if (s.budget && s.budget.done && s.startDay == null) s.startDay = todayNum(); if (!s.remind) s.remind = { recon: '09:00', review: '10:00', added: {} }; if (!s.remind.added) s.remind.added = {}; if (!s.learned) s.learned = {}; if (!s.givePct) s.givePct = 0; if (!s.partner) s.partner = ''; if (!Array.isArray(s.reviews)) s.reviews = []; if (!s.milestones) s.milestones = {}; if (!Array.isArray(s.cancel)) s.cancel = []; if (!s.cancelled) s.cancelled = 0; if (!s.rules) s.rules = {}; if (!Array.isArray(s.inbox)) s.inbox = []; if (!s.imported) s.imported = {}; if (!s.goals) s.goals = { asked: false, picks: [], ef: null }; if (!Array.isArray(s.goals.picks)) s.goals.picks = []; if (!s.budget.months) s.budget.months = {}; if (!s.saved) s.saved = {}; if (!Array.isArray(s.names)) s.names = []; if (!s.deleted) s.deleted = {}; if (!s.updated) s.updated = 0; return s; }
+  /* Trust boundary. Everything that enters the app from storage, a backup file or pasted sync text passes through here.
+     Identifiers and codes must be plain tokens, numbers must be numbers, list rows must be objects.
+     Free text is kept as typed (it is escaped wherever it is shown). */
+  var S_TOKEN = { id: 1, grp: 1, type: 1, freq: 1, kind: 1, start: 1, end: 1, cardNetwork: 1, goal: 1, has: 1, recon: 1, review: 1, picks: 1, backupDest: 1 };
+  var S_NUM = { amt: 1, limit: 1, apr: 1, cardBalance: 1, day: 1, day2: 1, ts: 1, balance: 1, givePct: 1, buffer: 1, cancelled: 1, base: 1, baseDay: 1, baseTs: 1, target: 1, updated: 1, startDay: 1, moneyLevelSeen: 1, moneyXPHigh: 1, lastBackupDay: 1, lastImportDay: 1, lastBalanceMatchDay: 1, step: 1, s: 1 };
+  var S_TEXT = { name: 1, note: 1, cat: 1, by: 1, desc: 1, head: 1, l: 1, r: 1, win: 1, partner: 1, key: 1, title: 1, text: 1, names: 1, rules: 1 };
+  var S_ROWS = { tx: 1, recs: 1, cats: 1, reviews: 1, inbox: 1, cancel: 1, rows: 1 };
+  var S_BADKEY = { '__proto__': 1, 'constructor': 1, 'prototype': 1 };
+  function sanitizeValue(v, key, depth) {
+    if (depth > 8) return null;
+    if (typeof v === 'string') {
+      if (S_NUM[key]) { var n = Number(v); return isFinite(n) && v.trim() !== '' ? n : 0; }
+      if (S_TOKEN[key]) return /^[A-Za-z0-9_.:\-]{1,64}$/.test(v) ? v : '';
+      if (S_TEXT[key]) return v.length > 2000 ? v.slice(0, 2000) : v;
+      return v.replace(/[<>"`]/g, '').slice(0, 2000);
+    }
+    if (typeof v === 'number') return isFinite(v) ? v : 0;
+    if (typeof v === 'boolean' || v == null) return S_TOKEN[key] && v != null ? '' : v;
+    if (Array.isArray(v)) {
+      var arr = v.map(function (x) { return sanitizeValue(x, key, depth + 1); });
+      if (S_ROWS[key]) arr = arr.filter(function (x) { return x && typeof x === 'object' && !Array.isArray(x); });
+      return arr;
+    }
+    if (typeof v === 'object') {
+      if (S_NUM[key] || S_TOKEN[key]) return S_NUM[key] ? 0 : '';
+      var out = {};
+      Object.keys(v).forEach(function (k) { if (S_BADKEY[k] || k.length > 200) return; out[k] = sanitizeValue(v[k], key === 'rules' ? 'rules' : k, depth + 1); });
+      return out;
+    }
+    return null;
+  }
+  function sanitizeState(s) {
+    var profiles = s.profiles;
+    Object.keys(s).forEach(function (k) { if (S_BADKEY[k]) { delete s[k]; return; } if (k !== 'profiles') s[k] = sanitizeValue(s[k], k, 0); });
+    s.profiles = profiles;
+    var iso = /^\d{4}-\d{2}-\d{2}$/;
+    s.tx = s.tx.filter(function (t) { return typeof t.day === 'number' && typeof t.amt === 'number' && t.id; });
+    s.tx.forEach(function (t) { if (t.type !== 'in') t.type = 'out'; if (typeof t.cat !== 'string') t.cat = ''; if (typeof t.note !== 'string') t.note = ''; });
+    s.recs = s.recs.filter(function (r) { return r.id && typeof r.amt === 'number' && typeof r.start === 'string' && iso.test(r.start); });
+    s.recs.forEach(function (r) { if (r.type !== 'in') r.type = 'out'; if (typeof r.name !== 'string' || !r.name) r.name = 'Item'; if (typeof r.cat !== 'string') r.cat = ''; if (!r.freq) r.freq = 'monthly'; });
+    s.budget.cats = s.budget.cats.filter(function (c) { return c.id && typeof c.name === 'string' && c.name; });
+    s.budget.cats.forEach(function (c) { if (typeof c.limit !== 'number') c.limit = 0; });
+    s.budget.done = s.budget.done === true; if (typeof s.budget.step !== 'number' || s.budget.step < -1 || s.budget.step > 6 || s.budget.step % 1) s.budget.step = s.budget.done ? 0 : -1;
+    if (typeof s.anchor.balance !== 'number') s.anchor.balance = 0;
+    if (typeof s.anchor.day !== 'number') s.anchor.day = todayNum();
+    if (typeof s.anchor.ts !== 'number') s.anchor.ts = 0;
+    if (!s.goals || typeof s.goals !== 'object' || Array.isArray(s.goals)) s.goals = { asked: false, picks: [], ef: null };
+    if (!Array.isArray(s.goals.picks)) s.goals.picks = []; s.goals.picks = s.goals.picks.filter(function (k) { return typeof k === 'string' && k; });
+    if (s.goals.ef != null && (typeof s.goals.ef !== 'object' || Array.isArray(s.goals.ef))) s.goals.ef = null;
+    if (!Array.isArray(s.names)) s.names = []; s.names = s.names.filter(function (n) { return typeof n === 'string'; }).slice(0, 2);
+    if (typeof s.partner !== 'string') s.partner = '';
+    s.givePct = typeof s.givePct === 'number' && s.givePct > 0 && s.givePct <= 50 ? s.givePct : 0;
+    ['rules', 'imported', 'saved', 'learned', 'milestones', 'paydays', 'deleted', 'remind'].forEach(function (k) { if (s[k] != null && (typeof s[k] !== 'object' || Array.isArray(s[k]))) delete s[k]; });
+    if (s.budget.months != null && (typeof s.budget.months !== 'object' || Array.isArray(s.budget.months))) s.budget.months = {};
+    if (s.challenge != null && (typeof s.challenge !== 'object' || !s.challenge.id)) s.challenge = null;
+    if (Array.isArray(s.reviews)) s.reviews = s.reviews.filter(function (r) { return typeof r.s === 'number'; });
+    if (Array.isArray(s.cancel)) s.cancel = s.cancel.filter(function (c) { return typeof c.amt === 'number' && typeof c.name === 'string'; });
+    if (Array.isArray(s.inbox)) s.inbox = s.inbox.filter(function (it) { return typeof it.amt === 'number' && typeof it.day === 'number' && typeof it.desc === 'string'; });
+    return s;
+  }
+  function norm(s) { sanitizeState(s); s.profiles=cleanProfiles(s.profiles); if (s.lastImport && typeof s.lastImport === 'object') { if (typeof s.lastImport.head !== 'string') s.lastImport.head = ''; delete s.lastImport.body; if (!Array.isArray(s.lastImport.rows)) s.lastImport.rows = []; } if (!s.paydays) s.paydays = {}; if (s.startDay === undefined) s.startDay = null; if (s.budget && s.budget.done && s.startDay == null) s.startDay = todayNum(); if (!s.remind) s.remind = { recon: '09:00', review: '10:00', added: {} }; if (!s.remind.added) s.remind.added = {}; if (!s.learned) s.learned = {}; if (!s.givePct) s.givePct = 0; if (!s.partner) s.partner = ''; if (!Array.isArray(s.reviews)) s.reviews = []; if (!s.milestones) s.milestones = {}; if (!Array.isArray(s.cancel)) s.cancel = []; if (!s.cancelled) s.cancelled = 0; if (!s.rules) s.rules = {}; if (!Array.isArray(s.inbox)) s.inbox = []; if (!s.imported) s.imported = {}; if (!s.goals) s.goals = { asked: false, picks: [], ef: null }; if (!Array.isArray(s.goals.picks)) s.goals.picks = []; if (!s.budget.months) s.budget.months = {}; if (!s.saved) s.saved = {}; if (!Array.isArray(s.names)) s.names = []; if (!s.deleted) s.deleted = {}; if (!s.updated) s.updated = 0; return s; }
 
   var pendingMoneyLevelUp = null;
   function moneyLevelIcon(name) {
@@ -1594,7 +1654,8 @@ function nextTarget(state) {
   }
   function isEncryptedBackup(o) { return !!(o && o.enc === 1 && o.app === 'take-control' && o.salt && o.iv && o.data); }
   function decryptBackup(o, pw) {
-    return bkKey(pw, unb64(o.salt), o.iter || BK_ITER).then(function (key) { return crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(o.iv) }, key, unb64(o.data)); })
+    var iter = Math.round(Number(o.iter)) || BK_ITER; if (iter < 100000 || iter > 2000000) return Promise.reject(new Error('iter'));
+    return bkKey(pw, unb64(o.salt), iter).then(function (key) { return crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(o.iv) }, key, unb64(o.data)); })
       .then(function (pt) { return new TextDecoder().decode(pt); });
   }
   function bkPassword() { var i = $('#bkPass'); return i && $('#bkProtect') && $('#bkProtect').checked ? i.value : ''; }
@@ -1684,15 +1745,22 @@ function nextTarget(state) {
     };
     rd.readAsText(f);
   }
+  // Apply incoming data, and put the previous budget back if the app cannot draw the result.
+  function applyIncoming(fn) {
+    var prev = JSON.stringify(state);
+    try { fn(); return true; }
+    catch (e) { try { state = norm(JSON.parse(prev)); localStorage.setItem(KEY, prev); loadMe(); render(); } catch (e2) {} return false; }
+  }
   function restoreText(text) {
-    var msg = bkMsgProxy;
-    (function () {
-      try {
-        var inc = JSON.parse(text); if (!valid(inc)) throw new Error('bad');
-        if (state.budget.done) { var n0 = state.tx.length; state = mergeStates(state, norm(inc)); save(); loadMe(); render(); var m = bkMsgProxy; if (m) m.textContent = 'Restored and merged. ' + Math.max(0, state.tx.length - n0) + ' entries added.'; }
-        else { inc.sample = false; state = norm(inc); resetDraft(); loadMe(); save(); setView(state.budget.done ? 'today' : 'plan'); }
-      } catch (e) { if (msg) msg.textContent = 'That file is not a Take Control backup.'; }
-    })();
+    var msg = bkMsgProxy, note = '';
+    var ok = applyIncoming(function () {
+      var inc = JSON.parse(text); if (!valid(inc)) throw new Error('bad');
+      if (state.budget.done) { var n0 = state.tx.length; state = mergeStates(state, norm(inc)); save(); loadMe(); render(); note = 'Restored and merged. ' + Math.max(0, state.tx.length - n0) + ' entries added.'; }
+      else { inc.sample = false; state = norm(inc); resetDraft(); loadMe(); save(); setView(state.budget.done ? 'today' : 'plan'); }
+    });
+    var m = bkMsgProxy;
+    if (!ok) { if (m) m.textContent = 'That file is not a Take Control backup. Your budget was not changed.'; }
+    else if (note && m) m.textContent = note;
   }
   /* ask */
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition, rec = null;
@@ -2035,7 +2103,7 @@ function nextTarget(state) {
   function secEvery(wiz) {
     var cats = state.budget.cats;
     var rows = cats.length ? cats.map(function (c) {
-      return '<div class="catrow"><label for="lim-' + c.id + '">' + esc(c.name) + '<small>' + (c.grp === 'want' ? 'Want' : 'Need') + '</small></label><div class="moneyin"><span aria-hidden="true">$</span><input type="text" id="lim-' + c.id + '" data-limit="' + c.id + '" inputmode="decimal" placeholder="0" value="' + inputVal(c.limit) + '" aria-label="Monthly limit for ' + esc(c.name) + '"></div><button class="mini" type="button" data-act="delcat" data-id="' + c.id + '">Remove</button></div>';
+      return '<div class="catrow"><label for="lim-' + c.id + '">' + esc(c.name) + '<small>' + (c.grp === 'want' ? 'Want' : 'Need') + '</small></label><div class="moneyin"><span aria-hidden="true">$</span><input type="text" id="lim-' + c.id + '" data-limit="' + c.id + '" inputmode="decimal" placeholder="0" value="' + inputVal(c.limit) + '" aria-label="Monthly limit for ' + esc(c.name) + '"></div><button class="mini" type="button" data-act="delcat" data-id="' + esc(c.id) + '">Remove</button></div>';
     }).join('') : '<p class="empty">No categories yet. Add one below.</p>';
     return '<section class="card"><h2>' + (wiz ? 'Set a limit for everyday spending' : 'Everyday spending limits') + '</h2><p class="sub">Groceries, gas, eating out and the rest. Give each a monthly limit. This is the money you will log every day.</p>' +
       '<div>' + rows + '</div><p class="err" id="sugErr"></p>' +
@@ -2260,7 +2328,7 @@ function nextTarget(state) {
   }
   function challengeHTML() {
     var cs = challengeStatus(state, V.today);
-    if (!cs) return '<details style="margin-top:12px"><summary>Pick a challenge</summary><p class="hint" style="margin:6px 0 0">Short, one at a time, with a dollar result at the end.</p><div class="chal">' + CHALLENGES.map(function (c) { return '<button class="chip" type="button" data-act="chalStart" data-id="' + c.id + '"><b>' + esc(c.name) + '</b><br><span class="hint" style="display:inline">' + esc(c.desc) + '</span></button>'; }).join('') + '</div></details>';
+    if (!cs) return '<details style="margin-top:12px"><summary>Pick a challenge</summary><p class="hint" style="margin:6px 0 0">Short, one at a time, with a dollar result at the end.</p><div class="chal">' + CHALLENGES.map(function (c) { return '<button class="chip" type="button" data-act="chalStart" data-id="' + esc(c.id) + '"><b>' + esc(c.name) + '</b><br><span class="hint" style="display:inline">' + esc(c.desc) + '</span></button>'; }).join('') + '</div></details>';
     var d = cs.def, pct = Math.min(100, cs.ok / cs.need * 100);
     var body;
     if (cs.finished) body = cs.won ? '<b>You won ' + esc(d.name) + '.</b> ' + cs.ok + ' of ' + d.days + ' days. ' + (state.milestones.chal ? '' : '') : '<b>' + esc(d.name) + ' is over.</b> ' + cs.ok + ' of ' + cs.need + ' days. Close counts. Pick it again or try another.';
@@ -2892,19 +2960,21 @@ function nextTarget(state) {
       }
       case 'restoreBackup': {
         var m2 = $('#backupMsg');
-        try { var s = JSON.parse($('#backup').value); if (!valid(s)) throw new Error('bad'); s.sample = false; state = norm(s); resetDraft(); loadMe(); save(); setView(state.budget.done ? 'today' : 'plan'); }
-        catch (x) { m2.textContent = 'That text is not a valid backup. Copy the full backup and try again.'; }
+        var okR = applyIncoming(function () { var s = JSON.parse($('#backup').value); if (!valid(s)) throw new Error('bad'); s.sample = false; state = norm(s); resetDraft(); loadMe(); save(); setView(state.budget.done ? 'today' : 'plan'); });
+        if (!okR) { m2 = $('#backupMsg'); if (m2) m2.textContent = 'That text is not a valid backup. Your budget was not changed. Copy the full backup and try again.'; }
         break;
       }
       case 'mergeSync': {
         var m3 = $('#backupMsg');
-        try {
+        var addedN = 0;
+        var okM = applyIncoming(function () {
           var inc = JSON.parse($('#backup').value); if (!valid(inc)) throw new Error('bad');
           var n0 = state.tx.length, merged = mergeStates(state, norm(inc));
-          var added = merged.tx.length - n0;
+          addedN = merged.tx.length - n0;
           state = merged; save(); loadMe(); render();
-          var m4 = $('#backupMsg'); if (m4) m4.textContent = 'Merged. ' + (added > 0 ? added + ' new entr' + (added === 1 ? 'y' : 'ies') + ' added.' : 'Nothing new to add.') + ' Send your data back so the other phone matches.';
-        } catch (x) { m3.textContent = 'That text is not valid sync data. Copy the full text from the other phone and try again.'; }
+        });
+        var m4 = $('#backupMsg');
+        if (m4) m4.textContent = okM ? 'Merged. ' + (addedN > 0 ? addedN + ' new entr' + (addedN === 1 ? 'y' : 'ies') + ' added.' : 'Nothing new to add.') + ' Send your data back so the other phone matches.' : 'That text is not valid sync data. Your budget was not changed. Copy the full text from the other phone and try again.';
         break;
       }
       case 'resetAsk': $('#resetRow').innerHTML = '<button class="btn danger" type="button" data-act="resetYes">Yes, erase everything</button><button class="btn alt" type="button" data-act="resetNo">Cancel</button>'; break;
