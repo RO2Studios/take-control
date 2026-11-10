@@ -712,3 +712,16 @@ body[data-view]:not([data-view="today"]) .sample-note .btn{min-height:36px;font-
 .recap.three>div{grid-template-columns:1fr;padding:10px;}
 .recap.three b{font-size:20px;}
 @media (prefers-reduced-motion:reduce){.fold-btn .plan-chev{transition:none;}}
+
+/* Lead-card trims */
+.stats.compact{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;}
+.stats.compact>div{display:block;padding:10px;}
+.stats.compact dd{font-size:18px;}
+details.more-steps{margin-top:10px;}
+details.more-steps>.coach,details.more-steps>.fund-meta{margin-top:10px;}
+/* Add form behind one button */
+details.add-fold{margin-top:12px;}
+details.add-fold>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;border:1.5px solid var(--accent);border-radius:14px;color:var(--accent);font-weight:700;font-size:16px;}
+details.add-fold>summary::-webkit-details-marker{display:none;}
+details.add-fold[open]>summary{border-color:var(--line);color:var(--ink-2);margin-bottom:12px;}
+details.add-fold>summary:focus-visible{outline:3px solid #15803d;outline-offset:2px;}
