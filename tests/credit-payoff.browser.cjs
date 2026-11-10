@@ -46,6 +46,8 @@ for(const width of [320,375,390,768,1440])test(`credit payoff controls and exist
  if(process.env.CREDIT_PAYOFF_SCREENSHOTS){fs.mkdirSync(process.env.CREDIT_PAYOFF_SCREENSHOTS,{recursive:true});await page.locator('#moneyInsights').screenshot({path:path.join(process.env.CREDIT_PAYOFF_SCREENSHOTS,`credit-${width}.png`)});}
  assert.equal(await page.evaluate(()=>localStorage.getItem('moneyAhead.v2')),before,'what-if controls leave saved budget untouched');
  await page.locator('#tabs [data-view="today"]').click();await page.locator('#subs [data-sub="goals"]').click();
+ assert.equal(await page.locator('#savDyn').isVisible(),false,'secondary Goals cards start collapsed');
+ await page.locator('#savings .fold-btn').click();
  await page.locator('#savSlider').fill('5000');
  const savings=await page.locator('#savDyn').innerText();
  for(const label of ['$50','1 year','3 years','5 years','4%'])assert.ok(savings.includes(label));

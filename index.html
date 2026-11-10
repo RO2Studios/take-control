@@ -357,7 +357,7 @@ input[type=file] { font-size: 14px; }
 .install .row-a { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 </style>
 <style>html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);-webkit-text-size-adjust:100%}body{margin:0;min-height:100vh;-webkit-tap-highlight-color:transparent}button{-webkit-appearance:none;appearance:none}</style>
-<link rel="stylesheet" href="ui.css?v=65">
+<link rel="stylesheet" href="ui.css?v=67">
 <script src="money-insights.js"></script>
 <script src="money-levels.js"></script>
 </head>
@@ -494,13 +494,13 @@ input[type=file] { font-size: 14px; }
           <div id="goalDyn"></div>
         </section>
 
-        <section class="card" id="coach" data-sub="goals" aria-labelledby="coachH">
-          <h2 id="coachH">Coach</h2>
+        <section class="card foldable" id="coach" data-sub="goals" aria-labelledby="coachH">
+          <h2 id="coachH"><button class="fold-btn" type="button" data-act="fold" data-fold="coach" aria-expanded="false"><span>Coach</span><span class="plan-chev" aria-hidden="true">›</span></button></h2>
           <div id="coachDyn"></div>
         </section>
 
-        <section class="card" id="savings" data-sub="goals" aria-labelledby="savH">
-          <h2 id="savH">Where saving takes you</h2>
+        <section class="card foldable" id="savings" data-sub="goals" aria-labelledby="savH">
+          <h2 id="savH"><button class="fold-btn" type="button" data-act="fold" data-fold="savings" aria-expanded="false"><span>Where saving takes you</span><span class="plan-chev" aria-hidden="true">›</span></button></h2>
           <div id="savDyn"></div>
         </section>
 
@@ -532,14 +532,14 @@ input[type=file] { font-size: 14px; }
           <div class="legend" id="chartLegend"></div>
         </section>
 
-        <section class="card" id="upcoming" data-sub="outlook" aria-labelledby="upH">
-          <h2 id="upH">Coming up</h2>
+        <section class="card foldable" id="upcoming" data-sub="outlook" aria-labelledby="upH">
+          <h2 id="upH"><button class="fold-btn" type="button" data-act="fold" data-fold="upcoming" aria-expanded="false"><span>Coming up</span><span class="plan-chev" aria-hidden="true">›</span></button></h2>
           <p class="sub">What lands in the next 30 days, with the projected balance after each.</p>
           <ul class="list scroll" id="upList"></ul>
         </section>
 
-        <section class="card" id="recent" data-sub="outlook" aria-labelledby="recH">
-          <h2 id="recH">Recent entries</h2>
+        <section class="card foldable" id="recent" data-sub="outlook" aria-labelledby="recH">
+          <h2 id="recH"><button class="fold-btn" type="button" data-act="fold" data-fold="recent" aria-expanded="false"><span>Recent entries</span><span class="plan-chev" aria-hidden="true">›</span></button></h2>
           <ul class="list scroll" id="recList"></ul>
         </section>
       </div>
@@ -1259,8 +1259,18 @@ function nextTarget(state) {
   function renderMoneyLevel() {
     var root=$('#moneyLevelRoot');if(!root)return;
     if(!state.budget.done){root.innerHTML='';root.hidden=true;return;}
+    if(cur==='settings'){root.innerHTML='';root.hidden=true;return;}
     root.hidden=false;
     var p=TakeControlLevels.progress(state);
+    if(cur!=='today'){
+      var nx=p.remaining&&p.remaining[0];
+      root.innerHTML='<button class="ml-strip" type="button" data-act="levelOpen" aria-label="Level '+p.level+', '+esc(p.current.name)+', '+p.percent+' percent.'+(nx?' Next: '+esc(nx.title)+'.':'')+' Open your journey">'+
+        '<span class="ml-strip-icon" style="--stage:'+p.current.color+'">'+moneyLevelBadge(p.current.icon)+'</span>'+
+        '<span class="ml-strip-body"><span class="ml-strip-top"><b>Level '+p.level+' · '+p.percent+'%</b><span class="ml-strip-track"><span style="width:'+p.percent+'%"></span></span></span>'+
+        '<span class="ml-strip-next">'+(nx?'Next: <b>'+esc(nx.title)+'</b>':'Top level reached. Keep the habits going.')+'</span></span>'+
+        '<span class="plan-chev" aria-hidden="true">›</span></button>';
+      return;
+    }
     var expanded=false;try{expanded=localStorage.getItem('moneyAhead.levelExpanded')==='1';}catch(e){}
     var missions=p.remaining;
     root.innerHTML='<section class="money-level card" aria-label="Money level and milestones"><details id="moneyLevelDetails"'+(expanded?' open':'')+'>'+
@@ -1339,6 +1349,7 @@ function nextTarget(state) {
   function setView(v) {
     if (!state.budget.done) v = 'plan';
     if (v !== cur) openLesson = null;
+    planSec = null;
     cur = v;
     document.body.classList.add('compact');
     document.body.setAttribute('data-view', v);
@@ -1424,7 +1435,7 @@ function nextTarget(state) {
       '<div class="legend">' + (t.give ? '<span><i style="background:var(--c-give)"></i>Giving</span>' : '') + '<span><i style="background:var(--c-bill)"></i>Bills</span><span><i style="background:var(--c-save)"></i>Savings</span><span><i style="background:var(--c-every)"></i>Everyday</span></div>' +
       '<div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center"><span class="hint" style="margin:0">Monthly, based on an average month</span>' + pill + '</div></div>';
   }
-  function updatePlanTotals() { var el = $('#planTotals'); if (el) el.outerHTML = totalsHTML(); }
+  function updatePlanTotals() { var el = $('#planTotals'); if (el) el.outerHTML = totalsHTML(); var pl = $('#planLeft'); if (pl) pl.innerHTML = planPillHTML(); }
 
 
   /* ---------- GOALS ---------- */
@@ -2201,10 +2212,53 @@ function nextTarget(state) {
     var nav = '<div class="wiz-nav"><button class="btn alt" type="button" data-act="back"' + (i === 0 ? ' disabled' : '') + '>Back</button><button class="btn" type="button" data-act="next">' + (last ? 'Start tracking' : 'Next: ' + STEPS[i + 1]) + '</button></div><p class="err" id="wizErr" role="alert">' + esc(wizNote) + '</p>';
     return prog + (i > 1 ? '<section class="card" style="padding:14px">' + totalsHTML() + '</section>' : '') + body + nav;
   }
-  function editHTML() {
+  /* Collapsible cards: secondary sections stay on the page, closed until tapped. */
+  var foldOpen = {};
+  function foldBtn(key, title, open) { return '<button class="fold-btn" type="button" data-act="fold" data-fold="' + key + '" aria-expanded="' + (open ? 'true' : 'false') + '"><span>' + title + '</span><span class="plan-chev" aria-hidden="true">›</span></button>'; }
+  function foldCard(id, key, title, body, defOpen) {
+    var open = foldOpen[key] != null ? foldOpen[key] : !!defOpen;
+    return '<section class="card foldable' + (open ? ' open' : '') + '" id="' + id + '"><h2>' + foldBtn(key, title, open) + '</h2><div class="fold-body">' + body + '</div></section>';
+  }
+  /* Plan is a one-screen summary. Each part opens on its own short page; "everything on one page" is one tap away. */
+  var planSec = null;
+  var PLAN_SECS = { income: ['Income', secIncome], giving: ['Giving', secGiving], bills: ['Bills', secBills], savings: ['Savings', secSavings], every: ['Everyday spending', secEvery], goals: ['Your goals', secGoals], review: ['How your plan adds up', secReview] };
+  function planPillHTML() {
+    var t = planTotals(state);
+    return t.inc === 0 ? '' : t.left === 0 ? '<span class="pill ok">Every dollar has a job</span>' : t.left > 0 ? '<span class="pill tight">' + fmt(t.left) + ' left to assign</span>' : '<span class="pill short">Over by ' + fmt(-t.left) + '</span>';
+  }
+  function planLeftHTML() { return '<div class="plan-left" id="planLeft">' + planPillHTML() + '</div>'; }
+  function planHomeHTML() {
+    var t = planTotals(state), inc = Math.max(t.inc, 1), n = function (f) { return state.recs.filter(f).length; };
+    var nIn = n(function (r) { return r.type === 'in'; }), nBill = n(function (r) { return r.type === 'out' && r.cat !== 'Savings' && r.cat !== 'Giving'; }), nSave = n(function (r) { return r.type === 'out' && r.cat === 'Savings'; }), nCat = state.budget.cats.length;
+    var plural = function (k, one, many) { return k + ' ' + (k === 1 ? one : many); };
+    var w = function (x) { return Math.max(0, Math.min(100, x / inc * 100)).toFixed(1) + '%'; };
+    var row = function (key, cls, name, sub, amt) {
+      return '<button class="plan-row" type="button" data-act="planSec" data-sec="' + key + '"><i class="' + cls + '" aria-hidden="true"></i><span class="plan-row-text"><b>' + name + '</b><small>' + esc(sub) + '</small></span><span class="plan-row-amt">' + fmt(amt) + '</span><span class="plan-chev" aria-hidden="true">›</span></button>';
+    };
+    var more = function (key, label) { return '<button class="plan-more" type="button" data-act="planSec" data-sec="' + key + '"><span>' + label + '</span><span class="plan-chev" aria-hidden="true">›</span></button>'; };
+    return '<section class="card plan-home"><h2>Your budget</h2><p class="sub">Five parts, monthly. Tap one to change it.</p>' +
+      '<div class="plan-rows">' +
+      row('income', 'p-inc', 'Income', nIn ? plural(nIn, 'paycheck', 'paychecks') : 'Add your take-home pay', t.inc) +
+      row('giving', 'p-give', 'Giving', state.givePct ? state.givePct + '% of each paycheck' : (t.give ? 'Set amounts' : 'Not set'), t.give) +
+      row('bills', 'p-bill', 'Bills', nBill ? plural(nBill, 'bill or subscription', 'bills and subscriptions') : 'Nothing added yet', t.fixed) +
+      row('savings', 'p-save', 'Savings', nSave ? plural(nSave, 'deposit', 'deposits') + ' each month' : 'Nothing set aside yet', t.save) +
+      row('every', 'p-every', 'Everyday spending', nCat ? plural(nCat, 'category', 'categories') : 'No categories yet', t.every) +
+      '</div>' +
+      '<div class="stackbar' + (t.left < 0 ? ' over' : '') + '" role="img" aria-label="How take-home pay is assigned"><i class="s-give" style="width:' + w(t.give) + '"></i><i class="s-bill" style="width:' + w(t.fixed) + '"></i><i class="s-save" style="width:' + w(t.save) + '"></i><i class="s-every" style="width:' + w(t.every) + '"></i></div>' +
+      planLeftHTML() + '</section>' +
+      '<section class="card plan-tools"><p class="lbl">More tools</p>' + more('goals', 'Your goals') + more('review', 'Compare with 50/30/20') + '</section>' +
+      '<p class="plan-all"><button class="link" type="button" data-act="planSec" data-sec="all">Show everything on one page</button></p>';
+  }
+  function planAllHTML() {
     return '<section class="card"><h2>Your budget</h2><p class="sub">Change anything here and it applies from now on. Next month\'s limits can also be set in the monthly check-in.</p>' + totalsHTML() + '</section>' +
-      secReview(false) + secGoals(false) + secIncome(false) + secGiving(false) + secBills(false) + secEvery(false) + secSavings(false) +
-      '<section class="card" id="settingsLink"><p class="hint" style="margin:0">Profile picture, names, reminders, backup and sync moved to <button class="link" type="button" data-act="openSettings" style="padding:0;min-height:0">Settings</button>, behind your picture at the top.</p></section>';
+      secReview(false) + secGoals(false) + secIncome(false) + secGiving(false) + secBills(false) + secEvery(false) + secSavings(false);
+  }
+  function editHTML() {
+    var back = '<button class="back-link" type="button" data-act="planSec" data-sec="">← Your budget</button>';
+    var foot = '<section class="card" id="settingsLink"><p class="hint" style="margin:0">Profile picture, names, reminders, backup and sync are in <button class="link" type="button" data-act="openSettings" style="padding:0;min-height:0">Settings</button>, behind your picture at the top.</p></section>';
+    if (planSec === 'all') return back + planAllHTML() + foot;
+    if (planSec && PLAN_SECS[planSec]) return back + planLeftHTML() + PLAN_SECS[planSec][1](false) + '<p class="plan-all"><button class="btn alt" type="button" data-act="planSec" data-sec="">Done</button></p>';
+    return planHomeHTML() + foot;
   }
   function renderSettings() {
     var root = $('#settingsRoot'); if (!root) return;
@@ -2456,11 +2510,11 @@ function nextTarget(state) {
     state.budget.cats.forEach(function (c) { var d = (m0.spent[c.id] || 0) - (m1.spent[c.id] || 0); if (m0.spent[c.id] > 0 && d > 0 && (!best || d > best.d)) best = { c: c, d: d }; });
     var under = 0; for (var n = pr[0]; n <= pr[1]; n++) if (spentOn(state, n) <= allowanceOn(state, n)) under += 1;
     var habit = best ? '<b>' + esc(best.c.name) + '</b><small>down ' + fmt(best.d) + ' vs ' + monthName(ppk) + '</small>' : '<b>' + under + ' days</b><small>under allowance</small>';
-    return '<section class="card" id="recap" style="margin-bottom:16px"><h2>' + monthName(pk) + ' in three numbers</h2><div class="recap">' +
+    return foldCard('recap', 'recap', esc(monthName(pk)) + ' in three numbers', '<div class="recap">' +
       '<div><span class="lbl">Spent vs plan</span><b class="' + (diff >= 0 ? 'pos' : 'neg') + '">' + (diff >= 0 ? fmt(diff) + ' under' : fmt(-diff) + ' over') + '</b><small>' + fmt(m1.totalSpent) + ' of ' + fmt(m1.totalLimit) + '</small></div>' +
       '<div><span class="lbl">Fund</span>' + (ef == null ? '<b>—</b><small>no goal set</small>' : '<b class="pos">' + (ef >= 0 ? '+' : '') + fmt(ef) + '</b><small>' + fmt(efSaved(state, pr[1])) + ' total</small>') + '</div>' +
       '<div><span class="lbl">One habit</span>' + habit + '</div></div>' +
-      '<p class="hint" style="margin:6px 0 0">' + (diff >= 0 ? (who() ? esc(who()) + ', that' : 'That') + ' is a month that worked. Same plan again.' : 'Over by ' + fmt(-diff) + '. Not a failure, a number. Lower one limit or raise one line, then move on.') + '</p></section>';
+      '<p class="hint" style="margin:6px 0 0">' + (diff >= 0 ? (who() ? esc(who()) + ', that' : 'That') + ' is a month that worked. Same plan again.' : 'Over by ' + fmt(-diff) + '. Not a failure, a number. Lower one limit or raise one line, then move on.') + '</p>', false);
   }
   function renderMonth() {
     var today = V.today, curKey = mkey(today), key = addMonth(curKey, monthOffset), bnd = monthBounds();
@@ -2472,12 +2526,12 @@ function nextTarget(state) {
 
     // summary
     var inc3 = ms.sch.inc ? ms.sch.bills.length : 0;
-    var sum = '<section class="card" id="msum"><h2>The plan for ' + monthName(key) + '</h2>' +
+    var sum = foldCard('msum', 'msum', 'The plan for ' + esc(monthName(key)),
       '<div class="mo"><div class="k-inc"><span class="lbl">Income</span><b class="pos">' + fmt(ms.income) + '</b></div><div class="k-bill"><span class="lbl">Bills</span><b>' + fmt(ms.sch.fixed) + '</b></div>' + (ms.sch.give ? '<div class="k-give"><span class="lbl">Giving</span><b>' + fmt(ms.sch.give) + '</b></div>' : '') + '<div class="k-save"><span class="lbl">Savings</span><b>' + fmt(ms.sch.save) + '</b></div><div class="k-every"><span class="lbl">Everyday limits</span><b>' + fmt(ms.totalLimit) + '</b></div></div>' +
       '<p class="headline" style="font-size:15px;margin-bottom:6px">' + (left === 0 ? (who() ? esc(who()) + ', every' : 'Every') + ' dollar has a job this month.' : left > 0 ? fmt(left) + ' of this month\'s income has no job yet. Raise a limit or add it to savings.' : 'This month plans to spend ' + fmt(-left) + ' more than comes in.') + '</p>' +
       (ms.income !== planTotals(state).inc ? '<p class="hint">This month has ' + (ms.income > planTotals(state).inc ? 'more' : 'less') + ' income than an average month because of how paydays fall.</p>' : '') +
       (isFuture ? '' : '<div style="margin-top:12px"><span class="lbl">Everyday spending so far</span><div class="bar-top" style="margin-top:4px"><span><b>' + fmt(ms.totalSpent) + '</b> of ' + fmt(ms.totalLimit) + '</span><span class="' + (ms.totalSpent > ms.totalLimit ? 'neg' : 'pos') + '"><b>' + (ms.totalSpent > ms.totalLimit ? fmt(ms.totalSpent - ms.totalLimit) + ' over' : fmt(ms.totalLimit - ms.totalSpent) + ' left') + '</b></span></div>' +
-      '<div class="bar"><i class="' + (ms.totalSpent > ms.totalLimit ? 'over' : '') + '" style="width:' + (ms.totalLimit ? Math.min(100, ms.totalSpent / ms.totalLimit * 100) : 0).toFixed(1) + '%"></i>' + (isCur ? '<u style="left:' + (dayFrac * 100).toFixed(1) + '%"></u>' : '') + '</div>' + (isCur ? '<p class="bar-note">The line marks how far through the month you are.</p>' : '') + '</div>') + '</section>';
+      '<div class="bar"><i class="' + (ms.totalSpent > ms.totalLimit ? 'over' : '') + '" style="width:' + (ms.totalLimit ? Math.min(100, ms.totalSpent / ms.totalLimit * 100) : 0).toFixed(1) + '%"></i>' + (isCur ? '<u style="left:' + (dayFrac * 100).toFixed(1) + '%"></u>' : '') + '</div>' + (isCur ? '<p class="bar-note">The line marks how far through the month you are.</p>' : '') + '</div>'), isFuture);
 
     // categories
     var bars = cats.map(function (c) {
@@ -2487,14 +2541,14 @@ function nextTarget(state) {
       return '<div><div class="bar-top"><span>' + esc(c.name) + '</span><span><b>' + fmt(sp) + '</b> of ' + fmt(lim) + '</span></div><div class="bar"><i class="' + st + '" style="width:' + Math.min(100, p * 100).toFixed(1) + '%"></i>' + (isCur && lim ? '<u style="left:' + (dayFrac * 100).toFixed(1) + '%"></u>' : '') + '</div><div class="bar-note ' + (st === 'over' ? 'neg' : '') + '">' + (isFuture ? 'Limit for the month' : note) + '</div></div>';
     });
     if (ms.unb > 0) bars.push('<div><div class="bar-top"><span>Not in the budget</span><span><b>' + fmt(ms.unb) + '</b></span></div><div class="bar-note">Entries in categories you removed.</div></div>');
-    var catCard = '<section class="card" id="mcats"><h2>Everyday spending by category</h2>' + (bars.length ? '<div class="bars">' + bars.join('') + '</div>' : '<p class="empty">No categories yet. Add them in Plan.</p>') + '</section>';
+    var catCard = foldCard('mcats', 'mcats', 'Everyday spending by category', bars.length ? '<div class="bars">' + bars.join('') + '</div>' : '<p class="empty">No categories yet. Add them in Plan.</p>', false);
 
     // bills
     var bl = ms.sch.bills.sort(function (a, b) { return a.n - b.n; });
-    var billCard = '<section class="card" id="mbills"><h2>Bills and savings</h2>' + (bl.length ? '<ul class="list">' + bl.map(function (b) {
+    var billCard = foldCard('mbills', 'mbills', 'Bills and savings', (bl.length ? '<ul class="list">' + bl.map(function (b) {
       var paid = b.n <= today;
       return '<li class="row"><div><div class="nm">' + esc(b.rc.name) + (isFuture ? '' : '<span class="tag ' + (paid ? 'paid' : '') + '">' + (paid ? (b.n === today ? 'Due today' : 'Paid') : 'In ' + (b.n - today) + ' day' + (b.n - today === 1 ? '' : 's')) + '</span>') + '</div><div class="d">' + dLong(b.n) + ' · ' + esc(b.rc.cat || '') + '</div></div><div class="am">' + fmtC(b.rc.amt) + '</div></li>';
-    }).join('') + '</ul>' : '<p class="empty">No bills fall in this month.</p>') + '</section>';
+    }).join('') + '</ul>' : '<p class="empty">No bills fall in this month.</p>'), false);
 
     // check-in (current month only)
     var check = '';
@@ -2510,14 +2564,29 @@ function nextTarget(state) {
         var nl = limitFor(state, c, nextKey);
         return '<div class="catrow"><label for="nl-' + c.id + '">' + esc(c.name) + '<small>This month ' + fmt(ms.spent[c.id]) + ' of ' + fmt(ms.lim[c.id]) + '</small></label><div class="moneyin"><span aria-hidden="true">$</span><input type="text" id="nl-' + c.id + '" data-nl="' + c.id + '" inputmode="decimal" value="' + inputVal(nl) + '" aria-label="' + esc(monthName(nextKey)) + ' limit for ' + esc(c.name) + '"></div><span></span></div>';
       }).join('');
-      check = '<section class="card" id="mcheck"><h2>Monthly check-in</h2><p class="sub">' + (lastDays <= 7 ? 'The month is almost over. ' : '') + (who() ? esc(who()) + ', do' : 'Do') + ' these three steps once a month, ideally in the last week.</p>' +
+      check = foldCard('mcheck', 'mcheck', 'Monthly check-in', '<p class="sub">' + (lastDays <= 7 ? 'The month is almost over. ' : '') + (who() ? esc(who()) + ', do' : 'Do') + ' these three steps once a month, ideally in the last week.</p>' +
         '<ol class="todo"><li><b>Match your bank balance.</b> ' + (fresh ? '<span class="tag paid">Done this week</span>' : '<span class="tag">Not done this week</span>') + '<div class="hint">Log any missing purchases, then enter what your bank shows so the numbers stay honest.</div><button class="link" type="button" data-act="gomatch">Match my balance now</button></li>' +
         '<li><b>See what went over.</b>' + (over.length ? '<ul>' + over.map(function (c) { return '<li>' + esc(c.name) + ' is ' + fmt(ms.spent[c.id] - ms.lim[c.id]) + ' over its limit.</li>'; }).join('') + '</ul>' : '<div class="hint">Nothing is over its limit right now.</div>') + (unspent > 0 && lastDays <= 7 ? '<div class="hint">' + fmt(unspent) + ' is unspent across categories. Moving it to savings is a strong way to use it.</div>' + (efLeft > 0 && Math.min(unspent, efLeft) >= 500 ? '<button class="link" type="button" data-act="efadd" data-amt="' + Math.min(unspent, efLeft) + '">I moved ' + fmt(floor5(Math.min(unspent, efLeft))) + ' to my emergency fund</button>' : '') : '') + '</li>' +
         '<li><b>Plan ' + esc(monthName(nextKey)) + '.</b><div class="hint">Next month brings in ' + fmt(ns.income) + ' with ' + fmt(ns.sch.fixed) + ' in bills' + (ns.sch.give ? ', ' + fmt(ns.sch.give) + ' in giving' : '') + ' and ' + fmt(ns.sch.save) + ' in savings. Set each everyday limit to use what is left.</div>' +
-        '<form class="stack" data-form="next" data-key="' + nextKey + '" autocomplete="off"><div>' + rows + '</div><div class="totals" id="nextTotals"></div><button class="btn" type="submit">Save ' + esc(monthName(nextKey)) + ' plan</button><p class="hint" id="nextMsg" role="status">' + (state.saved[nextKey] ? esc(monthName(nextKey)) + ' plan saved. It starts on the 1st.' : '') + '</p></form></li></ol></section>';
+        '<form class="stack" data-form="next" data-key="' + nextKey + '" autocomplete="off"><div>' + rows + '</div><div class="totals" id="nextTotals"></div><button class="btn" type="submit">Save ' + esc(monthName(nextKey)) + ' plan</button><p class="hint" id="nextMsg" role="status">' + (state.saved[nextKey] ? esc(monthName(nextKey)) + ' plan saved. It starts on the 1st.' : '') + '</p></form></li></ol>', lastDays <= 7);
     }
     var root = $('#monthRoot');
-    root.innerHTML = nav + (isCur ? recapHTML(curKey) : '') + '<div class="grid' + (check ? '' : ' no-check') + '" id="monthGrid">' + sum + check + catCard + billCard + '</div>';
+    // this month so far: what came in, what went out, what is left
+    var soFar = '';
+    if (!isFuture) {
+      var upto = Math.min(today, ms.r[1]), incSoFar = 0, outSoFar = ms.totalSpent;
+      for (var dn = ms.r[0]; dn <= upto; dn++) state.recs.forEach(function (rc) { if (rc.type === 'in' && hits(rc, dn, true)) incSoFar += rc.amt; });
+      state.tx.forEach(function (t) { if (!t.goal && t.type === 'in' && t.day >= ms.r[0] && t.day <= upto) incSoFar += t.amt; });
+      ms.sch.bills.forEach(function (b) { if (b.n <= upto) outSoFar += b.rc.amt; });
+      var remain = incSoFar - outSoFar, daysLeft = ms.r[1] - today;
+      var pace = !isCur ? '' : ms.totalSpent > ms.totalLimit ? 'Everyday spending is over its limit.' : ms.totalSpent > ms.totalLimit * dayFrac + ms.totalLimit * 0.1 ? 'Everyday spending is running ahead of the month.' : 'Everyday spending is on plan.';
+      soFar = '<section class="card" id="msofar"><h2>' + (isCur ? 'This month so far' : esc(monthName(key)) + ' totals') + '</h2><div class="recap three">' +
+        '<div><span class="lbl">Income</span><b class="pos">' + fmt(incSoFar) + '</b></div>' +
+        '<div><span class="lbl">Spent</span><b>' + fmt(outSoFar) + '</b></div>' +
+        '<div><span class="lbl">Remaining</span><b class="' + (remain >= 0 ? 'pos' : 'neg') + '">' + (remain < 0 ? '−' : '') + fmt(Math.abs(remain)) + '</b></div></div>' +
+        '<p class="hint" style="margin:6px 0 0">' + (isCur ? pace + ' ' + daysLeft + ' day' + (daysLeft === 1 ? '' : 's') + ' to go. ' : '') + 'Spent counts bills, giving, savings and everyday spending.</p></section>';
+    }
+    root.innerHTML = nav + soFar + '<div class="grid' + (check ? '' : ' no-check') + '" id="monthGrid">' + sum + check + catCard + billCard + '</div>' + (isCur ? recapHTML(curKey) : '');
     if (check) updateNextTotals();
   }
   function updateNextTotals() {
@@ -2964,6 +3033,9 @@ function nextTarget(state) {
         if (m4) m4.textContent = okM ? 'Merged. ' + (addedN > 0 ? addedN + ' new entr' + (addedN === 1 ? 'y' : 'ies') + ' added.' : 'Nothing new to add.') + ' Send your data back so the other phone matches.' : 'That text is not valid sync data. Your budget was not changed. Copy the full text from the other phone and try again.';
         break;
       }
+      case 'fold': { var fk = b.getAttribute('data-fold'), fc = b.closest('.foldable'); if (fc) { var fo = !fc.classList.contains('open'); fc.classList.toggle('open', fo); b.setAttribute('aria-expanded', fo ? 'true' : 'false'); foldOpen[fk] = fo; if (fo && fk === 'chart') renderChart(); } break; }
+      case 'planSec': planSec = b.getAttribute('data-sec') || null; renderPlan(); window.scrollTo({ top: 0 }); break;
+      case 'levelOpen': try { localStorage.setItem('moneyAhead.levelExpanded', '1'); } catch (e) {} setView('today'); break;
       case 'resetAsk': $('#resetRow').innerHTML = '<button class="btn danger" type="button" data-act="resetYes">Yes, erase everything</button><button class="btn alt" type="button" data-act="resetNo">Cancel</button>'; break;
       case 'resetNo': $('#resetRow').innerHTML = '<button class="btn alt" type="button" data-act="resetAsk">Erase everything</button>'; break;
       case 'resetYes': state = makeBlank(); resetDraft(); meIdx = null; save(); wizNote = ''; monthOffset = 0; lastDone = false; setView('plan'); break;
