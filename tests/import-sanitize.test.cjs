@@ -68,7 +68,7 @@ test('calendar text cannot carry raw line breaks or control characters into the 
   const src = html.slice(html.indexOf('function icsText(x)'), html.indexOf('\n', html.indexOf('function icsText(x)')));
   const sb = {}; vm.createContext(sb); vm.runInContext(src, sb);
   const out = sb.icsText('Rent\r\nBEGIN:VALARM\rX\u0000;a,b');
-  assert.ok(!/[\r\n\u0000]/.test(out)); assert.equal(out, 'Rent\\nBEGIN:VALARM\\nX\;a\\,b');
+  const B = String.fromCharCode(92); assert.ok(!/[\r\n\u0000]/.test(out)); assert.equal(out, ['Rent', 'nBEGIN:VALARM', 'nX', ';a', ',b'].join(B));
 });
 
 test('follow-ups: saved password is cleared, voice code is gone, CI actions are pinned to commits', () => {
