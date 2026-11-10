@@ -357,7 +357,7 @@ input[type=file] { font-size: 14px; }
 .install .row-a { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 </style>
 <style>html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);-webkit-text-size-adjust:100%}body{margin:0;min-height:100vh;-webkit-tap-highlight-color:transparent}button{-webkit-appearance:none;appearance:none}</style>
-<link rel="stylesheet" href="ui.css?v=64">
+<link rel="stylesheet" href="ui.css?v=65">
 <script src="money-insights.js"></script>
 <script src="money-levels.js"></script>
 </head>
@@ -1697,7 +1697,7 @@ function nextTarget(state) {
     var where = dest === 'drive' ? 'Google Drive' : dest === 'pc' ? 'this computer' : 'Files';
     var sheetHint = dest === 'drive' ? 'In the sheet that opens, tap Drive (or Save to Files, then Google Drive).' : 'In the sheet that opens, tap Save to Files, then pick iCloud Drive or On My iPhone.';
     var blob = new Blob([json], { type: 'application/json' });
-    var done = function () { state.lastBackupDay = todayNum(); save(); if (msg) msg.textContent = (who() ? who() + ', backup' : 'Backup') + (locked ? ' saved to ' + where + ', locked with your password.' : ' saved to ' + where + '.') + (dest === 'pc' ? '' : ' Same place next time and you will always have one tidy folder.'); };
+    var done = function () { if (locked) { var pwf = $('#bkPass'); if (pwf) { pwf.value = ''; pwf.type = 'password'; } } state.lastBackupDay = todayNum(); save(); if (msg) msg.textContent = (who() ? who() + ', backup' : 'Backup') + (locked ? ' saved to ' + where + ', locked with your password.' : ' saved to ' + where + '.') + (dest === 'pc' ? '' : ' Same place next time and you will always have one tidy folder.'); };
     var download = function (note) { var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 2000); done(); if (msg && note) msg.textContent = note; };
     // 1. Desktop browsers with a real save dialog (Chrome, Edge): the user picks the folder, including a Google Drive or iCloud folder.
     if (dest === 'pc' && window.showSaveFilePicker) {
@@ -1763,7 +1763,6 @@ function nextTarget(state) {
     else if (note && m) m.textContent = note;
   }
   /* ask */
-  var SR = window.SpeechRecognition || window.webkitSpeechRecognition, rec = null;
   function speak(txt) {
     return;
     try { speechSynthesis.cancel(); var u = new SpeechSynthesisUtterance(txt.replace(/−/g, 'minus ')); u.rate = 1.02; speechSynthesis.speak(u); } catch (e) {}
@@ -1824,17 +1823,6 @@ function nextTarget(state) {
     var pr = state.goals.ef ? efProject(state, V.today) : null;
     var t = 'Here is where you stand, ' + me + '. You have ' + fmt(Math.max(dp.left, 0)) + ' left for today and ' + fmt(Math.max(dp.remaining, 0)) + ' left in everyday spending for the month. Your balance is ' + fmt(V.f.bal0) + ', heading to ' + fmt(V.f.days[29].bal) + ' in 30 days. ' + (warn ? warn.text + ' ' : 'Every category is on pace. ') + (pr ? (pr.remaining > 0 ? 'Your emergency fund is at ' + fmt(pr.saved) + (pr.eta != null ? ', on track for ' + dFull(pr.eta) + '.' : '.') : 'Your emergency fund is full.') : '');
     out.innerHTML = '<div class="say">' + esc(t) + '</div>'; speak(t);
-  }
-  function toggleMic() {
-    var b = $('#micBtn');
-    if (rec) { try { rec.stop(); } catch (e) {} rec = null; b.classList.remove('on'); b.textContent = 'Talk'; return; }
-    try {
-      rec = new SR(); rec.lang = 'en-US'; rec.interimResults = false; rec.maxAlternatives = 1;
-      rec.onresult = function (e) { var q = e.results[0][0].transcript; $('#askQ').value = q; answerAsk(q); };
-      rec.onerror = function (e) { $('#askOut').innerHTML = '<div class="say">I could not hear that' + (e.error === 'not-allowed' ? '. Allow the microphone in your browser settings, or type the question.' : '. Try again or type it.') + '</div>'; };
-      rec.onend = function () { rec = null; b.classList.remove('on'); b.textContent = 'Talk'; };
-      rec.start(); b.classList.add('on'); b.textContent = 'Stop';
-    } catch (e) { rec = null; $('#askOut').innerHTML = '<div class="say">Voice is not available here. Type the question instead.</div>'; }
   }
   function ringSVG(pct, size) {
     var r = (size - 12) / 2, c = 2 * Math.PI * r, off = c * (1 - Math.max(0, Math.min(1, pct)));
@@ -2544,7 +2532,7 @@ function nextTarget(state) {
 
   /* ---------- CALENDAR ---------- */
   function icsDate(n, hm) { var p = parts(n), t = (hm || '09:00').split(':'); return p.y + String(p.m + 1).padStart(2, '0') + String(p.d).padStart(2, '0') + 'T' + String(t[0]).padStart(2, '0') + String(t[1]).padStart(2, '0') + '00'; }
-  function icsText(x) { return String(x).replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/,/g, '\\,').replace(/;/g, '\;'); }
+  function icsText(x) { return String(x).replace(/\r\n?/g, '\n').replace(/[\u0000-\u0009\u000b-\u001f\u007f]/g, '').replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/,/g, '\\,').replace(/;/g, '\\;'); }
   function nextDow(from, dow) { var d = new Date(from * DAY).getUTCDay(); return from + ((dow - d + 7) % 7); }
   function buildICS(ev) {
     var end = ev.start.replace(/T(\d\d)(\d\d)00$/, function (m, h, mi) { var mins = parseInt(h, 10) * 60 + parseInt(mi, 10) + (ev.mins || 30); return 'T' + String(Math.floor(mins / 60) % 24).padStart(2, '0') + String(mins % 60).padStart(2, '0') + '00'; });
@@ -2900,7 +2888,6 @@ function nextTarget(state) {
       case 'lessonShare': shareLesson(LESSONS.find(function (x) { return x.id === b.getAttribute('data-id'); })); break;
       case 'lessonClose': openLesson = null; if (cur === 'learn') $('#learnRoot').innerHTML = learnHTML(); else if (cur === 'plan') renderPlan(); else renderCoach(); break;
       case 'lessonGo': { openLesson = null; var vv = b.getAttribute('data-view'), ss = b.getAttribute('data-sub'); if (state.budget.done) { setView(vv); if (ss) setSub(ss); } else renderPlan(); break; }
-      case 'mic': toggleMic(); break;
       case 'shareWeek': { var ws3 = weekOf(V.today); shareWeek(weekGraphicSVG(ws3, weekStats(state, ws3, V.today), true), ws3); break; }
       case 'kept': { var rv = state.reviews.find(function (r) { return r.s === parseInt(b.getAttribute('data-s'), 10); }); if (rv) { rv.kept = b.getAttribute('data-v') === '1'; save(); renderReview(); } break; }
       case 'chalStart': state.challenge = { id: b.getAttribute('data-id'), start: todayNum() }; save(); render(); break;

@@ -63,3 +63,17 @@ test('restore rolls back on failure and a locked backup cannot demand an abusive
   assert.match(html, /iter < 100000 \|\| iter > 2000000/);
   assert.match(html, /function norm\(s\) \{ sanitizeState\(s\);/);
 });
+
+test('calendar text cannot carry raw line breaks or control characters into the .ics file', () => {
+  const src = html.slice(html.indexOf('function icsText(x)'), html.indexOf('\n', html.indexOf('function icsText(x)')));
+  const sb = {}; vm.createContext(sb); vm.runInContext(src, sb);
+  const out = sb.icsText('Rent\r\nBEGIN:VALARM\rX\u0000;a,b');
+  assert.ok(!/[\r\n\u0000]/.test(out)); assert.equal(out, 'Rent\\nBEGIN:VALARM\\nX\;a\\,b');
+});
+
+test('follow-ups: saved password is cleared, voice code is gone, CI actions are pinned to commits', () => {
+  assert.match(html, /if \(locked\) \{ var pwf = \$\('#bkPass'\); if \(pwf\) \{ pwf\.value = '';/);
+  assert.ok(!html.includes('SpeechRecognition'));
+  const wf = fs.readFileSync(path.join(__dirname, '..', '.github', 'workflows', 'financial-insights-tests.yml'), 'utf8');
+  for (const m of wf.matchAll(/uses: (\S+)/g)) assert.match(m[1], /@[0-9a-f]{40}$/, m[1]);
+});
